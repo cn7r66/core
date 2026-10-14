@@ -49,7 +49,7 @@ final class HasParameter implements Assertion
     {
         (new IsString())
             ->assert($value);
-        
+
             (new IsClassOrInterface())
             ->assert($this->class);
 

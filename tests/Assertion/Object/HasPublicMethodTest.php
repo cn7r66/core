@@ -10,6 +10,7 @@ use Vivarium\Assertion\Object\HasPublicMethod;
 use Vivarium\Test\Assertion\Stub\PrivateConstructorStub;
 use Vivarium\Test\Assertion\Stub\ProtectedConstructorStub;
 use Vivarium\Test\Assertion\Stub\StubClass;
+use Vivarium\Test\Assertion\Stub\StubClassWithConstructor;
 
 /** @coversDefaultClass \Vivarium\Assertion\Object\HasPublicMethod */
 final class HasPublicMethodTest extends TestCase
@@ -72,8 +73,8 @@ final class HasPublicMethodTest extends TestCase
         return [
             [StubClass::class, 'publicMethod'],
             [new StubClass(), 'publicMethod'],
-            [StubClass::class, '__construct'],
-            [new StubClass(), '__construct'],
+            [StubClassWithConstructor::class, '__construct'],
+            [new StubClassWithConstructor(), '__construct'],
         ];
     }
 
@@ -95,6 +96,11 @@ final class HasPublicMethodTest extends TestCase
                 StubClass::class,
                 'nonExistentMethod',
                 'Expected "' . StubClass::class . '" to have a public method named "nonExistentMethod".',
+            ],
+            [
+                StubClass::class,
+                '__construct',
+                'Expected "' . StubClass::class . '" to have a public method named "__construct".',
             ],
             [
                 ProtectedConstructorStub::class,
