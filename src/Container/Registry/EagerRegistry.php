@@ -196,28 +196,36 @@ final class EagerRegistry implements Registry, Binder
 
     public function hasProvider(Binding $binding): bool
     {
-        if ($this->providers->containsKey($binding)) {
-            return true;
+        return $this->registeredBinding($binding) !== null;
+    }
+
+    public function locate(Binding $binding): Binding
+    {
+        $registered = $this->registeredBinding($binding);
+
+        if ($registered === null) {
+            throw new BindingNotFound($binding);
         }
 
-        if ($binding->couldBeWidened()) {
-            return $this->hasProvider($binding->widen());
-        }
-
-        return false;
+        return $registered;
     }
 
     public function findProvider(Binding $binding): Provider
     {
+        return $this->providers->get($this->locate($binding));
+    }
+
+    private function registeredBinding(Binding $binding): Binding|null
+    {
         if ($this->providers->containsKey($binding)) {
-            return $this->providers->get($binding);
+            return $binding;
         }
 
         if ($binding->couldBeWidened()) {
-            return $this->findProvider($binding->widen());
+            return $this->registeredBinding($binding->widen());
         }
 
-        throw new BindingNotFound($binding);
+        return null;
     }
 
     public function findScope(Binding $binding): Scope

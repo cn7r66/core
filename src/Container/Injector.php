@@ -41,31 +41,32 @@ final class Injector implements Container
     public function get(Binding|string $request): mixed
     {
         return (new ResolutionContext(
+            fn (Binding $binding): Binding => $this->locate($binding),
             fn (Binding $binding, Container $context): mixed => $this->resolve($binding, $context),
             $this,
         ))->get($request);
     }
 
-    private function resolve(Binding $binding, Container $context): mixed
+    private function resolve(Binding $key, Container $context): mixed
     {
-        if ($this->cache->lookup($binding)) {
+        if ($this->cache->lookup($key)) {
             $this->solved = $this->solved->put(
-                $binding,
-                $this->cache->restore($binding),
+                $key,
+                $this->cache->restore($key),
             );
         }
 
-        if ($this->solved->containsKey($binding)) {
+        if ($this->solved->containsKey($key)) {
             return $this->solved
-                ->get($binding)
+                ->get($key)
                 ->solve($context);
         }
 
-        $provider   = $this->getProvider($binding);
-        $definition = $this->applyScope($binding, $provider);
-        $definition = $this->applyEnhancements($binding, $provider, $definition);
+        $provider   = $this->getProvider($key);
+        $definition = $this->applyScope($key, $provider);
+        $definition = $this->applyEnhancements($key, $provider, $definition);
 
-        $this->solved = $this->solved->put($binding, $definition);
+        $this->solved = $this->solved->put($key, $definition);
 
         return $definition->solve($context);
     }
@@ -119,17 +120,26 @@ final class Injector implements Container
         return new Binding($request);
     }
 
-    private function getProvider(Binding $binding): Provider
+    private function locate(Binding $binding): Binding
     {
         if ($this->registry->hasProvider($binding)) {
-            return $this->registry->findProvider($binding);
+            return $this->registry->locate($binding);
         }
 
         if (CheckIfType::isClass($binding->getType())) {
-            return new Constructor($binding->getType());
+            return new Binding($binding->getType(), $binding->getTag(), Binding::GLOBAL);
         }
 
         throw new BindingNotFound($binding);
+    }
+
+    private function getProvider(Binding $key): Provider
+    {
+        if ($this->registry->hasProvider($key)) {
+            return $this->registry->findProvider($key);
+        }
+
+        return new Constructor($key->getType());
     }
 
     private function applyScope(Binding $binding, Provider $provider): Definition

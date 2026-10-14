@@ -17,24 +17,31 @@ use Vivarium\Container\Exception\ResolutionFailed;
 
 /**
  * Container decorator handed down during resolution, carrying the immutable path
- * of bindings currently being resolved (ancestors only, root first).
+ * of registered bindings currently being resolved (ancestors only, root first).
+ * A request is mapped to the binding it resolves to before the path is consulted.
  *
  * A binding is on the path for the whole duration of its own resolution and leaves
- * it when get() returns, so diamonds are not cycles. Requesting a binding already
- * on the path throws CircularDependency. Any other failure is wrapped in
+ * it when get() returns, so diamonds are not cycles. Requesting a binding that
+ * resolves to one already on the path throws CircularDependency. Any other failure is wrapped in
  * ResolutionFailed carrying the path: the deepest context wraps first, outer
  * contexts rethrow CircularDependency and ResolutionFailed unchanged.
  */
 final class ResolutionContext implements Container
 {
     /**
-     * @param Closure(Binding, Container): mixed $resolve   Resolves the binding using the given
+     * @param Closure(Binding): Binding          $locate    Maps a requested binding to the binding it
+     *                                                      resolves to; may throw.
+     * @param Closure(Binding, Container): mixed $resolve   Resolves the located binding using the given
      *                                                      Container as the context for nested calls.
      * @param Container                          $container Target of has().
-     * @param list<Binding>                      $path      Bindings being resolved, root first.
+     * @param list<Binding>                      $path      Located bindings being resolved, root first.
      */
-    public function __construct(private Closure $resolve, private Container $container, private array $path = [])
-    {
+    public function __construct(
+        private Closure $locate,
+        private Closure $resolve,
+        private Container $container,
+        private array $path = [],
+    ) {
     }
 
     /**
@@ -48,17 +55,19 @@ final class ResolutionContext implements Container
     {
         $binding = $request instanceof Binding ? $request : new Binding($request);
 
-        foreach ($this->path as $ancestor) {
-            if ($ancestor->equals($binding)) {
-                throw new CircularDependency([...$this->path, $binding]);
-            }
-        }
-
-        $context       = clone $this;
-        $context->path = [...$this->path, $binding];
-
         try {
-            return ($this->resolve)($binding, $context);
+            $key = ($this->locate)($binding);
+
+            foreach ($this->path as $ancestor) {
+                if ($ancestor->equals($key)) {
+                    throw new CircularDependency([...$this->path, $key]);
+                }
+            }
+
+            $context       = clone $this;
+            $context->path = [...$this->path, $key];
+
+            return ($this->resolve)($key, $context);
         } catch (CircularDependency | ResolutionFailed $e) {
             throw $e;
         } catch (Throwable $e) {
