@@ -16,7 +16,7 @@ use Vivarium\Collection\Map\Map;
 use Vivarium\Collection\MultiMap\MultiMap;
 use Vivarium\Collection\MultiMap\MultiValueMap;
 use Vivarium\Collection\Queue\PriorityQueue;
-use Vivarium\Collection\Set\SortedSet;
+use Vivarium\Comparator\Priority;
 use Vivarium\Comparator\SortableComparator;
 use Vivarium\Comparator\ValueAndPriority;
 use Vivarium\Container\Binder;
@@ -26,13 +26,22 @@ use Vivarium\Container\Binding\InjectionBinder;
 use Vivarium\Container\Binding\ProviderBinder;
 use Vivarium\Container\Binding\ScopeBinder;
 use Vivarium\Container\Decorator;
+use Vivarium\Container\Exception\AmbiguousInjection;
 use Vivarium\Container\Exception\BindingNotFound;
+use Vivarium\Container\Exception\DuplicateBinding;
+use Vivarium\Container\Exception\DuplicateInjection;
 use Vivarium\Container\Injection;
 use Vivarium\Container\Provider;
 use Vivarium\Container\Registry;
 use Vivarium\Container\Scope;
 
+use function array_filter;
+use function array_map;
+use function array_values;
+use function count;
+use function is_a;
 use function sprintf;
+use function str_starts_with;
 
 final class EagerRegistry implements Registry, Binder
 {
@@ -63,8 +72,8 @@ final class EagerRegistry implements Registry, Binder
             return new PriorityQueue(new SortableComparator());
         });
 
-        $this->decorators = new MultiValueMap(static function (): SortedSet {
-            return new SortedSet(new SortableComparator());
+        $this->decorators = new MultiValueMap(static function (): PriorityQueue {
+            return new PriorityQueue(new SortableComparator());
         });
 
         $this->scopes = new HashMap();
@@ -76,10 +85,13 @@ final class EagerRegistry implements Registry, Binder
         string $tag = Binding::DEFAULT,
         string $context = Binding::GLOBAL,
     ): ProviderBinder {
-        return new ProviderBinder(
-            new Binding($type, $tag, $context),
-            $this->scopedRegistration(),
-        );
+        $binding = new Binding($type, $tag, $context);
+
+        if ($this->providers->containsKey($binding)) {
+            throw new DuplicateBinding($binding);
+        }
+
+        return new ProviderBinder($binding, $this->scopedRegistration());
     }
 
     /**
@@ -147,7 +159,7 @@ final class EagerRegistry implements Registry, Binder
             );
 
             return $registry;
-        });
+        }, Priority::HIGH);
     }
 
     /** @return InjectionBinder<EagerRegistry> */
@@ -160,6 +172,14 @@ final class EagerRegistry implements Registry, Binder
         return new InjectionBinder(
             $binding,
             function (Injection $injection, int $priority) use ($binding): EagerRegistry {
+                if ($this->injections->containsKey($binding)) {
+                    foreach ($this->injections->get($binding) as $entry) {
+                        if ($entry->getValue()->getSlot() === $injection->getSlot()) {
+                            throw new DuplicateInjection($binding, $injection->getSlot());
+                        }
+                    }
+                }
+
                 $registry             = clone $this;
                 $registry->injections = $registry->injections->put(
                     $binding,
@@ -168,6 +188,7 @@ final class EagerRegistry implements Registry, Binder
 
                 return $registry;
             },
+            Priority::LOW,
         );
     }
 
@@ -190,6 +211,7 @@ final class EagerRegistry implements Registry, Binder
 
                 return $registry;
             },
+            Priority::NORMAL,
         );
     }
 
@@ -239,9 +261,7 @@ final class EagerRegistry implements Registry, Binder
     /** @return iterable<ValueAndPriority<Injection>> */
     public function findInjections(Binding $binding): iterable
     {
-        $injections = new PriorityQueue(new SortableComparator());
-
-        $seen     = [];
+        $bySlot   = [];
         $untagged = new Binding($binding->getType(), Binding::DEFAULT, $binding->getContext());
         foreach ($untagged->hierarchy() as $candidate) {
             if (! $this->injections->containsKey($candidate)) {
@@ -250,16 +270,53 @@ final class EagerRegistry implements Registry, Binder
 
             foreach ($this->injections->get($candidate) as $entry) {
                 $slot = $entry->getValue()->getSlot();
-                if (isset($seen[$slot])) {
+                if (isset($bySlot[$slot][$candidate->hash()])) {
                     continue;
                 }
 
-                $seen[$slot] = true;
-                $injections  = $injections->enqueue($entry);
+                $bySlot[$slot][$candidate->hash()] = [$candidate, $entry];
             }
         }
 
+        $injections = new PriorityQueue(new SortableComparator());
+        foreach ($bySlot as $slot => $candidates) {
+            $candidates = array_values($candidates);
+            $winners    = array_values(array_filter(
+                $candidates,
+                static function (array $one) use ($candidates): bool {
+                    foreach ($candidates as $other) {
+                        if (self::isMoreSpecific($other[0], $one[0])) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                },
+            ));
+
+            if (count($winners) > 1) {
+                throw new AmbiguousInjection(
+                    (string) $slot,
+                    array_map(static fn (array $winner): Binding => $winner[0], $winners),
+                );
+            }
+
+            $injections = $injections->enqueue($winners[0][1]);
+        }
+
         return $injections;
+    }
+
+    private static function isMoreSpecific(Binding $first, Binding $second): bool
+    {
+        if ($first->getType() !== $second->getType()) {
+            return is_a($first->getType(), $second->getType(), true);
+        }
+
+        $context = $second->getContext();
+
+        return $first->getContext() !== $context
+            && ($context === Binding::GLOBAL || str_starts_with($first->getContext(), $context . '\\'));
     }
 
     /** @return iterable<ValueAndPriority<Injection>> */

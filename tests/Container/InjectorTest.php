@@ -25,7 +25,11 @@ use Vivarium\Container\Registry;
 use Vivarium\Container\Registry\EagerRegistry;
 use Vivarium\Test\Container\Stub\StubAlterationBase;
 use Vivarium\Test\Container\Stub\StubAlterationChild;
+use Vivarium\Test\Container\Stub\StubBandDecorator;
+use Vivarium\Test\Container\Stub\StubBandSubject;
 use Vivarium\Test\Container\Stub\StubClass;
+use Vivarium\Test\Container\Stub\StubContractHook;
+use Vivarium\Test\Container\Stub\StubContractHookImplementation;
 use Vivarium\Test\Container\Stub\StubInjectorContract;
 use Vivarium\Test\Container\Stub\StubInjectorCycleA;
 use Vivarium\Test\Container\Stub\StubInjectorCycleB;
@@ -519,5 +523,63 @@ final class InjectorTest extends TestCase
 
         static::assertSame($instance, $container->get(StubAlterationBase::class));
         static::assertSame(0, $instance->calls);
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     */
+    public function testDefaultOrderIsInjectionThenCallThenDecoration(): void
+    {
+        $registry = (new EagerRegistry())
+            ->define(StubBandSubject::class)->transient()
+            ->decorate(StubBandSubject::class)->withDecorator(new StubBandDecorator())->withDefaultPriority()
+            ->call(StubBandSubject::class)->onMethod('markCall')->withDefaultPriority()
+            ->inject(StubBandSubject::class)->onMethod('markInjection')->withDefaultPriority();
+
+        $result = (new Injector($registry))->get(StubBandSubject::class);
+
+        static::assertInstanceOf(StubBandSubject::class, $result);
+        static::assertSame(['injection', 'call', 'decoration'], $result->log);
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     * @dataProvider provideInterfaceInjectionRegistries
+     */
+    public function testInjectionRegisteredOnAnInterfaceAppliesToItsImplementation(
+        Registry $registry,
+        string $requested,
+    ): void {
+        $container = new Injector($registry);
+
+        $result = $container->get($requested);
+
+        static::assertInstanceOf(StubContractHookImplementation::class, $result);
+        static::assertSame(1, $result->calls);
+    }
+
+    /** @return iterable<string, array{Registry, string}> */
+    public static function provideInterfaceInjectionRegistries(): iterable
+    {
+        yield 'implementation resolved directly' => [
+            (new EagerRegistry())
+                ->inject(StubContractHook::class)->onMethod('m')->withDefaultPriority(),
+            StubContractHookImplementation::class,
+        ];
+
+        yield 'implementation resolved through the interface binding' => [
+            (new EagerRegistry())
+                ->bind(StubContractHook::class)->to(StubContractHookImplementation::class)->transient()
+                ->inject(StubContractHook::class)->onMethod('m')->withDefaultPriority(),
+            StubContractHook::class,
+        ];
     }
 }

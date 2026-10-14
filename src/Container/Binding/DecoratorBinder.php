@@ -18,7 +18,7 @@ final class DecoratorBinder
     /** @var callable(Decorator, int): T */
     private $create;
 
-    public function __construct(callable $create)
+    public function __construct(callable $create, private int $defaultPriority)
     {
         $this->create = $create;
     }
@@ -30,6 +30,7 @@ final class DecoratorBinder
 
         return new PriorityBinder(
             static fn (int $priority) => $create($decorator, $priority),
+            $this->defaultPriority,
         );
     }
 }

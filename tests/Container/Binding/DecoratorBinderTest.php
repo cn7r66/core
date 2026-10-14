@@ -12,6 +12,7 @@ namespace Vivarium\Test\Container\Binding;
 
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Vivarium\Comparator\Priority;
 use Vivarium\Container\Binding\DecoratorBinder;
 use Vivarium\Container\Binding\PriorityBinder;
 use Vivarium\Container\Decorator;
@@ -27,6 +28,7 @@ final class DecoratorBinderTest extends TestCase
     {
         $binder = new DecoratorBinder(
             static fn (Decorator $dec, int $priority): string => 'result',
+            Priority::NORMAL,
         );
 
         static::assertInstanceOf(PriorityBinder::class, $binder->withDecorator($this->createMock(Decorator::class)));
@@ -44,6 +46,7 @@ final class DecoratorBinderTest extends TestCase
 
                 return 'result';
             },
+            Priority::NORMAL,
         );
 
         $binder->withDecorator($decorator)->withDefaultPriority();
@@ -51,8 +54,11 @@ final class DecoratorBinderTest extends TestCase
         static::assertSame($decorator, $captured);
     }
 
-    /** @covers ::withDecorator */
-    public function testWithDefaultPriorityPassesNormalPriorityToCreate(): void
+    /**
+     * @covers ::withDecorator
+     * @dataProvider defaultPriorityProvider
+     */
+    public function testWithDefaultPriorityPassesTheDefaultGivenAtConstruction(int $defaultPriority): void
     {
         $capturedPriority = null;
 
@@ -62,11 +68,21 @@ final class DecoratorBinderTest extends TestCase
 
                 return $priority;
             },
+            $defaultPriority,
         );
 
         $binder->withDecorator($this->createMock(Decorator::class))->withDefaultPriority();
 
-        static::assertSame(0, $capturedPriority);
+        static::assertSame($defaultPriority, $capturedPriority);
+    }
+
+    /** @return array<string, array{int}> */
+    public static function defaultPriorityProvider(): array
+    {
+        return [
+            'low' => [Priority::LOW],
+            'high' => [Priority::HIGH],
+        ];
     }
 
     /** @covers ::withDecorator */
@@ -80,6 +96,7 @@ final class DecoratorBinderTest extends TestCase
 
                 return $priority;
             },
+            Priority::NORMAL,
         );
 
         $binder->withDecorator($this->createMock(Decorator::class))->withPriority(42);
@@ -94,6 +111,7 @@ final class DecoratorBinderTest extends TestCase
 
         $binder = new DecoratorBinder(
             static fn (Decorator $dec, int $priority): object => $expected,
+            Priority::NORMAL,
         );
 
         $result = $binder->withDecorator($this->createMock(Decorator::class))->withDefaultPriority();

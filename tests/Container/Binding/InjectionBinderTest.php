@@ -12,6 +12,7 @@ namespace Vivarium\Test\Container\Binding;
 
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
+use Vivarium\Comparator\Priority;
 use Vivarium\Container\Binding;
 use Vivarium\Container\Binding\InjectionBinder;
 use Vivarium\Container\Binding\PriorityBinder;
@@ -19,6 +20,7 @@ use Vivarium\Container\Injection;
 use Vivarium\Container\Injection\ImmutableMethodCall;
 use Vivarium\Container\Injection\MethodCall;
 use Vivarium\Container\Injection\SetProperty;
+use Vivarium\Test\Container\Stub\StubBinderContract;
 use Vivarium\Test\Container\Stub\StubClass;
 
 /** @coversDefaultClass \Vivarium\Container\Binding\InjectionBinder */
@@ -33,6 +35,7 @@ final class InjectionBinderTest extends TestCase
         $binder = new InjectionBinder(
             new Binding(StubClass::class),
             static fn (Injection $injection, int $priority): string => 'result',
+            Priority::NORMAL,
         );
 
         static::assertInstanceOf(PriorityBinder::class, $binder->onProperty('property'));
@@ -48,6 +51,7 @@ final class InjectionBinderTest extends TestCase
 
                 return 'result';
             },
+            Priority::NORMAL,
         );
 
         $binder->onProperty('property')->withDefaultPriority();
@@ -65,6 +69,7 @@ final class InjectionBinderTest extends TestCase
 
                 return 'result';
             },
+            Priority::NORMAL,
         );
 
         $binder->onProperty('property')->withDefaultPriority();
@@ -84,6 +89,7 @@ final class InjectionBinderTest extends TestCase
 
                 return 'result';
             },
+            Priority::NORMAL,
         );
 
         $binder->onProperty('property', 'string')->withDefaultPriority();
@@ -103,6 +109,7 @@ final class InjectionBinderTest extends TestCase
 
                 return 'result';
             },
+            Priority::NORMAL,
         );
 
         $binder->onProperty('property', Binding::DEFAULT, 'myTag')->withDefaultPriority();
@@ -119,6 +126,7 @@ final class InjectionBinderTest extends TestCase
             new Binding('string'),
             static function (Injection $injection, int $priority): void {
             },
+            Priority::NORMAL,
         );
 
         $binder->onProperty('property');
@@ -133,6 +141,7 @@ final class InjectionBinderTest extends TestCase
             new Binding(StubClass::class),
             static function (Injection $injection, int $priority): void {
             },
+            Priority::NORMAL,
         );
 
         $binder->onProperty('nonExistentProperty');
@@ -144,6 +153,7 @@ final class InjectionBinderTest extends TestCase
         $binder = new InjectionBinder(
             new Binding(StubClass::class),
             static fn (Injection $injection, int $priority): string => 'result',
+            Priority::NORMAL,
         );
 
         static::assertInstanceOf(PriorityBinder::class, $binder->onMethod('setService'));
@@ -159,6 +169,7 @@ final class InjectionBinderTest extends TestCase
 
                 return 'result';
             },
+            Priority::NORMAL,
         );
 
         $binder->onMethod('setService')->withDefaultPriority();
@@ -173,6 +184,7 @@ final class InjectionBinderTest extends TestCase
             new Binding('string'),
             static function (Injection $injection, int $priority): void {
             },
+            Priority::NORMAL,
         );
 
         $binder->onMethod('setService');
@@ -187,6 +199,7 @@ final class InjectionBinderTest extends TestCase
             new Binding(StubClass::class),
             static function (Injection $injection, int $priority): void {
             },
+            Priority::NORMAL,
         );
 
         $binder->onMethod('nonExistentMethod');
@@ -198,6 +211,7 @@ final class InjectionBinderTest extends TestCase
         $binder = new InjectionBinder(
             new Binding(StubClass::class),
             static fn (Injection $injection, int $priority): string => 'result',
+            Priority::NORMAL,
         );
 
         static::assertInstanceOf(PriorityBinder::class, $binder->onImmutableMethod('withService'));
@@ -213,6 +227,7 @@ final class InjectionBinderTest extends TestCase
 
                 return 'result';
             },
+            Priority::NORMAL,
         );
 
         $binder->onImmutableMethod('withService')->withDefaultPriority();
@@ -227,6 +242,7 @@ final class InjectionBinderTest extends TestCase
             new Binding('string'),
             static function (Injection $injection, int $priority): void {
             },
+            Priority::NORMAL,
         );
 
         $binder->onImmutableMethod('withService');
@@ -241,6 +257,7 @@ final class InjectionBinderTest extends TestCase
             new Binding(StubClass::class),
             static function (Injection $injection, int $priority): void {
             },
+            Priority::NORMAL,
         );
 
         $binder->onImmutableMethod('nonExistentMethod');
@@ -252,6 +269,7 @@ final class InjectionBinderTest extends TestCase
         $binder = new InjectionBinder(
             new Binding(StubClass::class),
             static fn (Injection $inj, int $priority): string => 'result',
+            Priority::NORMAL,
         );
 
         $result = $binder->withInjection($this->createMock(Injection::class));
@@ -270,8 +288,58 @@ final class InjectionBinderTest extends TestCase
 
                 return 'result';
             },
+            Priority::NORMAL,
         );
 
         $binder->withInjection($injection)->withDefaultPriority();
+    }
+
+    /**
+     * @covers ::onMethod
+     * @covers ::withInjection
+     * @covers ::__construct
+     */
+    public function testOnMethodAcceptsAnInterface(): void
+    {
+        $binder = new InjectionBinder(
+            new Binding(StubBinderContract::class),
+            static fn (Injection $injection, int $priority): string => 'result',
+            Priority::NORMAL,
+        );
+
+        static::assertInstanceOf(PriorityBinder::class, $binder->onMethod('configure'));
+    }
+
+    /**
+     * @covers ::onImmutableMethod
+     * @covers ::withInjection
+     * @covers ::__construct
+     */
+    public function testOnImmutableMethodAcceptsAnInterface(): void
+    {
+        $binder = new InjectionBinder(
+            new Binding(StubBinderContract::class),
+            static fn (Injection $injection, int $priority): string => 'result',
+            Priority::NORMAL,
+        );
+
+        static::assertInstanceOf(PriorityBinder::class, $binder->onImmutableMethod('configure'));
+    }
+
+    /**
+     * @covers ::onProperty
+     * @covers ::__construct
+     */
+    public function testOnPropertyRejectsAnInterface(): void
+    {
+        $this->expectException(AssertionFailed::class);
+
+        $binder = new InjectionBinder(
+            new Binding(StubBinderContract::class),
+            static fn (Injection $injection, int $priority): string => 'result',
+            Priority::NORMAL,
+        );
+
+        $binder->onProperty('property');
     }
 }

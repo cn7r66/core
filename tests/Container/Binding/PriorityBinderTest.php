@@ -21,8 +21,9 @@ final class PriorityBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::withDefaultPriority
+     * @dataProvider defaultPriorityProvider
      */
-    public function testWithDefaultPriorityPassesNormalPriorityToCreate(): void
+    public function testWithDefaultPriorityPassesTheDefaultGivenAtConstruction(int $defaultPriority): void
     {
         $capturedPriority = null;
 
@@ -32,11 +33,21 @@ final class PriorityBinderTest extends TestCase
 
                 return 'result';
             },
+            $defaultPriority,
         );
 
         $binder->withDefaultPriority();
 
-        static::assertSame(Priority::NORMAL, $capturedPriority);
+        static::assertSame($defaultPriority, $capturedPriority);
+    }
+
+    /** @return array<string, array{int}> */
+    public static function defaultPriorityProvider(): array
+    {
+        return [
+            'low' => [Priority::LOW],
+            'high' => [Priority::HIGH],
+        ];
     }
 
     /** @covers ::withDefaultPriority */
@@ -46,6 +57,7 @@ final class PriorityBinderTest extends TestCase
 
         $binder = new PriorityBinder(
             static fn (int $priority): object => $expected,
+            Priority::NORMAL,
         );
 
         static::assertSame($expected, $binder->withDefaultPriority());
@@ -62,6 +74,7 @@ final class PriorityBinderTest extends TestCase
 
                 return 'result';
             },
+            Priority::NORMAL,
         );
 
         $binder->withPriority(42);
@@ -76,6 +89,7 @@ final class PriorityBinderTest extends TestCase
 
         $binder = new PriorityBinder(
             static fn (int $priority): object => $expected,
+            Priority::NORMAL,
         );
 
         static::assertSame($expected, $binder->withPriority(10));

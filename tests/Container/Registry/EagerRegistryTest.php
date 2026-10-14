@@ -20,6 +20,8 @@ use Vivarium\Container\Binding\ProviderBinder;
 use Vivarium\Container\Binding\ScopeBinder;
 use Vivarium\Container\Decorator;
 use Vivarium\Container\Exception\BindingNotFound;
+use Vivarium\Container\Exception\DuplicateBinding;
+use Vivarium\Container\Exception\DuplicateInjection;
 use Vivarium\Container\Injection;
 use Vivarium\Container\Provider;
 use Vivarium\Container\Registry\EagerRegistry;
@@ -27,6 +29,7 @@ use Vivarium\Container\Scope;
 use Vivarium\Test\Container\Stub\Stub;
 use Vivarium\Test\Container\Stub\StubBase;
 use Vivarium\Test\Container\Stub\StubClass;
+use Vivarium\Test\Container\Stub\StubDuplicateSlot;
 use Vivarium\Test\Container\Stub\StubWithNoArgs;
 
 /** @coversDefaultClass \Vivarium\Container\Registry\EagerRegistry */
@@ -715,5 +718,144 @@ final class EagerRegistryTest extends TestCase
 
         static::assertCount(1, $enhancements);
         static::assertSame($injection, $enhancements[0]->getValue());
+    }
+
+    /**
+     * @covers ::bind
+     * @covers ::__construct
+     */
+    public function testBindingTheSameBindingTwiceIsRejected(): void
+    {
+        $binding  = new Binding(StubClass::class, 'audit', 'App\\Orders');
+        $registry = (new EagerRegistry())
+            ->bind(StubClass::class, 'audit', 'App\\Orders')
+            ->toProvider($this->createMock(Provider::class))
+            ->transient();
+
+        try {
+            $registry->bind(StubClass::class, 'audit', 'App\\Orders');
+            static::fail('Expected DuplicateBinding');
+        } catch (DuplicateBinding $exception) {
+            static::assertTrue($binding->equals($exception->getBinding()));
+        }
+    }
+
+    /**
+     * @covers ::define
+     * @covers ::bind
+     * @covers ::__construct
+     */
+    public function testDefiningTheSameClassTwiceIsRejected(): void
+    {
+        $binding  = new Binding(StubWithNoArgs::class, Binding::DEFAULT, Binding::GLOBAL);
+        $registry = (new EagerRegistry())->define(StubWithNoArgs::class)->transient();
+
+        try {
+            $registry->define(StubWithNoArgs::class);
+            static::fail('Expected DuplicateBinding');
+        } catch (DuplicateBinding $exception) {
+            static::assertTrue($binding->equals($exception->getBinding()));
+        }
+    }
+
+    /**
+     * @covers ::extend
+     * @covers ::bind
+     * @covers ::__construct
+     */
+    public function testExtendReplacesARegistrationWithoutDuplicateError(): void
+    {
+        $first    = $this->createMock(Provider::class);
+        $second   = $this->createMock(Provider::class);
+        $binding  = new Binding(StubClass::class, 'audit', 'App\\Orders');
+        $registry = (new EagerRegistry())
+            ->bind(StubClass::class, 'audit', 'App\\Orders')
+            ->toProvider($first)
+            ->transient();
+
+        $extended = $registry
+            ->extend(StubClass::class, 'audit', 'App\\Orders')
+            ->toProvider($second)
+            ->transient();
+
+        static::assertSame($second, $extended->findProvider($binding));
+    }
+
+    /**
+     * @covers ::inject
+     * @covers ::__construct
+     */
+    public function testInjectingTheSameSlotTwiceOnOneBindingIsRejected(): void
+    {
+        $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
+        $registry = (new EagerRegistry())
+            ->inject(StubClass::class)
+            ->onProperty('property')
+            ->withDefaultPriority();
+
+        try {
+            $registry->inject(StubClass::class)->onProperty('property')->withDefaultPriority();
+            static::fail('Expected DuplicateInjection');
+        } catch (DuplicateInjection $exception) {
+            static::assertTrue($binding->equals($exception->getBinding()));
+            static::assertSame('$property', $exception->getSlot());
+        }
+    }
+
+    /**
+     * @covers ::inject
+     * @covers ::__construct
+     */
+    public function testSameSlotOnAMoreSpecificTypeIsAllowed(): void
+    {
+        $registry = (new EagerRegistry())
+            ->inject(StubBase::class)
+            ->withInjection($this->mockInjection('slot'))
+            ->withDefaultPriority()
+            ->inject(StubClass::class)
+            ->withInjection($this->mockInjection('slot'))
+            ->withDefaultPriority();
+
+        $binding = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
+
+        static::assertNotEmpty($this->toArray($registry->findInjections($binding)));
+    }
+
+    /**
+     * @covers ::inject
+     * @covers ::__construct
+     */
+    public function testPropertyAndMethodWithTheSameNameAreDifferentSlots(): void
+    {
+        $registry = (new EagerRegistry())
+            ->inject(StubDuplicateSlot::class)
+            ->onProperty('logger')
+            ->withDefaultPriority()
+            ->inject(StubDuplicateSlot::class)
+            ->onMethod('logger')
+            ->withDefaultPriority();
+
+        $binding = new Binding(StubDuplicateSlot::class, Binding::DEFAULT, Binding::GLOBAL);
+
+        static::assertCount(2, $this->toArray($registry->findInjections($binding)));
+    }
+
+    /**
+     * @covers ::call
+     * @covers ::__construct
+     */
+    public function testCallingTheSameMethodTwiceIsAllowed(): void
+    {
+        $registry = (new EagerRegistry())
+            ->call(StubClass::class)
+            ->onMethod('setService')
+            ->withDefaultPriority()
+            ->call(StubClass::class)
+            ->onMethod('setService')
+            ->withDefaultPriority();
+
+        $binding = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
+
+        static::assertCount(2, $this->toArray($registry->findCalls($binding)));
     }
 }

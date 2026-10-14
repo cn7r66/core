@@ -10,15 +10,13 @@ declare(strict_types=1);
 
 namespace Vivarium\Container\Binding;
 
-use Vivarium\Comparator\Priority;
-
 /** @template T */
 final class PriorityBinder
 {
     /** @var callable(int): T */
     private $create;
 
-    public function __construct(callable $create)
+    public function __construct(callable $create, private int $defaultPriority)
     {
         $this->create = $create;
     }
@@ -26,7 +24,7 @@ final class PriorityBinder
     /** @return T */
     public function withDefaultPriority()
     {
-        return $this->withPriority(Priority::NORMAL);
+        return $this->withPriority($this->defaultPriority);
     }
 
     /** @return T */

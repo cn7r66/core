@@ -28,7 +28,7 @@ final class SetProperty implements Injection
 
     public function getSlot(): string
     {
-        return $this->property;
+        return '$' . $this->property;
     }
 
     public function enhance(mixed $instance, Container $container): mixed

@@ -260,11 +260,11 @@ final class SetPropertyTest extends TestCase
      * @covers ::__construct
      * @covers ::getSlot
      */
-    public function testGetSlotReturnsPropertyName(): void
+    public function testGetSlotIsPropertyNameWithDollarSign(): void
     {
         $enhancement = new SetProperty('property', new Binding('string'));
 
-        static::assertSame('property', $enhancement->getSlot());
+        static::assertSame('$property', $enhancement->getSlot());
     }
 
     /**

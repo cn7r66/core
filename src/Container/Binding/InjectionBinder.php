@@ -14,6 +14,7 @@ use Vivarium\Assertion\Object\HasMethod;
 use Vivarium\Assertion\Object\HasProperty;
 use Vivarium\Assertion\Type\IsAssignableToProperty;
 use Vivarium\Assertion\Type\IsClass;
+use Vivarium\Assertion\Type\IsClassOrInterface;
 use Vivarium\Container\Binding;
 use Vivarium\Container\Injection;
 use Vivarium\Container\Injection\ImmutableMethodCall;
@@ -27,8 +28,11 @@ final class InjectionBinder
     /** @var callable(Injection, int): T */
     private $create;
 
-    public function __construct(private Binding $binding, callable $create)
-    {
+    public function __construct(
+        private Binding $binding,
+        callable $create,
+        private int $defaultPriority,
+    ) {
         $this->create = $create;
     }
 
@@ -62,7 +66,7 @@ final class InjectionBinder
     /** @return PriorityBinder<T> */
     public function onMethod(string $method): PriorityBinder
     {
-        (new IsClass())
+        (new IsClassOrInterface())
             ->assert($this->binding->getType());
 
         (new HasMethod($method))
@@ -76,7 +80,7 @@ final class InjectionBinder
     /** @return PriorityBinder<T> */
     public function onImmutableMethod(string $method): PriorityBinder
     {
-        (new IsClass())
+        (new IsClassOrInterface())
             ->assert($this->binding->getType());
 
         (new HasMethod($method))
@@ -94,6 +98,7 @@ final class InjectionBinder
 
         return new PriorityBinder(
             static fn (int $priority) => $create($injection, $priority),
+            $this->defaultPriority,
         );
     }
 }
