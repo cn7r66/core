@@ -83,8 +83,7 @@ final class CompositionTest extends TestCase
     {
         $this->expectException(AssertionFailed::class);
 
-        $composition = new Composition(new Fun(static fn (int $n): int => $n), $slot);
-        $composition->enhance(static fn (int $a): int => $a, new Injector(new EagerRegistry()));
+        new Composition(new Fun(static fn (int $n): int => $n), $slot);
     }
 
     /** @return iterable<string, array{string|int}> */
