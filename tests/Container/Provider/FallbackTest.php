@@ -85,14 +85,15 @@ final class FallbackTest extends TestCase
     }
 
     /** @covers ::getCapabilities */
-    public function testGetCapabilitiesReturnsInjectableAndDecorable(): void
+    public function testGetCapabilitiesReturnsInterceptableAndDecorableButNotInjectable(): void
     {
         $primary      = new Binding(StubClass::class);
         $secondary    = $this->createMock(Provider::class);
         $provider     = new Fallback($primary, $secondary);
         $capabilities = $provider->getCapabilities();
 
-        static::assertTrue($capabilities->contains(Capability::INJECTABLE));
+        static::assertFalse($capabilities->contains(Capability::INJECTABLE));
+        static::assertTrue($capabilities->contains(Capability::INTERCEPTABLE));
         static::assertTrue($capabilities->contains(Capability::DECORABLE));
         static::assertCount(2, $capabilities);
     }

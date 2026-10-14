@@ -28,6 +28,12 @@ interface Registry
 
     public function findScope(Binding $binding): Scope;
 
-    /** @return iterable<ValueAndPriority<Enhancement>> */
-    public function findEnhancements(Binding $binding): iterable;
+    /** @return iterable<ValueAndPriority<Injection>> */
+    public function findInjections(Binding $binding): iterable;
+
+    /** @return iterable<ValueAndPriority<Injection>> */
+    public function findCalls(Binding $binding): iterable;
+
+    /** @return iterable<ValueAndPriority<Decorator>> */
+    public function findDecorations(Binding $binding): iterable;
 }

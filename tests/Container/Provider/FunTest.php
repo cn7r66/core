@@ -49,14 +49,15 @@ final class FunTest extends TestCase
     }
 
     /** @covers ::getCapabilities */
-    public function testGetCapabilitiesReturnsInterceptableAndDecorable(): void
+    public function testGetCapabilitiesReturnsInjectableInterceptableAndDecorable(): void
     {
         $provider     = new Fun(static fn (Container $c): string => 'test');
         $capabilities = $provider->getCapabilities();
 
+        static::assertTrue($capabilities->contains(Capability::INJECTABLE));
         static::assertTrue($capabilities->contains(Capability::INTERCEPTABLE));
         static::assertTrue($capabilities->contains(Capability::DECORABLE));
-        static::assertCount(2, $capabilities);
+        static::assertCount(3, $capabilities);
     }
 
     /** @covers ::provide */

@@ -44,13 +44,14 @@ final class ContainerCallTest extends TestCase
     }
 
     /** @covers ::getCapabilities */
-    public function testGetCapabilitiesReturnsInjectableAndDecorable(): void
+    public function testGetCapabilitiesReturnsInterceptableAndDecorableButNotInjectable(): void
     {
         $binding      = new Binding(StubClass::class);
         $provider     = new ContainerCall($binding);
         $capabilities = $provider->getCapabilities();
 
-        static::assertTrue($capabilities->contains(Capability::INJECTABLE));
+        static::assertFalse($capabilities->contains(Capability::INJECTABLE));
+        static::assertTrue($capabilities->contains(Capability::INTERCEPTABLE));
         static::assertTrue($capabilities->contains(Capability::DECORABLE));
         static::assertCount(2, $capabilities);
     }

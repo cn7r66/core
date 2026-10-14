@@ -236,10 +236,10 @@ final class EagerRegistry implements Registry, Binder
         return Scope::TRANSIENT;
     }
 
-    /** @return iterable<ValueAndPriority<Enhancement>> */
-    public function findEnhancements(Binding $binding): iterable
+    /** @return iterable<ValueAndPriority<Injection>> */
+    public function findInjections(Binding $binding): iterable
     {
-        $enhancements = new PriorityQueue(new SortableComparator());
+        $injections = new PriorityQueue(new SortableComparator());
 
         $seen     = [];
         $untagged = new Binding($binding->getType(), Binding::DEFAULT, $binding->getContext());
@@ -254,23 +254,39 @@ final class EagerRegistry implements Registry, Binder
                     continue;
                 }
 
-                $seen[$slot]  = true;
-                $enhancements = $enhancements->enqueue($entry);
+                $seen[$slot] = true;
+                $injections  = $injections->enqueue($entry);
             }
         }
+
+        return $injections;
+    }
+
+    /** @return iterable<ValueAndPriority<Injection>> */
+    public function findCalls(Binding $binding): iterable
+    {
+        $calls = new PriorityQueue(new SortableComparator());
 
         if ($this->interceptions->containsKey($binding)) {
             foreach ($this->interceptions->get($binding) as $entry) {
-                $enhancements = $enhancements->enqueue($entry);
+                $calls = $calls->enqueue($entry);
             }
         }
+
+        return $calls;
+    }
+
+    /** @return iterable<ValueAndPriority<Decorator>> */
+    public function findDecorations(Binding $binding): iterable
+    {
+        $decorations = new PriorityQueue(new SortableComparator());
 
         if ($this->decorators->containsKey($binding)) {
             foreach ($this->decorators->get($binding) as $entry) {
-                $enhancements = $enhancements->enqueue($entry);
+                $decorations = $decorations->enqueue($entry);
             }
         }
 
-        return $enhancements;
+        return $decorations;
     }
 }

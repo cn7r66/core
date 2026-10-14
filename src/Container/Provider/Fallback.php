@@ -43,7 +43,7 @@ final class Fallback implements Provider
     public function getCapabilities(): Set
     {
         return HashSet::fromArray([
-            Capability::INJECTABLE,
+            Capability::INTERCEPTABLE,
             Capability::DECORABLE,
         ]);
     }

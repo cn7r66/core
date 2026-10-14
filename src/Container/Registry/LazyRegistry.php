@@ -12,7 +12,8 @@ namespace Vivarium\Container\Registry;
 
 use Vivarium\Comparator\ValueAndPriority;
 use Vivarium\Container\Binding;
-use Vivarium\Container\Enhancement;
+use Vivarium\Container\Decorator;
+use Vivarium\Container\Injection;
 use Vivarium\Container\Provider;
 use Vivarium\Container\Registry;
 use Vivarium\Container\Scope;
@@ -58,12 +59,28 @@ final class LazyRegistry implements Registry
             ->findScope($binding);
     }
 
-    /** @return iterable<ValueAndPriority<Enhancement>> */
-    public function findEnhancements(Binding $binding): iterable
+    /** @return iterable<ValueAndPriority<Injection>> */
+    public function findInjections(Binding $binding): iterable
     {
         return $this
             ->getRealRegistry()
-            ->findEnhancements($binding);
+            ->findInjections($binding);
+    }
+
+    /** @return iterable<ValueAndPriority<Injection>> */
+    public function findCalls(Binding $binding): iterable
+    {
+        return $this
+            ->getRealRegistry()
+            ->findCalls($binding);
+    }
+
+    /** @return iterable<ValueAndPriority<Decorator>> */
+    public function findDecorations(Binding $binding): iterable
+    {
+        return $this
+            ->getRealRegistry()
+            ->findDecorations($binding);
     }
 
     private function getRealRegistry(): Registry

@@ -127,6 +127,7 @@ final class StaticFactory implements Provider, Caller, Equality
     public function getCapabilities(): Set
     {
         return HashSet::fromArray([
+            Capability::INJECTABLE,
             Capability::INTERCEPTABLE,
             Capability::DECORABLE,
         ]);

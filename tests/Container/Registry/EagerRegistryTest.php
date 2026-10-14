@@ -202,7 +202,7 @@ final class EagerRegistryTest extends TestCase
      * @covers ::__construct
      * @covers ::decorate
      */
-    public function testAfterDecoratingFindEnhancementsContainsDecorator(): void
+    public function testAfterDecoratingFindDecorationsContainsDecorator(): void
     {
         $decorator = $this->createMock(Decorator::class);
         $binding   = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
@@ -212,14 +212,14 @@ final class EagerRegistryTest extends TestCase
             ->withDecorator($decorator)
             ->withDefaultPriority();
 
-        $enhancements = $this->toArray($registry->findEnhancements($binding));
+        $enhancements = $this->toArray($registry->findDecorations($binding));
 
         static::assertCount(1, $enhancements);
         static::assertSame($decorator, $enhancements[0]->getValue());
     }
 
     /** @covers ::decorate */
-    public function testDecorateIsImmutableOriginalHasNoEnhancements(): void
+    public function testDecorateIsImmutableOriginalHasNoDecorations(): void
     {
         $decorator = $this->createMock(Decorator::class);
         $binding   = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
@@ -227,7 +227,7 @@ final class EagerRegistryTest extends TestCase
         $original = new EagerRegistry();
         $original->decorate(StubClass::class)->withDecorator($decorator)->withDefaultPriority();
 
-        static::assertEmpty($this->toArray($original->findEnhancements($binding)));
+        static::assertEmpty($this->toArray($original->findDecorations($binding)));
     }
 
     /** @covers ::inject */
@@ -242,7 +242,7 @@ final class EagerRegistryTest extends TestCase
      * @covers ::__construct
      * @covers ::inject
      */
-    public function testAfterInjectingFindEnhancementsContainsInjection(): void
+    public function testAfterInjectingFindInjectionsContainsInjection(): void
     {
         $injection = $this->mockInjection('slot');
         $binding   = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
@@ -252,7 +252,7 @@ final class EagerRegistryTest extends TestCase
             ->withInjection($injection)
             ->withDefaultPriority();
 
-        $enhancements = $this->toArray($registry->findEnhancements($binding));
+        $enhancements = $this->toArray($registry->findInjections($binding));
 
         static::assertCount(1, $enhancements);
         static::assertSame($injection, $enhancements[0]->getValue());
@@ -269,14 +269,14 @@ final class EagerRegistryTest extends TestCase
             ->withInjection($injection)
             ->withDefaultPriority();
 
-        $enhancements = $this->toArray($registry->findEnhancements($binding));
+        $enhancements = $this->toArray($registry->findInjections($binding));
 
         static::assertCount(1, $enhancements);
         static::assertSame($injection, $enhancements[0]->getValue());
     }
 
     /** @covers ::inject */
-    public function testInjectIsImmutableOriginalHasNoEnhancements(): void
+    public function testInjectIsImmutableOriginalHasNoInjections(): void
     {
         $injection = $this->mockInjection('slot');
         $binding   = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
@@ -284,7 +284,7 @@ final class EagerRegistryTest extends TestCase
         $original = new EagerRegistry();
         $original->inject(StubClass::class)->withInjection($injection)->withDefaultPriority();
 
-        static::assertEmpty($this->toArray($original->findEnhancements($binding)));
+        static::assertEmpty($this->toArray($original->findInjections($binding)));
     }
 
     /** @covers ::call */
@@ -299,7 +299,7 @@ final class EagerRegistryTest extends TestCase
      * @covers ::__construct
      * @covers ::call
      */
-    public function testAfterCallFindEnhancementsContainsInjection(): void
+    public function testAfterCallFindCallsContainsInjection(): void
     {
         $injection = $this->mockInjection('slot');
         $binding   = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
@@ -309,7 +309,7 @@ final class EagerRegistryTest extends TestCase
             ->withInjection($injection)
             ->withDefaultPriority();
 
-        $enhancements = $this->toArray($registry->findEnhancements($binding));
+        $enhancements = $this->toArray($registry->findCalls($binding));
 
         static::assertCount(1, $enhancements);
         static::assertSame($injection, $enhancements[0]->getValue());
@@ -326,13 +326,13 @@ final class EagerRegistryTest extends TestCase
             ->withInjection($injection)
             ->withDefaultPriority();
 
-        $enhancements = $this->toArray($registry->findEnhancements($binding));
+        $enhancements = $this->toArray($registry->findCalls($binding));
 
         static::assertEmpty($enhancements);
     }
 
     /** @covers ::call */
-    public function testCallIsImmutableOriginalHasNoEnhancements(): void
+    public function testCallIsImmutableOriginalHasNoCalls(): void
     {
         $injection = $this->mockInjection('slot');
         $binding   = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
@@ -340,7 +340,7 @@ final class EagerRegistryTest extends TestCase
         $original = new EagerRegistry();
         $original->call(StubClass::class)->withInjection($injection)->withDefaultPriority();
 
-        static::assertEmpty($this->toArray($original->findEnhancements($binding)));
+        static::assertEmpty($this->toArray($original->findCalls($binding)));
     }
 
     /** @covers ::__construct */
@@ -351,7 +351,9 @@ final class EagerRegistryTest extends TestCase
 
         static::assertFalse($registry->hasProvider($binding));
         static::assertSame(Scope::TRANSIENT, $registry->findScope($binding));
-        static::assertEmpty($this->toArray($registry->findEnhancements($binding)));
+        static::assertEmpty($this->toArray($registry->findInjections($binding)));
+        static::assertEmpty($this->toArray($registry->findCalls($binding)));
+        static::assertEmpty($this->toArray($registry->findDecorations($binding)));
     }
 
     /** @covers ::hasProvider */
@@ -696,7 +698,7 @@ final class EagerRegistryTest extends TestCase
 
     /**
      * @covers ::inject
-     * @covers ::findEnhancements
+     * @covers ::findInjections
      * @covers ::__construct
      */
     public function testUntaggedInjectionAppliesToTaggedBinding(): void
@@ -709,7 +711,7 @@ final class EagerRegistryTest extends TestCase
             ->withInjection($injection)
             ->withDefaultPriority();
 
-        $enhancements = $this->toArray($registry->findEnhancements($binding));
+        $enhancements = $this->toArray($registry->findInjections($binding));
 
         static::assertCount(1, $enhancements);
         static::assertSame($injection, $enhancements[0]->getValue());

@@ -36,7 +36,7 @@ final class ContainerCall implements Provider
     public function getCapabilities(): Set
     {
         return HashSet::fromArray([
-            Capability::INJECTABLE,
+            Capability::INTERCEPTABLE,
             Capability::DECORABLE,
         ]);
     }

@@ -75,14 +75,14 @@ final class FactoryTest extends TestCase
     }
 
     /** @covers ::getCapabilities */
-    public function testGetCapabilitiesDoesNotIncludeInjectable(): void
+    public function testGetCapabilitiesReturnsInjectableInterceptableAndDecorable(): void
     {
         $capabilities = (new Factory(new Binding(StubFactory::class), 'create'))->getCapabilities();
 
-        static::assertFalse($capabilities->contains(Capability::INJECTABLE));
+        static::assertTrue($capabilities->contains(Capability::INJECTABLE));
         static::assertTrue($capabilities->contains(Capability::INTERCEPTABLE));
         static::assertTrue($capabilities->contains(Capability::DECORABLE));
-        static::assertCount(2, $capabilities);
+        static::assertCount(3, $capabilities);
     }
 
     /** @covers ::__construct */

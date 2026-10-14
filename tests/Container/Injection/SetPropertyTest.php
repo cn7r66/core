@@ -258,24 +258,6 @@ final class SetPropertyTest extends TestCase
 
     /**
      * @covers ::__construct
-     * @covers ::accept
-     */
-    public function testAcceptReturnsFalseWhenProviderIsNotEnhanceable(): void
-    {
-        $provider = $this->createMock(Provider::class);
-        $provider->method('getTarget')->willReturn(StubClass::class);
-        $provider->method('getCapabilities')->willReturn(
-            HashSet::fromArray([Capability::DECORABLE]), // Wrong capability
-        );
-
-        $binding     = new Binding('string');
-        $enhancement = new SetProperty('property', $binding);
-
-        static::assertFalse($enhancement->accept($provider));
-    }
-
-    /**
-     * @covers ::__construct
      * @covers ::getSlot
      */
     public function testGetSlotReturnsPropertyName(): void
@@ -286,20 +268,34 @@ final class SetPropertyTest extends TestCase
     }
 
     /**
+     * @param array<Capability> $capabilities
+     *
      * @covers ::__construct
      * @covers ::accept
+     * @dataProvider capabilitySetsProvider
      */
-    public function testAcceptReturnsFalseWhenProviderHasNoCapabilities(): void
+    public function testAcceptIgnoresProviderCapabilities(array $capabilities): void
     {
         $provider = $this->createMock(Provider::class);
         $provider->method('getTarget')->willReturn(StubClass::class);
         $provider->method('getCapabilities')->willReturn(
-            HashSet::fromArray([]),
+            HashSet::fromArray($capabilities),
         );
 
         $binding     = new Binding('string');
         $enhancement = new SetProperty('property', $binding);
 
-        static::assertFalse($enhancement->accept($provider));
+        static::assertTrue($enhancement->accept($provider));
+    }
+
+    /** @return array<string, array{array<Capability>}> */
+    public static function capabilitySetsProvider(): array
+    {
+        return [
+            'none' => [[]],
+            'decorable only' => [[Capability::DECORABLE]],
+            'injectable only' => [[Capability::INJECTABLE]],
+            'all' => [[Capability::INJECTABLE, Capability::INTERCEPTABLE, Capability::DECORABLE]],
+        ];
     }
 }

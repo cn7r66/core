@@ -12,7 +12,8 @@ namespace Vivarium\Test\Container\Registry;
 
 use PHPUnit\Framework\TestCase;
 use Vivarium\Container\Binding;
-use Vivarium\Container\Enhancement;
+use Vivarium\Container\Decorator;
+use Vivarium\Container\Injection;
 use Vivarium\Container\Provider;
 use Vivarium\Container\Registry;
 use Vivarium\Container\Registry\LazyRegistry;
@@ -62,7 +63,9 @@ final class LazyRegistryTest extends TestCase
      * @covers ::hasProvider
      * @covers ::findProvider
      * @covers ::findScope
-     * @covers ::findEnhancements
+     * @covers ::findInjections
+     * @covers ::findCalls
+     * @covers ::findDecorations
      * @covers ::getRealRegistry
      */
     public function testFactoryIsCalledOnlyOnce(): void
@@ -72,7 +75,9 @@ final class LazyRegistryTest extends TestCase
         $inner   = $this->createMock(Registry::class);
         $inner->method('hasProvider')->willReturn(false);
         $inner->method('findScope')->willReturn(Scope::SERVICE);
-        $inner->method('findEnhancements')->willReturn([]);
+        $inner->method('findInjections')->willReturn([]);
+        $inner->method('findCalls')->willReturn([]);
+        $inner->method('findDecorations')->willReturn([]);
 
         $registry = new LazyRegistry(static function () use (&$called, $inner): Registry {
             $called++;
@@ -82,7 +87,9 @@ final class LazyRegistryTest extends TestCase
 
         $registry->hasProvider($binding);
         $registry->findScope($binding);
-        $registry->findEnhancements($binding);
+        $registry->findInjections($binding);
+        $registry->findCalls($binding);
+        $registry->findDecorations($binding);
 
         self::assertSame(1, $called);
     }
@@ -145,21 +152,51 @@ final class LazyRegistryTest extends TestCase
         self::assertSame(Scope::SERVICE, $registry->findScope($binding));
     }
 
-    /** @covers ::findEnhancements */
-    public function testFindEnhancementsDelegatesToInnerRegistry(): void
+    /** @covers ::findInjections */
+    public function testFindInjectionsDelegatesToInnerRegistry(): void
     {
-        $binding     = new Binding(StubClass::class);
-        $enhancement = $this->createMock(Enhancement::class);
-        $inner       = $this->createMock(Registry::class);
+        $binding   = new Binding(StubClass::class);
+        $injection = $this->createMock(Injection::class);
+        $inner     = $this->createMock(Registry::class);
         $inner->expects($this->once())
-            ->method('findEnhancements')
+            ->method('findInjections')
             ->with($binding)
-            ->willReturn([$enhancement]);
+            ->willReturn([$injection]);
 
         $registry = new LazyRegistry(static fn (): Registry => $inner);
 
-        $enhancements = $registry->findEnhancements($binding);
+        self::assertSame([$injection], $registry->findInjections($binding));
+    }
 
-        self::assertSame([$enhancement], $enhancements);
+    /** @covers ::findCalls */
+    public function testFindCallsDelegatesToInnerRegistry(): void
+    {
+        $binding = new Binding(StubClass::class);
+        $call    = $this->createMock(Injection::class);
+        $inner   = $this->createMock(Registry::class);
+        $inner->expects($this->once())
+            ->method('findCalls')
+            ->with($binding)
+            ->willReturn([$call]);
+
+        $registry = new LazyRegistry(static fn (): Registry => $inner);
+
+        self::assertSame([$call], $registry->findCalls($binding));
+    }
+
+    /** @covers ::findDecorations */
+    public function testFindDecorationsDelegatesToInnerRegistry(): void
+    {
+        $binding   = new Binding(StubClass::class);
+        $decorator = $this->createMock(Decorator::class);
+        $inner     = $this->createMock(Registry::class);
+        $inner->expects($this->once())
+            ->method('findDecorations')
+            ->with($binding)
+            ->willReturn([$decorator]);
+
+        $registry = new LazyRegistry(static fn (): Registry => $inner);
+
+        self::assertSame([$decorator], $registry->findDecorations($binding));
     }
 }

@@ -23,6 +23,8 @@ use Vivarium\Container\Injection;
 use Vivarium\Container\Injector;
 use Vivarium\Container\Registry;
 use Vivarium\Container\Registry\EagerRegistry;
+use Vivarium\Test\Container\Stub\StubAlterationBase;
+use Vivarium\Test\Container\Stub\StubAlterationChild;
 use Vivarium\Test\Container\Stub\StubClass;
 use Vivarium\Test\Container\Stub\StubInjectorContract;
 use Vivarium\Test\Container\Stub\StubInjectorCycleA;
@@ -455,5 +457,67 @@ final class InjectorTest extends TestCase
         yield 'empty registry' => [new EagerRegistry()];
 
         yield 'default tag registered' => [(new EagerRegistry())->define(StubWithNoArgs::class)->transient()];
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     */
+    public function testInjectionThroughBindingChainIsAppliedOnce(): void
+    {
+        $registry  = (new EagerRegistry())
+            ->bind(StubAlterationBase::class)->to(StubAlterationChild::class)->transient()
+            ->inject(StubAlterationBase::class)->onMethod('increment')->withDefaultPriority();
+        $container = new Injector($registry);
+
+        $result = $container->get(StubAlterationBase::class);
+
+        static::assertInstanceOf(StubAlterationChild::class, $result);
+        static::assertSame(1, $result->calls);
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     */
+    public function testCallOnAliasBindingIsAppliedOnce(): void
+    {
+        $registry  = (new EagerRegistry())
+            ->bind(StubAlterationBase::class)->to(StubAlterationChild::class)->transient()
+            ->call(StubAlterationBase::class)->onMethod('increment')->withDefaultPriority();
+        $container = new Injector($registry);
+
+        $viaAlias = $container->get(StubAlterationBase::class);
+        $direct   = $container->get(StubAlterationChild::class);
+
+        static::assertInstanceOf(StubAlterationBase::class, $viaAlias);
+        static::assertSame(1, $viaAlias->calls);
+        static::assertInstanceOf(StubAlterationChild::class, $direct);
+        static::assertSame(0, $direct->calls);
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     */
+    public function testInjectionIsNotAppliedToSuppliedInstance(): void
+    {
+        $instance  = new StubAlterationBase();
+        $registry  = (new EagerRegistry())
+            ->bind(StubAlterationBase::class)->toInstance($instance)->transient()
+            ->inject(StubAlterationBase::class)->onMethod('increment')->withDefaultPriority();
+        $container = new Injector($registry);
+
+        static::assertSame($instance, $container->get(StubAlterationBase::class));
+        static::assertSame(0, $instance->calls);
     }
 }

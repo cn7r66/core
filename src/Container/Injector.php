@@ -14,6 +14,7 @@ use ReflectionClass;
 use Vivarium\Check\CheckIfType;
 use Vivarium\Collection\Map\HashMap;
 use Vivarium\Collection\Map\Map;
+use Vivarium\Comparator\ValueAndPriority;
 use Vivarium\Container\Cache\NoOpCache;
 use Vivarium\Container\Collector\NoOpCollector;
 use Vivarium\Container\Definition\Cloneable;
@@ -64,7 +65,7 @@ final class Injector implements Container
 
         $provider   = $this->getProvider($key);
         $definition = $this->applyScope($key, $provider);
-        $definition = $this->applyEnhancements($key, $provider, $definition);
+        $definition = $this->applyAlterations($key, $provider, $definition);
 
         $this->solved = $this->solved->put($key, $definition);
 
@@ -155,9 +156,42 @@ final class Injector implements Container
         };
     }
 
-    private function applyEnhancements(Binding $binding, Provider $provider, Definition $definition): Definition
+    private function applyAlterations(Binding $binding, Provider $provider, Definition $definition): Definition
     {
-        foreach ($this->registry->findEnhancements($binding) as $entry) {
+        $definition = $this->applyChannel(
+            $this->registry->findInjections($binding),
+            Capability::INJECTABLE,
+            $provider,
+            $definition,
+        );
+
+        $definition = $this->applyChannel(
+            $this->registry->findCalls($binding),
+            Capability::INTERCEPTABLE,
+            $provider,
+            $definition,
+        );
+
+        return $this->applyChannel(
+            $this->registry->findDecorations($binding),
+            Capability::DECORABLE,
+            $provider,
+            $definition,
+        );
+    }
+
+    /** @param iterable<ValueAndPriority<Enhancement>> $entries */
+    private function applyChannel(
+        iterable $entries,
+        Capability $required,
+        Provider $provider,
+        Definition $definition,
+    ): Definition {
+        if (! $provider->getCapabilities()->contains($required)) {
+            return $definition;
+        }
+
+        foreach ($entries as $entry) {
             if (! $entry->getValue()->accept($provider)) {
                 continue;
             }

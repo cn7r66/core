@@ -16,7 +16,6 @@ use Vivarium\Assertion\Type\IsAssignableTo;
 use Vivarium\Assertion\Var\IsObject;
 use Vivarium\Check\CheckIfObject;
 use Vivarium\Container\Binding;
-use Vivarium\Container\Capability;
 use Vivarium\Container\Container;
 use Vivarium\Container\Injection;
 use Vivarium\Container\Provider;
@@ -60,15 +59,9 @@ final class SetProperty implements Injection
 
     public function accept(Provider $provider): bool
     {
-        $hasProperty = CheckIfObject::hasProperty(
+        return CheckIfObject::hasProperty(
             $provider->getTarget(),
             $this->property,
         );
-
-        $isEnhanceable =
-            $provider->getCapabilities()->contains(Capability::INJECTABLE) ||
-            $provider->getCapabilities()->contains(Capability::INTERCEPTABLE);
-
-        return $hasProperty && $isEnhanceable;
     }
 }
