@@ -91,6 +91,7 @@ final class BindingTest extends TestCase
 
     /**
      * @covers ::couldBeWidened
+     * @covers ::__construct
      * @dataProvider provideCouldBeWidenedCases
      */
     public function testCouldBeWidenedReturnsExpectedResult(
@@ -120,6 +121,7 @@ final class BindingTest extends TestCase
      * @covers ::widen
      * @covers ::getTag
      * @covers ::getContext
+     * @covers ::__construct
      */
     public function testWidenRemovesTagFirst(): void
     {
@@ -134,6 +136,7 @@ final class BindingTest extends TestCase
      * @covers ::widen
      * @covers ::getTag
      * @covers ::getContext
+     * @covers ::__construct
      */
     public function testWidenNarrowsContextAfterTagIsDefault(): void
     {
@@ -144,7 +147,10 @@ final class BindingTest extends TestCase
         static::assertSame('Vivarium\Test', $widened->getContext());
     }
 
-    /** @covers ::widen */
+    /**
+     * @covers ::widen
+     * @covers ::__construct
+     */
     public function testWidenThrowsWhenAlreadyAtMinimum(): void
     {
         $binding = new Binding(StubClass::class);
@@ -154,7 +160,10 @@ final class BindingTest extends TestCase
         $binding->widen();
     }
 
-    /** @covers ::equals */
+    /**
+     * @covers ::equals
+     * @covers ::__construct
+     */
     public function testSameInstanceIsEqual(): void
     {
         $binding = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
@@ -162,7 +171,10 @@ final class BindingTest extends TestCase
         static::assertTrue($binding->equals($binding));
     }
 
-    /** @covers ::equals */
+    /**
+     * @covers ::equals
+     * @covers ::__construct
+     */
     public function testBindingsWithIdenticalArgumentsAreEqual(): void
     {
         $a = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
@@ -171,7 +183,10 @@ final class BindingTest extends TestCase
         static::assertTrue($a->equals($b));
     }
 
-    /** @covers ::equals */
+    /**
+     * @covers ::equals
+     * @covers ::__construct
+     */
     public function testEqualsReturnsFalseForNonBindingObject(): void
     {
         $binding = new Binding(StubClass::class);
@@ -179,7 +194,10 @@ final class BindingTest extends TestCase
         static::assertFalse($binding->equals(new stdClass()));
     }
 
-    /** @covers ::equals */
+    /**
+     * @covers ::equals
+     * @covers ::__construct
+     */
     public function testBindingsWithDifferentContextAreNotEqual(): void
     {
         $a = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
@@ -188,7 +206,10 @@ final class BindingTest extends TestCase
         static::assertFalse($a->equals($b));
     }
 
-    /** @covers ::equals */
+    /**
+     * @covers ::equals
+     * @covers ::__construct
+     */
     public function testBindingsWithDifferentTypeAreNotEqual(): void
     {
         $a = new Binding(StubClass::class);
@@ -197,7 +218,10 @@ final class BindingTest extends TestCase
         static::assertFalse($a->equals($b));
     }
 
-    /** @covers ::hash */
+    /**
+     * @covers ::hash
+     * @covers ::__construct
+     */
     public function testSameArgumentsProduceSameHash(): void
     {
         $a = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
@@ -206,7 +230,10 @@ final class BindingTest extends TestCase
         static::assertSame($a->hash(), $b->hash());
     }
 
-    /** @covers ::hash */
+    /**
+     * @covers ::hash
+     * @covers ::__construct
+     */
     public function testDifferentArgumentsProduceDifferentHash(): void
     {
         $a = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
@@ -215,7 +242,10 @@ final class BindingTest extends TestCase
         static::assertNotSame($a->hash(), $b->hash());
     }
 
-    /** @covers ::hash */
+    /**
+     * @covers ::hash
+     * @covers ::__construct
+     */
     public function testHashIsConsistentAcrossCalls(): void
     {
         $binding = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
@@ -228,6 +258,7 @@ final class BindingTest extends TestCase
      * @covers ::expand
      * @covers ::extends
      * @covers ::interfaces
+     * @covers ::__construct
      */
     public function testHierarchyForInterfaceWithNoParentContainsOnlyItself(): void
     {
@@ -242,6 +273,7 @@ final class BindingTest extends TestCase
      * @covers ::expand
      * @covers ::extends
      * @covers ::interfaces
+     * @covers ::__construct
      */
     public function testHierarchyForClassWithParentsContainsAllAncestors(): void
     {
@@ -256,6 +288,7 @@ final class BindingTest extends TestCase
      * @covers ::expand
      * @covers ::extends
      * @covers ::interfaces
+     * @covers ::__construct
      */
     public function testHierarchyOrderIsMostSpecificFirst(): void
     {
@@ -271,6 +304,7 @@ final class BindingTest extends TestCase
      * @covers ::expand
      * @covers ::extends
      * @covers ::interfaces
+     * @covers ::__construct
      */
     public function testHierarchyWithTagAndContextExpandsAllLevels(): void
     {
@@ -278,5 +312,34 @@ final class BindingTest extends TestCase
         $hierarchy = $binding->hierarchy();
 
         static::assertCount(13, $hierarchy);
+    }
+
+    /**
+     * @covers ::__toString
+     * @covers ::__construct
+     * @dataProvider provideToStringCases
+     */
+    public function testToStringRendersTagAndContextOnlyWhenNonDefault(
+        string $type,
+        string $tag,
+        string $context,
+        string $expected,
+    ): void {
+        $binding = new Binding($type, $tag, $context);
+
+        static::assertSame($expected, (string) $binding);
+    }
+
+    /** @return array<string, array{string, string, string, string}> */
+    public static function provideToStringCases(): array
+    {
+        $type = StubClass::class;
+
+        return [
+            'type-only'          => [$type, Binding::DEFAULT, Binding::GLOBAL, $type],
+            'custom-tag'         => [$type, 'audit', Binding::GLOBAL, $type . ':audit'],
+            'custom-context'     => [$type, Binding::DEFAULT, 'App\Orders', $type . ' (in App\Orders)'],
+            'custom-tag-context' => [$type, 'audit', 'App\Orders', $type . ':audit (in App\Orders)'],
+        ];
     }
 }

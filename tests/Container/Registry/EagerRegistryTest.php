@@ -575,4 +575,101 @@ final class EagerRegistryTest extends TestCase
 
         return $result;
     }
+
+    /**
+     * @param list<string> $registered
+     *
+     * @covers ::locate
+     * @covers ::registeredBinding
+     * @covers ::__construct
+     * @dataProvider provideLocatableContexts
+     */
+    public function testLocateReturnsRegisteredBindingWithMostSpecificMatchingContext(
+        array $registered,
+        string $requested,
+        string $expected,
+    ): void {
+        $registry = new EagerRegistry();
+
+        foreach ($registered as $context) {
+            $registry = $registry
+                ->bind(StubClass::class, Binding::DEFAULT, $context)
+                ->toProvider($this->createMock(Provider::class))
+                ->transient();
+        }
+
+        $located = $registry->locate(new Binding(StubClass::class, Binding::DEFAULT, $requested));
+
+        static::assertTrue(
+            (new Binding(StubClass::class, Binding::DEFAULT, $expected))->equals($located),
+        );
+    }
+
+    /** @return iterable<string, array{list<string>, string, string}> */
+    public static function provideLocatableContexts(): iterable
+    {
+        yield 'exact global' => [[Binding::GLOBAL], Binding::GLOBAL, Binding::GLOBAL];
+        yield 'exact namespace' => [['App\\Orders'], 'App\\Orders', 'App\\Orders'];
+        yield 'specific request widens to global' => [[Binding::GLOBAL], 'App\\Orders\\Checkout', Binding::GLOBAL];
+        yield 'specific request widens to namespace' => [['App\\Orders'], 'App\\Orders\\Checkout', 'App\\Orders'];
+        yield 'most specific registration wins' => [
+            [Binding::GLOBAL, 'App\\Orders', 'App\\Orders\\Checkout'],
+            'App\\Orders\\Checkout',
+            'App\\Orders\\Checkout',
+        ];
+
+        yield 'nearest ancestor wins over global' => [
+            [Binding::GLOBAL, 'App\\Orders'],
+            'App\\Orders\\Checkout',
+            'App\\Orders',
+        ];
+    }
+
+    /**
+     * @covers ::locate
+     * @covers ::registeredBinding
+     * @covers ::__construct
+     * @dataProvider provideUnlocatableRequests
+     */
+    public function testLocateThrowsBindingNotFoundCarryingRequestedBinding(
+        string $registeredContext,
+        string $requestedContext,
+    ): void {
+        $registry  = (new EagerRegistry())
+            ->bind(StubClass::class, Binding::DEFAULT, $registeredContext)
+            ->toProvider($this->createMock(Provider::class))
+            ->transient();
+        $requested = new Binding(StubWithNoArgs::class, Binding::DEFAULT, $requestedContext);
+
+        try {
+            $registry->locate($requested);
+            static::fail('Expected BindingNotFound');
+        } catch (BindingNotFound $exception) {
+            static::assertTrue($requested->equals($exception->getBinding()));
+        }
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function provideUnlocatableRequests(): iterable
+    {
+        yield 'different type, same context' => [Binding::GLOBAL, Binding::GLOBAL];
+        yield 'different type, wider registration' => [Binding::GLOBAL, 'App\\Orders\\Checkout'];
+    }
+
+    /**
+     * @covers ::locate
+     * @covers ::registeredBinding
+     * @covers ::__construct
+     */
+    public function testLocateThrowsBindingNotFoundOnEmptyRegistryWithRequestedContext(): void
+    {
+        $requested = new Binding(StubClass::class, Binding::DEFAULT, 'App\\Orders\\Checkout');
+
+        try {
+            (new EagerRegistry())->locate($requested);
+            static::fail('Expected BindingNotFound');
+        } catch (BindingNotFound $exception) {
+            static::assertTrue($requested->equals($exception->getBinding()));
+        }
+    }
 }

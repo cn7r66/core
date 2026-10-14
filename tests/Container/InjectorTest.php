@@ -17,14 +17,26 @@ use Vivarium\Container\Cache\NoOpCache;
 use Vivarium\Container\Collector\NoOpCollector;
 use Vivarium\Container\Definition;
 use Vivarium\Container\Exception\BindingNotFound;
+use Vivarium\Container\Exception\CircularDependency;
 use Vivarium\Container\Exception\ResolutionFailed;
 use Vivarium\Container\Injection;
 use Vivarium\Container\Injector;
 use Vivarium\Container\Registry;
 use Vivarium\Container\Registry\EagerRegistry;
 use Vivarium\Test\Container\Stub\StubClass;
+use Vivarium\Test\Container\Stub\StubInjectorContract;
+use Vivarium\Test\Container\Stub\StubInjectorCycleA;
+use Vivarium\Test\Container\Stub\StubInjectorCycleB;
+use Vivarium\Test\Container\Stub\StubInjectorCycleC;
+use Vivarium\Test\Container\Stub\StubInjectorDiamondTop;
+use Vivarium\Test\Container\Stub\StubInjectorNeedsInterface;
+use Vivarium\Test\Container\Stub\StubInjectorShared;
+use Vivarium\Test\Container\Stub\StubInjectorSharedUserB;
+use Vivarium\Test\Container\Stub\StubInjectorSharedUserC;
 use Vivarium\Test\Container\Stub\StubService;
 use Vivarium\Test\Container\Stub\StubWithNoArgs;
+
+use function array_map;
 
 /** @coversDefaultClass \Vivarium\Container\Injector */
 final class InjectorTest extends TestCase
@@ -297,5 +309,109 @@ final class InjectorTest extends TestCase
         $container = new Injector($registry);
 
         static::assertInstanceOf(StubWithNoArgs::class, $container->get(StubWithNoArgs::class));
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::locate
+     * @covers ::resolve
+     * @covers ::getProvider
+     * @covers ::applyScope
+     * @covers ::applyEnhancements
+     */
+    public function testServiceIsSharedAcrossDependentsInDifferentClasses(): void
+    {
+        $registry = (new EagerRegistry())->define(StubInjectorShared::class)->service();
+
+        $container = new Injector($registry);
+
+        $b = $container->get(StubInjectorSharedUserB::class);
+        $c = $container->get(StubInjectorSharedUserC::class);
+
+        static::assertSame($b->d, $c->d);
+        static::assertSame($b->d, $container->get(StubInjectorShared::class));
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::locate
+     * @covers ::resolve
+     * @covers ::getProvider
+     * @covers ::applyScope
+     * @covers ::applyEnhancements
+     */
+    public function testCircularDependencyIsDetectedOnFirstRepeat(): void
+    {
+        $container = new Injector(new EagerRegistry());
+
+        try {
+            $container->get(StubInjectorCycleA::class);
+        } catch (CircularDependency $failure) {
+            $types = array_map(static fn (Binding $binding): string => $binding->getType(), $failure->getPath());
+
+            static::assertSame(
+                [
+                    StubInjectorCycleA::class,
+                    StubInjectorCycleB::class,
+                    StubInjectorCycleC::class,
+                    StubInjectorCycleA::class,
+                ],
+                $types,
+            );
+            static::assertSame(
+                'Circular dependency: [' . StubInjectorCycleA::class . ' → ' . StubInjectorCycleB::class
+                . ' → ' . StubInjectorCycleC::class . ' → ' . StubInjectorCycleA::class . ']',
+                $failure->getMessage(),
+            );
+
+            return;
+        }
+
+        static::fail('Expected CircularDependency to be thrown.');
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::locate
+     * @covers ::resolve
+     * @covers ::getProvider
+     * @covers ::applyScope
+     * @covers ::applyEnhancements
+     */
+    public function testDiamondDependencyIsNotACycle(): void
+    {
+        $container = new Injector(new EagerRegistry());
+
+        static::assertInstanceOf(StubInjectorDiamondTop::class, $container->get(StubInjectorDiamondTop::class));
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::locate
+     * @covers ::resolve
+     * @covers ::getProvider
+     * @covers ::applyScope
+     * @covers ::applyEnhancements
+     */
+    public function testMissingDependencyFailureCarriesResolutionPath(): void
+    {
+        $container = new Injector(new EagerRegistry());
+
+        try {
+            $container->get(StubInjectorNeedsInterface::class);
+        } catch (ResolutionFailed $failure) {
+            $types = array_map(static fn (Binding $binding): string => $binding->getType(), $failure->getPath());
+
+            static::assertSame([StubInjectorNeedsInterface::class, StubInjectorContract::class], $types);
+            static::assertInstanceOf(BindingNotFound::class, $failure->getPrevious());
+
+            return;
+        }
+
+        static::fail('Expected ResolutionFailed to be thrown.');
     }
 }
