@@ -10,10 +10,10 @@ declare(strict_types=1);
 
 namespace Vivarium\Container\Binding;
 
+use Closure;
 use ReflectionFunction;
 use Vivarium\Assertion\Boolean\IsTrue;
 use Vivarium\Assertion\Conditional\IsNotNull;
-use Vivarium\Assertion\Object\IsInstanceOf;
 use Vivarium\Assertion\Type\IsAssignableTo;
 use Vivarium\Container\Binding;
 use Vivarium\Container\Provider;
@@ -23,8 +23,10 @@ use Vivarium\Container\Provider\Constructor;
 use Vivarium\Container\Provider\ContainerCall;
 use Vivarium\Container\Provider\Enum;
 use Vivarium\Container\Provider\Factory;
+use Vivarium\Container\Provider\Fun;
 use Vivarium\Container\Provider\Instance;
 use Vivarium\Container\Provider\StaticFactory;
+use Vivarium\Type\Type;
 
 use function defined;
 use function enum_exists;
@@ -79,6 +81,22 @@ final class ProviderBinder
         return $this->toProvider($configure(new Constructor($class)));
     }
 
+    /**
+     * The function is called to produce the value, its parameters autowired.
+     *
+     * @param callable(Fun): Fun|null $configure
+     *
+     * @return T
+     */
+    public function toFunction(Closure|string $fn, callable|null $configure = null)
+    {
+        if ($configure === null) {
+            $configure = static fn (Fun $fun): Fun => $fun;
+        }
+
+        return $this->toProvider($configure(new Fun($fn)));
+    }
+
     /** @return MethodBinder<T> */
     public function toFactory(
         string $class,
@@ -111,8 +129,8 @@ final class ProviderBinder
         (new IsNotNull())
             ->assert($instance);
 
-        (new IsInstanceOf($this->source->getType()))
-            ->assert($instance);
+        (new IsAssignableTo($this->source->getType()))
+            ->assert(Type::of($instance));
 
         return $this->toProvider(
             new Instance($instance),

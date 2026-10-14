@@ -11,6 +11,8 @@ use Vivarium\Container\Container;
 use Vivarium\Container\Provider\Instance;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
+use function in_array;
+
 /** @coversDefaultClass \Vivarium\Container\Provider\Instance */
 final class InstanceTest extends TestCase
 {
@@ -55,23 +57,42 @@ final class InstanceTest extends TestCase
         static::assertSame('int', $provider->getTarget());
     }
 
-    /** @covers ::getCapabilities */
-    public function testGetCapabilitiesForObjectReturnsInterceptableAndDecorable(): void
+    /**
+     * @covers ::__construct
+     * @covers ::getCapabilities
+     * @dataProvider provideCapabilityCases
+     */
+    public function testReportsCapabilitiesByValueKind(mixed $value, Capability $capability, bool $expected): void
     {
-        $provider     = new Instance(new stdClass());
-        $capabilities = $provider->getCapabilities();
+        $capabilities = (new Instance($value))->getCapabilities();
 
-        static::assertTrue($capabilities->contains(Capability::INTERCEPTABLE));
-        static::assertTrue($capabilities->contains(Capability::DECORABLE));
-        static::assertCount(2, $capabilities);
+        static::assertSame($expected, $capabilities->contains($capability));
     }
 
-    /** @covers ::getCapabilities */
-    public function testGetCapabilitiesForPrimitiveReturnsEmptySet(): void
+    /** @return iterable<string, array{mixed, Capability, bool}> */
+    public static function provideCapabilityCases(): iterable
     {
-        $provider     = new Instance('hello');
-        $capabilities = $provider->getCapabilities();
+        $values = [
+            'object' => [new stdClass(), [Capability::INTERCEPTABLE, Capability::DECORABLE]],
+            'closure' => [
+                static function (): void {
+                },
+                [Capability::INTERCEPTABLE, Capability::DECORABLE],
+            ],
+            'callable function name' => ['strlen', [Capability::DECORABLE]],
+            'int' => [42, []],
+            'non-callable string' => ['hello', []],
+            'array' => [[1, 2], []],
+        ];
 
-        static::assertCount(0, $capabilities);
+        foreach ($values as $name => [$value, $granted]) {
+            foreach (Capability::cases() as $capability) {
+                yield $name . ' ' . $capability->name => [
+                    $value,
+                    $capability,
+                    in_array($capability, $granted, true),
+                ];
+            }
+        }
     }
 }

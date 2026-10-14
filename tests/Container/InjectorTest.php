@@ -21,6 +21,7 @@ use Vivarium\Container\Exception\CircularDependency;
 use Vivarium\Container\Exception\ResolutionFailed;
 use Vivarium\Container\Injection;
 use Vivarium\Container\Injector;
+use Vivarium\Container\Provider\Constructor;
 use Vivarium\Container\Registry;
 use Vivarium\Container\Registry\EagerRegistry;
 use Vivarium\Test\Container\Stub\StubAlterationBase;
@@ -30,6 +31,11 @@ use Vivarium\Test\Container\Stub\StubBandSubject;
 use Vivarium\Test\Container\Stub\StubClass;
 use Vivarium\Test\Container\Stub\StubContractHook;
 use Vivarium\Test\Container\Stub\StubContractHookImplementation;
+use Vivarium\Test\Container\Stub\StubDecoratedBase;
+use Vivarium\Test\Container\Stub\StubDecoratedDependency;
+use Vivarium\Test\Container\Stub\StubDecoratedOuter;
+use Vivarium\Test\Container\Stub\StubDecoratedSubject;
+use Vivarium\Test\Container\Stub\StubDecoratedWrapper;
 use Vivarium\Test\Container\Stub\StubInjectorContract;
 use Vivarium\Test\Container\Stub\StubInjectorCycleA;
 use Vivarium\Test\Container\Stub\StubInjectorCycleB;
@@ -581,5 +587,136 @@ final class InjectorTest extends TestCase
                 ->inject(StubContractHook::class)->onMethod('m')->withDefaultPriority(),
             StubContractHook::class,
         ];
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     */
+    public function testDecoratorWrapsResolvedObjectAndAutowiresOtherParameters(): void
+    {
+        $registry = (new EagerRegistry())
+            ->bind(StubDecoratedSubject::class)->to(StubDecoratedBase::class)->transient()
+            ->decorate(StubDecoratedSubject::class)->with(StubDecoratedWrapper::class, 'inner')->withDefaultPriority();
+
+        $result = (new Injector($registry))->get(StubDecoratedSubject::class);
+
+        static::assertInstanceOf(StubDecoratedWrapper::class, $result);
+        static::assertInstanceOf(StubDecoratedBase::class, $result->inner);
+        static::assertInstanceOf(StubDecoratedDependency::class, $result->dependency);
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     */
+    public function testDecoratorConfigureCallbackBindsAnotherConstructorArgument(): void
+    {
+        $registry = (new EagerRegistry())
+            ->bind(StubDecoratedSubject::class)->to(StubDecoratedBase::class)->transient()
+            ->decorate(StubDecoratedSubject::class)->with(
+                StubDecoratedWrapper::class,
+                'inner',
+                static fn (Constructor $c) => $c->bindArgument('level')->toInstance(3),
+            )->withDefaultPriority();
+
+        $result = (new Injector($registry))->get(StubDecoratedSubject::class);
+
+        static::assertInstanceOf(StubDecoratedWrapper::class, $result);
+        static::assertInstanceOf(StubDecoratedBase::class, $result->inner);
+        static::assertSame(3, $result->level);
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     */
+    public function testFunctionDecoratorWrapsResolvedObject(): void
+    {
+        $decorator = static function (
+            StubDecoratedSubject $inner,
+            StubDecoratedDependency $d,
+        ): StubDecoratedSubject {
+            return new StubDecoratedWrapper($inner, $d);
+        };
+
+        $registry = (new EagerRegistry())
+            ->bind(StubDecoratedSubject::class)->to(StubDecoratedBase::class)->transient()
+            ->decorate(StubDecoratedSubject::class)->withFunction($decorator, 'inner')->withDefaultPriority();
+
+        $result = (new Injector($registry))->get(StubDecoratedSubject::class);
+
+        static::assertInstanceOf(StubDecoratedWrapper::class, $result);
+        static::assertInstanceOf(StubDecoratedBase::class, $result->inner);
+        static::assertInstanceOf(StubDecoratedDependency::class, $result->dependency);
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     */
+    public function testLaterRegisteredDecoratorIsOutermostWithDefaultPriority(): void
+    {
+        $registry = (new EagerRegistry())
+            ->bind(StubDecoratedSubject::class)->to(StubDecoratedBase::class)->transient()
+            ->decorate(StubDecoratedSubject::class)->with(StubDecoratedWrapper::class, 'inner')->withDefaultPriority()
+            ->decorate(StubDecoratedSubject::class)->with(StubDecoratedOuter::class, 'inner')->withDefaultPriority();
+
+        $result = (new Injector($registry))->get(StubDecoratedSubject::class);
+
+        static::assertInstanceOf(StubDecoratedOuter::class, $result);
+        static::assertInstanceOf(StubDecoratedWrapper::class, $result->inner);
+        static::assertInstanceOf(StubDecoratedBase::class, $result->inner->inner);
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     */
+    public function testComposedDecoratorFeedsCallableResultToNextFunction(): void
+    {
+        $registry = (new EagerRegistry())
+            ->bind('callable')->toInstance(static fn (int $a, int $b): int => $a + $b)->service()
+            ->decorate('callable')->compose(static fn (int $n): int => $n * 10, 'n')->withDefaultPriority();
+
+        $result = (new Injector($registry))->get('callable');
+
+        static::assertIsCallable($result);
+        static::assertSame(50, $result(2, 3));
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     */
+    public function testServiceScopedBindingIsDecoratedOnce(): void
+    {
+        $registry = (new EagerRegistry())
+            ->bind(StubDecoratedSubject::class)->to(StubDecoratedBase::class)->service()
+            ->decorate(StubDecoratedSubject::class)->with(StubDecoratedWrapper::class, 'inner')->withDefaultPriority();
+
+        $container = new Injector($registry);
+        $first     = $container->get(StubDecoratedSubject::class);
+
+        static::assertInstanceOf(StubDecoratedWrapper::class, $first);
+        static::assertSame($first, $container->get(StubDecoratedSubject::class));
     }
 }

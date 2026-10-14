@@ -147,18 +147,22 @@ final class EagerRegistry implements Registry, Binder
     ): DecoratorBinder {
         $binding = new Binding($type, $tag, $context);
 
-        return new DecoratorBinder(function (Decorator $decorator, int $priority) use ($binding): EagerRegistry {
-            $registry             = clone $this;
-            $registry->decorators = $registry->decorators->put(
-                $binding,
-                new ValueAndPriority(
-                    $decorator,
-                    $priority,
-                ),
-            );
+        return new DecoratorBinder(
+            $binding,
+            function (Decorator $decorator, int $priority) use ($binding): EagerRegistry {
+                $registry             = clone $this;
+                $registry->decorators = $registry->decorators->put(
+                    $binding,
+                    new ValueAndPriority(
+                        $decorator,
+                        $priority,
+                    ),
+                );
 
-            return $registry;
-        }, Priority::HIGH);
+                return $registry;
+            },
+            Priority::HIGH,
+        );
     }
 
     /** @return InjectionBinder<EagerRegistry> */
