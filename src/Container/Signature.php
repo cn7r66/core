@@ -34,8 +34,8 @@ use function sprintf;
  * A callable signature (constructor, method or function) reduced to its
  * ordered parameter descriptors.
  *
- * Positions are the source of truth for a signature; names are merely an
- * interface onto those positions.
+ * Parameters are addressed by zero-based position; names are looked up to a
+ * position.
  */
 final class Signature
 {
@@ -160,7 +160,6 @@ final class Signature
         );
     }
 
-    /** Returns the number of parameters in this signature. */
     public function count(): int
     {
         return $this->parameters->count();
@@ -182,8 +181,7 @@ final class Signature
     /**
      * Returns the position of the parameter named $name.
      *
-     * $name must be a parameter of this signature; an unknown name is a
-     * precondition violation.
+     * @throws AssertionFailed If no parameter is named $name.
      */
     public function positionOf(string $name): int
     {
@@ -196,9 +194,7 @@ final class Signature
         return $this->lookup->get($name);
     }
 
-    /**
-     * Tells whether an explicit argument has been bound at $position.
-     */
+    /** Whether an explicit argument has been bound at $position. */
     public function hasArgument(int $position): bool
     {
         (new IsInHalfOpenRightRange(0, $this->count()))
@@ -237,11 +233,8 @@ final class Signature
      * Returns the effective argument providers for this signature, keyed by
      * position.
      *
-     * Every position is present — there are no key gaps. An unbound variadic
-     * slot yields its default fallback-to-empty-array provider rather than
-     * being omitted. How a variadic argument's provider spreads into an
-     * actual call is the invoker's concern, since only it knows the last
-     * parameter's kind from this signature; it is not this method's concern.
+     * Every position is present; an unbound variadic yields its default
+     * provider.
      *
      * @return array<int, Provider>
      */
@@ -257,26 +250,17 @@ final class Signature
     }
 
     /**
-     * Projects $this onto $target, the signature it is overriding at
-     * resolution time (e.g. a real runtime constructor signature overriding
-     * a more general one registered elsewhere).
+     * Projects this signature onto $target, the signature that overrides it.
      *
-     * This is a zero-knowledge structural projection following PHP's own
-     * parameter-override rules: names are never compared, positions are the
-     * only alignment key. $target wins throughout — its own parameters and
-     * lookup are reused as-is, and its own explicit argument bindings always
-     * take precedence over $this's. $this only contributes an argument
-     * binding at a position where $target has no explicit binding of its own.
+     * Parameters are aligned by position; names are ignored. $target's own
+     * explicit bindings win; this signature only fills positions $target
+     * leaves unbound.
      *
-     * The result is a resolution-time value only: it is never intended for
-     * registration equality or memoization.
-     *
-     * $target must have at least as many positions as $this; every aligned
-     * position's kind and type must be a legal PHP override of $this's; and
-     * any position $target declares beyond $this's count must be safely
-     * omittable. Any violation raises a Container domain exception
-     * (CannotBeProjected, CannotBeReplaced, CannotBeOmitted) intended to be
-     * wrapped by callers with resolution context.
+     * @throws CannotBeProjected If $target has fewer positions than this one.
+     * @throws CannotBeReplaced If an aligned parameter of $target is not a
+     *                          legal PHP override (kind or type).
+     * @throws CannotBeOmitted If $target has extra positions that cannot be
+     *                         omitted.
      */
     public function project(Signature $target): Signature
     {

@@ -44,8 +44,6 @@ final class StaticFactory implements Provider, Caller, Equality
     {
         $this->signature = Signature::ofMethod($class, $method);
 
-        // Invocability is the Caller's concern, not Signature::ofMethod's: the guard
-        // deliberately does not live there so signatures stay extractable from any method.
         (new HasPublicMethod($this->method))
             ->assert($this->class);
 
@@ -56,12 +54,7 @@ final class StaticFactory implements Provider, Caller, Equality
             );
     }
 
-    /**
-     * Binds an argument provider to the method parameter named $name.
-     *
-     * $name must be a parameter of the method; an unknown name is a
-     * precondition violation.
-     */
+    /** {@inheritDoc} */
     public function bindArgument(string $name): ProviderBinder
     {
         return $this->bindArgumentAtPosition(
@@ -69,13 +62,7 @@ final class StaticFactory implements Provider, Caller, Equality
         );
     }
 
-    /**
-     * Binds an argument provider to the method parameter at the zero-based
-     * $position.
-     *
-     * A provider bound to a variadic position promises the whole collected
-     * array the slot receives, not the element type.
-     */
+    /** {@inheritDoc} */
     public function bindArgumentAtPosition(int $position): ProviderBinder
     {
         $parameter = $this->signature->getParameter($position);

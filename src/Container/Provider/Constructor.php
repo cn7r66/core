@@ -44,8 +44,7 @@ final class Constructor implements Provider, Caller, Equality
     {
         $this->signature = Signature::ofConstructor($class);
 
-        // Instantiability lives here, not on Signature::ofConstructor: signatures
-        // must remain extractable from abstract classes for hierarchy projection.
+        // Signature::ofConstructor accepts abstract classes, so instantiability is checked here.
         (new IsTrue())
             ->assert(
                 (new ReflectionClass($class))->isInstantiable(),
@@ -53,12 +52,7 @@ final class Constructor implements Provider, Caller, Equality
             );
     }
 
-    /**
-     * Binds an argument provider to the constructor parameter named $name.
-     *
-     * $name must be a parameter of the constructor; an unknown name is a
-     * precondition violation.
-     */
+    /** {@inheritDoc} */
     public function bindArgument(string $name): ProviderBinder
     {
         return $this->bindArgumentAtPosition(
@@ -66,13 +60,7 @@ final class Constructor implements Provider, Caller, Equality
         );
     }
 
-    /**
-     * Binds an argument provider to the constructor parameter at the
-     * zero-based $position.
-     *
-     * A provider bound to a variadic position promises the whole collected
-     * array the slot receives, not the element type.
-     */
+    /** {@inheritDoc} */
     public function bindArgumentAtPosition(int $position): ProviderBinder
     {
         $parameter = $this->signature->getParameter($position);

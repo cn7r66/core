@@ -32,18 +32,9 @@ final class Variadic implements Parameter
     private Provider $default;
 
     /**
-     * Resolves the default provider to the container's default `array`
-     * binding in this context, falling back to an empty array when nothing
-     * is bound.
-     *
-     * Interim policy: every variadic parameter in a given context collapses
-     * onto this same `array` identity regardless of its own element type —
-     * a deliberate, temporary limitation (not a design goal) accepted until
-     * the Type value-object hierarchy lands and multibinding can give each
-     * element type its own `Sequence<T>` identity instead (see
-     * `core/.claude/ContainerTheory.md` §6.3 and `core/.claude/TODO.md`
-     * Phase 2). At that point this becomes
-     * `Binding('Sequence<' . $this->type . '>', Binding::DEFAULT, $context)`.
+     * The default provider is the container's `array` binding in this context,
+     * or an empty array when nothing is bound. All variadic parameters in a
+     * context share that binding, whatever their element type.
      */
     public function __construct(private string $name, private string $type, string $context)
     {
@@ -59,18 +50,11 @@ final class Variadic implements Parameter
         );
     }
 
-    /** Returns the parameter's name. */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * Returns the parameter's declared type identity.
-     *
-     * The type is already normalized and vetted by the caller that built
-     * this parameter; this contract has no opinion on type syntax.
-     */
     public function getType(): string
     {
         return $this->type;
@@ -86,12 +70,8 @@ final class Variadic implements Parameter
     }
 
     /**
-     * The guard checks the provider's target against `Type::ARRAY`, not
-     * against `$this->type`: `$this->type` holds the element type (e.g.
-     * `string` for `string ...$tags`), but a provider bound to a variadic
-     * slot promises the collected value — the whole array the slot
-     * receives. Interim policy until parameterized types (`Array<Foo>` /
-     * `iterable<Foo>`) land.
+     * A provider bound here supplies the whole collected array, so its target
+     * is checked against `array`, not against the element type.
      */
     public function withArgument(Provider $provider): Parameter
     {
@@ -110,10 +90,9 @@ final class Variadic implements Parameter
     }
 
     /**
-     * Always true: PHP's own override rules permit widening any non-variadic
-     * base to a variadic override, and a variadic base can always be
-     * replaced by another variadic. There is no base kind a variadic
-     * position cannot legally replace.
+     * Whether this parameter can replace $base in an override.
+     *
+     * Always true: a variadic can replace any kind of base.
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
@@ -122,10 +101,6 @@ final class Variadic implements Parameter
         return true;
     }
 
-    /**
-     * A variadic position may always be omitted from the target signature
-     * it is projected onto.
-     */
     public function canBeOmitted(): bool
     {
         return true;

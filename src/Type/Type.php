@@ -116,9 +116,8 @@ final class Type
     }
 
     /**
-     * Only the two-member nullable shape (`T|null`) is admitted here; full structural
-     * union normalization is future Type-hierarchy work. PHP-grammar validity for the
-     * admitted shape is enforced here (mixed/void/never cannot be union members).
+     * Only `T|null` unions are supported; `mixed`, `void` and `never` cannot be
+     * union members.
      */
     private static function normalizeNullableUnion(string $type): string
     {

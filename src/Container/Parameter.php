@@ -10,18 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Container;
 
+use Vivarium\Assertion\Exception\AssertionFailed;
+
 /**
  * Descriptor of one parameter of a callable signature: the declared slot a
  * Provider argument fills.
  */
 interface Parameter
 {
-    /** Returns the parameter's name. */
     public function getName(): string;
 
-    /**
-     * Returns the parameter's declared type identity.
-     */
     public function getType(): string;
 
     /**
@@ -36,28 +34,26 @@ interface Parameter
      * Returns a new Parameter with $provider bound as its explicit argument,
      * replacing any previously bound argument.
      *
-     * The provider's target must be assignable to this slot's type; a
-     * mismatch is a precondition violation.
+     * @throws AssertionFailed If the provider's target is not assignable to
+     *                         this slot's type.
      */
     public function withArgument(Provider $provider): Parameter;
 
     /**
-     * True if and only if an explicit argument has been bound via
-     * withArgument(), as opposed to this parameter resting on its default.
+     * Whether an argument was bound with withArgument(), as opposed to this
+     * parameter resting on its default.
      */
     public function isExplicit(): bool;
 
     /**
-     * True if and only if a parameter of this kind, at the same position,
-     * may legally replace $base when overriding a signature.
-     *
-     * Mirrors PHP's own parameter-override variance rules.
+     * Whether this parameter can replace $base at the same position in an
+     * override, following PHP's own parameter variance rules.
      */
     public function canReplace(Parameter $base): bool;
 
     /**
-     * True if and only if a target signature is allowed to lack a
-     * corresponding base position for a parameter of this kind.
+     * Whether a target signature may lack the base position this parameter
+     * occupies.
      */
     public function canBeOmitted(): bool;
 }

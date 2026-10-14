@@ -19,11 +19,10 @@ use Vivarium\Container\Provider\ContainerCall;
 use Vivarium\Type\Type;
 
 /**
- * A required, non-variadic parameter with no default value — the plain case
- * of a signature position.
+ * A required, non-variadic parameter with no default value.
  *
- * The default provider is built at construction, from the context in which
- * the parameter was declared; that context is not retained.
+ * The default provider is built at construction from the declaring context,
+ * which is not retained.
  */
 final class Required implements Parameter
 {
@@ -48,18 +47,11 @@ final class Required implements Parameter
         );
     }
 
-    /** Returns the parameter's name. */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * Returns the parameter's declared type identity.
-     *
-     * The type is already normalized and vetted by the caller that built
-     * this parameter; this contract has no opinion on type syntax.
-     */
     public function getType(): string
     {
         return $this->type;
@@ -92,21 +84,16 @@ final class Required implements Parameter
         return $parameter;
     }
 
-    /** True if and only if an explicit argument has been bound via withArgument(). */
     public function isExplicit(): bool
     {
         return $this->explicit !== null;
     }
 
     /**
-     * True if and only if $base is itself a required position and this
-     * position's type is the same as or wider than the base's.
+     * Whether this parameter can replace $base in an override.
      *
-     * An optional or variadic base position cannot be narrowed to required
-     * without breaking PHP's own parameter-override rules; a required
-     * position can only ever replace another required position. The type
-     * check follows PHP's contravariance rule: replacing may widen the
-     * accepted type, never narrow it.
+     * $base must be required (an optional or variadic base cannot become
+     * required), and this type must be the same as or wider than the base's.
      */
     public function canReplace(Parameter $base): bool
     {
@@ -121,10 +108,6 @@ final class Required implements Parameter
         return (new IsAssignableTo($this->type))($base->getType());
     }
 
-    /**
-     * A required position can never be omitted from the target signature it
-     * is projected onto.
-     */
     public function canBeOmitted(): bool
     {
         return false;

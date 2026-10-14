@@ -22,15 +22,8 @@ use Vivarium\Type\Type;
 /**
  * Provides the declared default value of an optional parameter.
  *
- * `ReflectionParameter::getDefaultValue()` re-evaluates the initializer
- * expression on every call, so this provider re-evaluates it inside
- * `provide()` rather than caching the result: for object-creating defaults
- * (PHP 8.1+ `new XXX(...)` initializers) freezing one evaluation would
- * share a single instance across every resolution, whereas PHP's own
- * semantics give each call site that omits the argument a fresh instance.
- * The default is never evaluated at construction: the target is the
- * parameter's declared type, and evaluating an object-creating initializer
- * eagerly would run user code just to inspect its result.
+ * The default is re-evaluated on every call, as PHP does, so object defaults
+ * such as `new Foo()` are not shared across resolutions.
  */
 final class DefaultValue implements Provider
 {

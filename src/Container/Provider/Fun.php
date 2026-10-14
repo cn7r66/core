@@ -50,12 +50,7 @@ final class Fun implements Provider, Caller, Equality
         $this->signature = Signature::ofFunction($fn);
     }
 
-    /**
-     * Binds an argument provider to the function parameter named $name.
-     *
-     * $name must be a parameter of the function; an unknown name is a
-     * precondition violation.
-     */
+    /** {@inheritDoc} */
     public function bindArgument(string $name): ProviderBinder
     {
         return $this->bindArgumentAtPosition(
@@ -63,13 +58,7 @@ final class Fun implements Provider, Caller, Equality
         );
     }
 
-    /**
-     * Binds an argument provider to the function parameter at the
-     * zero-based $position.
-     *
-     * A provider bound to a variadic position promises the whole collected
-     * array the slot receives, not the element type.
-     */
+    /** {@inheritDoc} */
     public function bindArgumentAtPosition(int $position): ProviderBinder
     {
         $parameter = $this->signature->getParameter($position);
