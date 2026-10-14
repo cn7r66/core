@@ -40,8 +40,14 @@ final class Injector implements Container
 
     public function get(Binding|string $request): mixed
     {
-        $binding = $this->makeBinding($request);
+        return (new ResolutionContext(
+            fn (Binding $binding, Container $context): mixed => $this->resolve($binding, $context),
+            $this,
+        ))->get($request);
+    }
 
+    private function resolve(Binding $binding, Container $context): mixed
+    {
         if ($this->cache->lookup($binding)) {
             $this->solved = $this->solved->put(
                 $binding,
@@ -52,7 +58,7 @@ final class Injector implements Container
         if ($this->solved->containsKey($binding)) {
             return $this->solved
                 ->get($binding)
-                ->solve($this);
+                ->solve($context);
         }
 
         $provider   = $this->getProvider($binding);
@@ -61,7 +67,7 @@ final class Injector implements Container
 
         $this->solved = $this->solved->put($binding, $definition);
 
-        return $definition->solve($this);
+        return $definition->solve($context);
     }
 
     public function has(Binding|string $request): bool
@@ -123,7 +129,7 @@ final class Injector implements Container
             return new Constructor($binding->getType());
         }
 
-        throw new BindingNotFound();
+        throw new BindingNotFound($binding);
     }
 
     private function applyScope(Binding $binding, Provider $provider): Definition

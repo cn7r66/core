@@ -112,6 +112,26 @@ final class Binding implements Equality
         return $binding;
     }
 
+    /**
+     * Renders the binding for error messages: `Type`, with `:tag` appended when the tag is
+     * not DEFAULT and ` (in context)` appended when the context is not GLOBAL,
+     * e.g. `Logger`, `Logger:audit`, `Logger:audit (in App\Orders)`.
+     */
+    public function __toString(): string
+    {
+        $text = $this->type;
+
+        if ($this->tag !== self::DEFAULT) {
+            $text .= ':' . $this->tag;
+        }
+
+        if ($this->context !== self::GLOBAL) {
+            $text .= ' (in ' . $this->context . ')';
+        }
+
+        return $text;
+    }
+
     public function couldBeWidened(): bool
     {
         return $this->tag !== self::DEFAULT ||

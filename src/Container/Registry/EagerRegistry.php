@@ -224,7 +224,7 @@ final class EagerRegistry implements Registry, Binder
             return $this->findProvider($binding->widen());
         }
 
-        throw new BindingNotFound();
+        throw new BindingNotFound($binding);
     }
 
     public function findScope(Binding $binding): Scope
