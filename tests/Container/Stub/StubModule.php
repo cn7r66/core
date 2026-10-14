@@ -18,8 +18,7 @@ final class StubModule implements Module
     public function configure(Binder $binder): Binder
     {
         return $binder
-            ->bind(Stub::class)->to(StubClass::class)
-            ->decorate(Stub::class)->withDecorator(new StubDecorator())->withDefaultPriority()
-            ->scope(Stub::class)->service();
+            ->bind(Stub::class)->to(StubClass::class)->service()
+            ->decorate(Stub::class)->withDecorator(new StubDecorator())->withDefaultPriority();
     }
 }

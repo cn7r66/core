@@ -39,7 +39,7 @@ final class ScopeBinder
     }
 
     /** @return T */
-    public function clonable()
+    public function cloneable()
     {
         return ($this->create)(Scope::CLONEABLE);
     }

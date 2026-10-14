@@ -70,31 +70,32 @@ final class EagerRegistry implements Registry, Binder
         $this->scopes = new HashMap();
     }
 
-    /** @return ProviderBinder<EagerRegistry> */
+    /** @return ProviderBinder<ScopeBinder<EagerRegistry>> */
     public function bind(
         string $type,
         string $tag = Binding::DEFAULT,
         string $context = Binding::GLOBAL,
     ): ProviderBinder {
-        $binding = new Binding($type, $tag, $context);
-
-        return new ProviderBinder($binding, function (Binding $source, Provider $provider): EagerRegistry {
-            $registry            = clone $this;
-            $registry->providers = $registry->providers->put($source, $provider);
-
-            return $registry;
-        });
+        return new ProviderBinder(
+            new Binding($type, $tag, $context),
+            $this->scopedRegistration(),
+        );
     }
 
+    /**
+     * Constructor autowiring for a class; the scope is mandatory.
+     *
+     * @return ScopeBinder<EagerRegistry>
+     */
     public function define(
         string $class,
         string $tag = Binding::DEFAULT,
         string $context = Binding::GLOBAL,
-    ): Registry {
+    ): ScopeBinder {
         return $this->bind($class, $tag, $context)->toConstructor();
     }
 
-    /** @return ProviderBinder<Registry,Provider> */
+    /** @return ProviderBinder<ScopeBinder<EagerRegistry>> */
     public function extend(
         string $type,
         string $tag = Binding::DEFAULT,
@@ -108,31 +109,23 @@ final class EagerRegistry implements Registry, Binder
                 sprintf('Binding (%s, %s, %s) does not exists.', $type, $tag, $context),
             );
 
-        return new ProviderBinder(
-            $binding,
-            function (Binding $source, Provider $provider): EagerRegistry {
-                $registry            = clone $this;
-                $registry->providers = $registry->providers->put($source, $provider);
-
-                return $registry;
-            },
-        );
+        return new ProviderBinder($binding, $this->scopedRegistration());
     }
 
-    /** @return ScopeBinder<Registry> */
-    public function scope(
-        string $type,
-        string $tag = Binding::DEFAULT,
-        string $context = Binding::GLOBAL,
-    ): ScopeBinder {
-        $binding = new Binding($type, $tag, $context);
+    /** @return callable(Binding, Provider): ScopeBinder<EagerRegistry> */
+    private function scopedRegistration(): callable
+    {
+        return function (Binding $source, Provider $provider): ScopeBinder {
+            return new ScopeBinder(
+                function (Scope $scope) use ($source, $provider): EagerRegistry {
+                    $registry            = clone $this;
+                    $registry->providers = $registry->providers->put($source, $provider);
+                    $registry->scopes    = $registry->scopes->put($source, $scope);
 
-        return new ScopeBinder(function (Scope $scope) use ($binding): EagerRegistry {
-            $registry         = clone $this;
-            $registry->scopes = $registry->scopes->put($binding, $scope);
-
-            return $registry;
-        });
+                    return $registry;
+                },
+            );
+        };
     }
 
     /** @return DecoratorBinder<Registry> */

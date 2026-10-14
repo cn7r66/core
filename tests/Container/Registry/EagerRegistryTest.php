@@ -50,7 +50,7 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
-            ->toProvider($provider);
+            ->toProvider($provider)->transient();
 
         static::assertTrue($registry->hasProvider($binding));
     }
@@ -62,7 +62,7 @@ final class EagerRegistryTest extends TestCase
         $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
 
         $original = new EagerRegistry();
-        $original->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)->toProvider($provider);
+        $original->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)->toProvider($provider)->transient();
 
         static::assertFalse($original->hasProvider($binding));
     }
@@ -76,7 +76,7 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class, 'custom', Binding::GLOBAL)
-            ->toProvider($provider);
+            ->toProvider($provider)->transient();
 
         static::assertTrue($registry->hasProvider($bindingTagged));
         static::assertFalse($registry->hasProvider($bindingDefault));
@@ -86,7 +86,7 @@ final class EagerRegistryTest extends TestCase
     public function testDefineRegistersProviderForNoArgConstructor(): void
     {
         $binding  = new Binding(StubWithNoArgs::class, Binding::DEFAULT, Binding::GLOBAL);
-        $registry = (new EagerRegistry())->define(StubWithNoArgs::class);
+        $registry = (new EagerRegistry())->define(StubWithNoArgs::class)->transient();
 
         static::assertTrue($registry->hasProvider($binding));
     }
@@ -96,7 +96,7 @@ final class EagerRegistryTest extends TestCase
     {
         $binding  = new Binding(StubWithNoArgs::class, Binding::DEFAULT, Binding::GLOBAL);
         $original = new EagerRegistry();
-        $original->define(StubWithNoArgs::class);
+        $original->define(StubWithNoArgs::class)->transient();
 
         static::assertFalse($original->hasProvider($binding));
     }
@@ -107,7 +107,7 @@ final class EagerRegistryTest extends TestCase
         $provider = $this->createMock(Provider::class);
         $registry = (new EagerRegistry())
             ->bind(StubClass::class)
-            ->toProvider($provider);
+            ->toProvider($provider)->transient();
 
         $binder = $registry->extend(StubClass::class);
 
@@ -123,9 +123,9 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class)
-            ->toProvider($first)
+            ->toProvider($first)->transient()
             ->extend(StubClass::class)
-            ->toProvider($second);
+            ->toProvider($second)->transient();
 
         static::assertSame($second, $registry->findProvider($binding));
     }
@@ -138,42 +138,54 @@ final class EagerRegistryTest extends TestCase
         (new EagerRegistry())->extend(StubClass::class);
     }
 
-    /** @covers ::scope */
-    public function testScopeReturnsScopeBinder(): void
+    /** @covers ::define */
+    public function testDefineReturnsScopeBinder(): void
     {
-        $binder = (new EagerRegistry())->scope(StubClass::class);
+        $binder = (new EagerRegistry())->define(StubWithNoArgs::class);
 
         static::assertInstanceOf(ScopeBinder::class, $binder);
     }
 
-    /** @covers ::scope */
-    public function testAfterScopingFindScopeReturnsChosenScope(): void
+    /** @covers ::bind */
+    public function testBindingProviderReturnsScopeBinder(): void
+    {
+        $binder = (new EagerRegistry())
+            ->bind(StubClass::class)
+            ->toProvider($this->createMock(Provider::class));
+
+        static::assertInstanceOf(ScopeBinder::class, $binder);
+    }
+
+    /** @covers ::bind */
+    public function testAfterRegisteringWithScopeFindScopeReturnsChosenScope(): void
     {
         $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
         $registry = (new EagerRegistry())
-            ->scope(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
+            ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
+            ->toProvider($this->createMock(Provider::class))
             ->service();
 
         static::assertSame(Scope::SERVICE, $registry->findScope($binding));
     }
 
-    /** @covers ::scope */
-    public function testScopeIsImmutableOriginalReturnsTransient(): void
+    /** @covers ::bind */
+    public function testRegisteringWithScopeIsImmutableOriginalReturnsTransient(): void
     {
         $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
         $original = new EagerRegistry();
-        $original->scope(StubClass::class)->service();
+        $original->bind(StubClass::class)->toProvider($this->createMock(Provider::class))->service();
 
         static::assertSame(Scope::TRANSIENT, $original->findScope($binding));
     }
 
-    /** @covers ::scope */
-    public function testClonableScopeRegistered(): void
+    /** @covers ::bind */
+    public function testCloneableScopeRegistered(): void
     {
         $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
         $registry = (new EagerRegistry())
-            ->scope(StubClass::class)
-            ->clonable();
+            ->bind(StubClass::class)
+            ->toProvider($this->createMock(Provider::class))
+            ->cloneable();
 
         static::assertSame(Scope::CLONEABLE, $registry->findScope($binding));
     }
@@ -359,7 +371,7 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class)
-            ->toProvider($provider);
+            ->toProvider($provider)->transient();
 
         static::assertTrue($registry->hasProvider($binding));
     }
@@ -372,7 +384,7 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class)
-            ->toProvider($provider);
+            ->toProvider($provider)->transient();
 
         static::assertFalse($registry->hasProvider($binding));
     }
@@ -385,7 +397,7 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
-            ->toProvider($provider);
+            ->toProvider($provider)->transient();
 
         static::assertTrue($registry->hasProvider($binding));
     }
@@ -398,7 +410,7 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
-            ->toProvider($provider);
+            ->toProvider($provider)->transient();
 
         static::assertTrue($registry->hasProvider($binding));
     }
@@ -411,7 +423,7 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
-            ->toProvider($provider);
+            ->toProvider($provider)->transient();
 
         static::assertTrue($registry->hasProvider($binding));
     }
@@ -424,7 +436,7 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class)
-            ->toProvider($provider);
+            ->toProvider($provider)->transient();
 
         static::assertSame($provider, $registry->findProvider($binding));
     }
@@ -438,9 +450,9 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubBase::class)
-            ->toProvider($parentProvider)
+            ->toProvider($parentProvider)->transient()
             ->bind(StubClass::class)
-            ->toProvider($childProvider);
+            ->toProvider($childProvider)->transient();
 
         static::assertSame($childProvider, $registry->findProvider($binding));
     }
@@ -453,7 +465,7 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
-            ->toProvider($provider);
+            ->toProvider($provider)->transient();
 
         static::assertSame($provider, $registry->findProvider($binding));
     }
@@ -466,7 +478,7 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
-            ->toProvider($provider);
+            ->toProvider($provider)->transient();
 
         static::assertSame($provider, $registry->findProvider($binding));
     }
@@ -480,9 +492,9 @@ final class EagerRegistryTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
-            ->toProvider($globalProvider)
+            ->toProvider($globalProvider)->transient()
             ->bind(StubClass::class, Binding::DEFAULT, 'Vivarium\Test\Container')
-            ->toProvider($specificProvider);
+            ->toProvider($specificProvider)->transient();
 
         static::assertSame($specificProvider, $registry->findProvider($binding));
     }
@@ -510,7 +522,8 @@ final class EagerRegistryTest extends TestCase
     {
         $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
         $registry = (new EagerRegistry())
-            ->scope(StubClass::class)
+            ->bind(StubClass::class)
+            ->toProvider($this->createMock(Provider::class))
             ->service();
 
         static::assertSame(Scope::SERVICE, $registry->findScope($binding));
@@ -521,7 +534,8 @@ final class EagerRegistryTest extends TestCase
     {
         $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
         $registry = (new EagerRegistry())
-            ->scope(StubBase::class)
+            ->bind(StubBase::class)
+            ->toProvider($this->createMock(Provider::class))
             ->service();
 
         static::assertSame(Scope::TRANSIENT, $registry->findScope($binding));
@@ -532,7 +546,8 @@ final class EagerRegistryTest extends TestCase
     {
         $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
         $registry = (new EagerRegistry())
-            ->scope(Stub::class)
+            ->bind(Stub::class)
+            ->toProvider($this->createMock(Provider::class))
             ->service();
 
         static::assertSame(Scope::TRANSIENT, $registry->findScope($binding));

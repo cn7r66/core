@@ -33,10 +33,10 @@ final class ScopeBinderTest extends TestCase
         static::assertSame(Scope::TRANSIENT, $this->makeBinder()->transient());
     }
 
-    /** @covers ::clonable */
-    public function testClonableReturnsCloneableScope(): void
+    /** @covers ::cloneable */
+    public function testCloneableReturnsCloneableScope(): void
     {
-        static::assertSame(Scope::CLONEABLE, $this->makeBinder()->clonable());
+        static::assertSame(Scope::CLONEABLE, $this->makeBinder()->cloneable());
     }
 
     /** @covers ::service */

@@ -17,6 +17,7 @@ use Vivarium\Container\Cache\NoOpCache;
 use Vivarium\Container\Collector\NoOpCollector;
 use Vivarium\Container\Definition;
 use Vivarium\Container\Exception\BindingNotFound;
+use Vivarium\Container\Exception\ResolutionFailed;
 use Vivarium\Container\Injection;
 use Vivarium\Container\Injector;
 use Vivarium\Container\Registry;
@@ -69,7 +70,8 @@ final class InjectorTest extends TestCase
 
         $registry = (new EagerRegistry())
             ->bind(StubWithNoArgs::class)
-            ->toInstance($instance);
+            ->toInstance($instance)
+            ->transient();
 
         $container = new Injector($registry);
 
@@ -83,8 +85,7 @@ final class InjectorTest extends TestCase
     public function testServiceScopeReturnsSameInstance(): void
     {
         $registry = (new EagerRegistry())
-            ->bind(StubWithNoArgs::class)->toConstructor()
-            ->scope(StubWithNoArgs::class)->service();
+            ->bind(StubWithNoArgs::class)->toConstructor()->service();
 
         $container = new Injector($registry);
 
@@ -101,8 +102,7 @@ final class InjectorTest extends TestCase
     public function testTransientScopeReturnsDifferentInstances(): void
     {
         $registry = (new EagerRegistry())
-            ->bind(StubWithNoArgs::class)->toConstructor()
-            ->scope(StubWithNoArgs::class)->transient();
+            ->bind(StubWithNoArgs::class)->toConstructor()->transient();
 
         $container = new Injector($registry);
 
@@ -128,7 +128,7 @@ final class InjectorTest extends TestCase
     {
         $registry = (new EagerRegistry())
             ->bind('string', Binding::DEFAULT, StubClass::class)
-                ->toClassConstant(StubClass::class, 'STRING_CONSTANT')
+                ->toClassConstant(StubClass::class, 'STRING_CONSTANT')->transient()
             ->inject(StubClass::class)->onProperty('property')->withDefaultPriority();
 
         $container = new Injector($registry);
@@ -171,8 +171,7 @@ final class InjectorTest extends TestCase
     public function testEnhancementsAppliedBeforeScopeCaching(): void
     {
         $registry = (new EagerRegistry())
-            ->bind(StubClass::class)->toConstructor()
-            ->scope(StubClass::class)->service()
+            ->bind(StubClass::class)->toConstructor()->service()
             ->inject(StubClass::class)->onMethod('setService')->withDefaultPriority();
 
         $container = new Injector($registry);
@@ -256,7 +255,7 @@ final class InjectorTest extends TestCase
     public function testHasReturnsTrueWhenRegistryHasProvider(): void
     {
         $registry = (new EagerRegistry())
-            ->bind(StubWithNoArgs::class)->toConstructor();
+            ->bind(StubWithNoArgs::class)->toConstructor()->transient();
 
         $container = new Injector($registry);
 
@@ -271,9 +270,15 @@ final class InjectorTest extends TestCase
     {
         $container = new Injector(new EagerRegistry());
 
-        $this->expectException(BindingNotFound::class);
+        try {
+            $container->get('string');
+        } catch (ResolutionFailed $failure) {
+            static::assertInstanceOf(BindingNotFound::class, $failure->getPrevious());
 
-        $container->get('string');
+            return;
+        }
+
+        static::fail('Expected ResolutionFailed to be thrown.');
     }
 
     /**

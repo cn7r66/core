@@ -19,6 +19,6 @@ final class StubModule implements Module
     public function configure(Binder $binder): Binder
     {
         return $binder
-            ->bind(EventDispatcher::class)->to(StubEventDispatcher::class);
+            ->bind(EventDispatcher::class)->to(StubEventDispatcher::class)->transient();
     }
 }

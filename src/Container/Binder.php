@@ -23,6 +23,20 @@ interface Binder
         string $context = Binding::GLOBAL,
     ): ProviderBinder;
 
+    /** Constructor autowiring for a class; the scope is mandatory. */
+    public function define(
+        string $class,
+        string $tag = Binding::DEFAULT,
+        string $context = Binding::GLOBAL,
+    ): ScopeBinder;
+
+    /** Replaces an existing registration; the scope is mandatory. */
+    public function extend(
+        string $type,
+        string $tag = Binding::DEFAULT,
+        string $context = Binding::GLOBAL,
+    ): ProviderBinder;
+
     public function inject(
         string $type,
         string $tag = Binding::DEFAULT,
@@ -40,10 +54,4 @@ interface Binder
         string $tag = Binding::DEFAULT,
         string $context = Binding::GLOBAL,
     ): DecoratorBinder;
-
-    public function scope(
-        string $type,
-        string $tag = Binding::DEFAULT,
-        string $context = Binding::GLOBAL,
-    ): ScopeBinder;
 }
