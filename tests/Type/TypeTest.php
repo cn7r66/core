@@ -273,6 +273,10 @@ final class TypeTest extends TestCase
             ['string', Type::STRING],
             [TypeStub::class, TypeStub::class],
             [StubInterfaceA::class, StubInterfaceA::class],
+            [StubInterfaceA::class . '|null', StubInterfaceA::class . '|null'],
+            ['null|' . StubInterfaceA::class, StubInterfaceA::class . '|null'],
+            ['integer|null', 'int|null'],
+            ['null|null', 'null'],
         ];
     }
 
@@ -281,6 +285,15 @@ final class TypeTest extends TestCase
     {
         return [
             ['NotAType', 'Expected a valid type. Got "NotAType".'],
+            ['int|string', 'Expected a valid type. Got "int|string".'],
+            ['int|string|null', 'Expected a valid type. Got "int|string|null".'],
+            [
+                StubInterfaceA::class . '&' . StubInterfaceB::class,
+                'Expected a valid type. Got "' . StubInterfaceA::class . '&' . StubInterfaceB::class . '".',
+            ],
+            ['mixed|null', 'Expected a valid type. Got "mixed|null".'],
+            ['void|null', 'Expected a valid type. Got "void|null".'],
+            ['never|null', 'Expected a valid type. Got "never|null".'],
         ];
     }
 

@@ -32,7 +32,9 @@ use function array_unique;
 use function array_values;
 use function class_exists;
 use function constant;
+use function count;
 use function defined;
+use function explode;
 use function gettype;
 use function implode;
 use function in_array;
@@ -41,6 +43,7 @@ use function is_array;
 use function is_callable;
 use function is_object;
 use function is_string;
+use function str_contains;
 
 final class Type
 {
@@ -92,6 +95,15 @@ final class Type
 
     public static function normalize(string $type): string
     {
+        if (! str_contains($type, '&') && str_contains($type, '|')) {
+            return self::normalizeNullableUnion($type);
+        }
+
+        return self::normalizeSingleType($type);
+    }
+
+    private static function normalizeSingleType(string $type): string
+    {
         if (class_exists($type) || interface_exists($type)) {
             return $type;
         }
@@ -101,6 +113,35 @@ final class Type
         }
 
         return self::ALIASES[$type] ?? $type;
+    }
+
+    /**
+     * Only the two-member nullable shape (`T|null`) is admitted here; full structural
+     * union normalization is future Type-hierarchy work. PHP-grammar validity for the
+     * admitted shape is enforced here (mixed/void/never cannot be union members).
+     */
+    private static function normalizeNullableUnion(string $type): string
+    {
+        $members = array_values(array_unique(array_map(
+            static fn (string $member): string => self::normalizeSingleType($member),
+            explode('|', $type),
+        )));
+
+        if (count($members) === 1) {
+            return $members[0];
+        }
+
+        if (count($members) === 2 && in_array(self::NULL, $members, true)) {
+            $other = $members[0] === self::NULL ? $members[1] : $members[0];
+
+            if ($other === self::MIXED || $other === self::VOID || $other === self::NEVER) {
+                throw new NotAType($type);
+            }
+
+            return $other . '|' . self::NULL;
+        }
+
+        throw new NotAType($type);
     }
 
     public static function union(string $type, string ...$types): string
