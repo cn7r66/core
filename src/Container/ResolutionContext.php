@@ -45,7 +45,7 @@ final class ResolutionContext implements Container
     }
 
     /**
-     * Resolves the request with this context's path extended by the requested binding.
+     * Locates the request, then resolves it with this context's path extended by the located binding.
      * A string request is the Binding of that type with default tag and global context.
      *
      * @throws CircularDependency If the binding is already on the path.

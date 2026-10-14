@@ -34,7 +34,10 @@ final class DecoratorBinderTest extends TestCase
         static::assertInstanceOf(PriorityBinder::class, $binder->withDecorator($this->createMock(Decorator::class)));
     }
 
-    /** @covers ::withDecorator */
+    /**
+     * @covers ::withDecorator
+     * @covers \Vivarium\Container\Binding\PriorityBinder::withDefaultPriority
+     */
     public function testWithDecoratorForwardsDecoratorToCreate(): void
     {
         $decorator = $this->createMock(Decorator::class);
@@ -56,6 +59,7 @@ final class DecoratorBinderTest extends TestCase
 
     /**
      * @covers ::withDecorator
+     * @covers \Vivarium\Container\Binding\PriorityBinder::withDefaultPriority
      * @dataProvider defaultPriorityProvider
      */
     public function testWithDefaultPriorityPassesTheDefaultGivenAtConstruction(int $defaultPriority): void
@@ -85,7 +89,10 @@ final class DecoratorBinderTest extends TestCase
         ];
     }
 
-    /** @covers ::withDecorator */
+    /**
+     * @covers ::withDecorator
+     * @covers \Vivarium\Container\Binding\PriorityBinder::withPriority
+     */
     public function testWithPriorityPassesExplicitPriorityToCreate(): void
     {
         $capturedPriority = null;
@@ -104,8 +111,11 @@ final class DecoratorBinderTest extends TestCase
         static::assertSame(42, $capturedPriority);
     }
 
-    /** @covers ::withDecorator */
-    public function testWithPriorityReturnsValueFromCreate(): void
+    /**
+     * @covers ::withDecorator
+     * @covers \Vivarium\Container\Binding\PriorityBinder::withDefaultPriority
+     */
+    public function testWithDefaultPriorityReturnsValueFromCreate(): void
     {
         $expected = new stdClass();
 
@@ -115,6 +125,24 @@ final class DecoratorBinderTest extends TestCase
         );
 
         $result = $binder->withDecorator($this->createMock(Decorator::class))->withDefaultPriority();
+
+        static::assertSame($expected, $result);
+    }
+
+    /**
+     * @covers ::withDecorator
+     * @covers \Vivarium\Container\Binding\PriorityBinder::withPriority
+     */
+    public function testWithPriorityReturnsValueFromCreate(): void
+    {
+        $expected = new stdClass();
+
+        $binder = new DecoratorBinder(
+            static fn (Decorator $dec, int $priority): object => $expected,
+            Priority::NORMAL,
+        );
+
+        $result = $binder->withDecorator($this->createMock(Decorator::class))->withPriority(42);
 
         static::assertSame($expected, $result);
     }

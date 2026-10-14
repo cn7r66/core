@@ -40,7 +40,6 @@ use function array_map;
 use function array_values;
 use function count;
 use function is_a;
-use function sprintf;
 use function str_starts_with;
 
 final class EagerRegistry implements Registry, Binder
@@ -118,7 +117,7 @@ final class EagerRegistry implements Registry, Binder
         (new IsTrue())
             ->assert(
                 $this->providers->containsKey($binding),
-                sprintf('Binding (%s, %s, %s) does not exists.', $type, $tag, $context),
+                'Binding ' . $binding . ' is not registered. Use bind() to register it.',
             );
 
         return new ProviderBinder($binding, $this->scopedRegistration());

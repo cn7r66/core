@@ -215,7 +215,7 @@ final class Signature
         (new IsInHalfOpenRightRange(0, $this->count()))
             ->assert(
                 $position,
-                'Requested argument in position %s does not exists.',
+                'No argument at position %s.',
             );
 
         $signature             = clone $this;
