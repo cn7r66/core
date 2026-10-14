@@ -10,9 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Container\Exception;
 
-use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
 
-final class BindingNotFound extends RuntimeException implements ContainerExceptionInterface
+final class BindingNotFound extends RuntimeException implements ContainerException
 {
 }
