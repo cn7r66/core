@@ -414,4 +414,46 @@ final class InjectorTest extends TestCase
 
         static::fail('Expected ResolutionFailed to be thrown.');
     }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::locate
+     * @covers ::resolve
+     * @dataProvider provideRegistriesWithoutOtherTagRegistration
+     */
+    public function testTaggedClassWithoutRegistrationIsNotAutowired(Registry $registry): void
+    {
+        $container = new Injector($registry);
+
+        try {
+            $container->get(new Binding(StubWithNoArgs::class, 'other'));
+        } catch (ResolutionFailed $failure) {
+            static::assertInstanceOf(BindingNotFound::class, $failure->getPrevious());
+
+            return;
+        }
+
+        static::fail('Expected ResolutionFailed to be thrown.');
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::has
+     * @dataProvider provideRegistriesWithoutOtherTagRegistration
+     */
+    public function testHasIsFalseForTaggedClassWithoutRegistration(Registry $registry): void
+    {
+        $container = new Injector($registry);
+
+        static::assertFalse($container->has(new Binding(StubWithNoArgs::class, 'other')));
+    }
+
+    /** @return iterable<string, array{Registry}> */
+    public static function provideRegistriesWithoutOtherTagRegistration(): iterable
+    {
+        yield 'empty registry' => [new EagerRegistry()];
+
+        yield 'default tag registered' => [(new EagerRegistry())->define(StubWithNoArgs::class)->transient()];
+    }
 }

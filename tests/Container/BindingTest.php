@@ -111,9 +111,40 @@ final class BindingTest extends TestCase
         return [
             'string-id-default-global'       => ['string', Binding::DEFAULT, Binding::GLOBAL, false],
             'class-default-global'           => [StubClass::class, Binding::DEFAULT, Binding::GLOBAL, false],
-            'class-custom-tag-global'        => [StubClass::class, 'theTag', Binding::GLOBAL, true],
+            'class-custom-tag-global'        => [StubClass::class, 'theTag', Binding::GLOBAL, false],
             'class-default-class-context'    => [StubClass::class, Binding::DEFAULT, StubBase::class, true],
             'class-custom-tag-class-context' => [StubClass::class, 'theTag', StubBase::class, true],
+        ];
+    }
+
+    /**
+     * @covers ::widen
+     * @covers ::getType
+     * @covers ::getTag
+     * @covers ::getContext
+     * @covers ::__construct
+     * @dataProvider provideWidenCases
+     */
+    public function testWidenKeepsTagAndMovesContextUpOneLevel(
+        string $tag,
+        string $context,
+        string $expectedContext,
+    ): void {
+        $widened = (new Binding(StubClass::class, $tag, $context))->widen();
+
+        static::assertSame(StubClass::class, $widened->getType());
+        static::assertSame($tag, $widened->getTag());
+        static::assertSame($expectedContext, $widened->getContext());
+    }
+
+    /** @return array<string, array{string, string, string}> */
+    public static function provideWidenCases(): array
+    {
+        return [
+            'custom-tag-three-levels' => ['theTag', 'App\Orders\Checkout', 'App\Orders'],
+            'custom-tag-two-levels'   => ['theTag', 'App\Orders', 'App'],
+            'custom-tag-one-level'    => ['theTag', 'App', Binding::GLOBAL],
+            'default-tag-two-levels'  => [Binding::DEFAULT, 'App\Orders', 'App'],
         ];
     }
 
@@ -123,28 +154,13 @@ final class BindingTest extends TestCase
      * @covers ::getContext
      * @covers ::__construct
      */
-    public function testWidenRemovesTagFirst(): void
+    public function testWidenTwiceKeepsTagAndMovesContextUpTwoLevels(): void
     {
-        $binding = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
-        $widened = $binding->widen();
-
-        static::assertSame(Binding::DEFAULT, $widened->getTag());
-        static::assertSame('Vivarium\Test\Container', $widened->getContext());
-    }
-
-    /**
-     * @covers ::widen
-     * @covers ::getTag
-     * @covers ::getContext
-     * @covers ::__construct
-     */
-    public function testWidenNarrowsContextAfterTagIsDefault(): void
-    {
-        $binding = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
+        $binding = new Binding(StubClass::class, 'theTag', 'App\Orders\Checkout');
         $widened = $binding->widen()->widen();
 
-        static::assertSame(Binding::DEFAULT, $widened->getTag());
-        static::assertSame('Vivarium\Test', $widened->getContext());
+        static::assertSame('theTag', $widened->getTag());
+        static::assertSame('App', $widened->getContext());
     }
 
     /**
@@ -311,7 +327,11 @@ final class BindingTest extends TestCase
         $binding   = new Binding(StubClass::class, 'myTag', 'Vivarium\Test\Container');
         $hierarchy = $binding->hierarchy();
 
-        static::assertCount(13, $hierarchy);
+        static::assertCount(12, $hierarchy);
+
+        for ($i = 0; $i < $hierarchy->count(); $i++) {
+            static::assertSame('myTag', $hierarchy->getAtIndex($i)->getTag());
+        }
     }
 
     /**

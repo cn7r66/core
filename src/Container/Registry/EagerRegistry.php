@@ -153,10 +153,9 @@ final class EagerRegistry implements Registry, Binder
     /** @return InjectionBinder<EagerRegistry> */
     public function inject(
         string $type,
-        string $tag = Binding::DEFAULT,
         string $context = Binding::GLOBAL,
     ): InjectionBinder {
-        $binding = new Binding($type, $tag, $context);
+        $binding = new Binding($type, Binding::DEFAULT, $context);
 
         return new InjectionBinder(
             $binding,
@@ -242,8 +241,9 @@ final class EagerRegistry implements Registry, Binder
     {
         $enhancements = new PriorityQueue(new SortableComparator());
 
-        $seen = [];
-        foreach ($binding->hierarchy() as $candidate) {
+        $seen     = [];
+        $untagged = new Binding($binding->getType(), Binding::DEFAULT, $binding->getContext());
+        foreach ($untagged->hierarchy() as $candidate) {
             if (! $this->injections->containsKey($candidate)) {
                 continue;
             }

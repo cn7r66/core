@@ -39,7 +39,6 @@ interface Binder
 
     public function inject(
         string $type,
-        string $tag = Binding::DEFAULT,
         string $context = Binding::GLOBAL,
     ): InjectionBinder;
 

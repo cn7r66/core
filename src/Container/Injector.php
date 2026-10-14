@@ -87,6 +87,10 @@ final class Injector implements Container
             return true;
         }
 
+        if ($binding->getTag() !== Binding::DEFAULT) {
+            return false;
+        }
+
         if (! CheckIfType::isClass($binding->getType())) {
             return false;
         }
@@ -126,8 +130,8 @@ final class Injector implements Container
             return $this->registry->locate($binding);
         }
 
-        if (CheckIfType::isClass($binding->getType())) {
-            return new Binding($binding->getType(), $binding->getTag(), Binding::GLOBAL);
+        if ($binding->getTag() === Binding::DEFAULT && CheckIfType::isClass($binding->getType())) {
+            return new Binding($binding->getType(), Binding::DEFAULT, Binding::GLOBAL);
         }
 
         throw new BindingNotFound($binding);

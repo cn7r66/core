@@ -248,7 +248,7 @@ final class EagerRegistryTest extends TestCase
         $binding   = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
 
         $registry = (new EagerRegistry())
-            ->inject(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
+            ->inject(StubClass::class, Binding::GLOBAL)
             ->withInjection($injection)
             ->withDefaultPriority();
 
@@ -390,7 +390,7 @@ final class EagerRegistryTest extends TestCase
     }
 
     /** @covers ::hasProvider */
-    public function testHasProviderReturnsTrueWhenProviderRegisteredWithDefaultTagAndLookupUsesCustomTag(): void
+    public function testHasProviderReturnsFalseWhenProviderRegisteredWithDefaultTagAndLookupUsesCustomTag(): void
     {
         $provider = $this->createMock(Provider::class);
         $binding  = new Binding(StubClass::class, 'custom', Binding::GLOBAL);
@@ -399,7 +399,7 @@ final class EagerRegistryTest extends TestCase
             ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
             ->toProvider($provider)->transient();
 
-        static::assertTrue($registry->hasProvider($binding));
+        static::assertFalse($registry->hasProvider($binding));
     }
 
     /** @covers ::hasProvider */
@@ -416,7 +416,7 @@ final class EagerRegistryTest extends TestCase
     }
 
     /** @covers ::hasProvider */
-    public function testHasProviderReturnsTrueWhenFoundViaCustomTagAndNamespaceContextLookup(): void
+    public function testHasProviderReturnsFalseForCustomTagAndNamespaceContextWhenOnlyDefaultTagRegistered(): void
     {
         $provider = $this->createMock(Provider::class);
         $binding  = new Binding(StubClass::class, 'custom', 'Vivarium\Test\Container');
@@ -425,7 +425,7 @@ final class EagerRegistryTest extends TestCase
             ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
             ->toProvider($provider)->transient();
 
-        static::assertTrue($registry->hasProvider($binding));
+        static::assertFalse($registry->hasProvider($binding));
     }
 
     /** @covers ::findProvider */
@@ -458,7 +458,7 @@ final class EagerRegistryTest extends TestCase
     }
 
     /** @covers ::findProvider */
-    public function testFindProviderWidensTagToFindProvider(): void
+    public function testFindProviderThrowsWhenTaggedRequestHasOnlyDefaultTagRegistration(): void
     {
         $provider = $this->createMock(Provider::class);
         $binding  = new Binding(StubClass::class, 'custom', Binding::GLOBAL);
@@ -467,7 +467,9 @@ final class EagerRegistryTest extends TestCase
             ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
             ->toProvider($provider)->transient();
 
-        static::assertSame($provider, $registry->findProvider($binding));
+        $this->expectException(BindingNotFound::class);
+
+        $registry->findProvider($binding);
     }
 
     /** @covers ::findProvider */
@@ -671,5 +673,45 @@ final class EagerRegistryTest extends TestCase
         } catch (BindingNotFound $exception) {
             static::assertTrue($requested->equals($exception->getBinding()));
         }
+    }
+
+    /**
+     * @covers ::locate
+     * @covers ::registeredBinding
+     * @covers ::__construct
+     */
+    public function testTaggedBindingIsFoundAtWiderContextKeepingItsTag(): void
+    {
+        $registry = (new EagerRegistry())
+            ->bind(StubClass::class, 'audit', Binding::GLOBAL)
+            ->toProvider($this->createMock(Provider::class))
+            ->transient();
+        $request  = new Binding(StubClass::class, 'audit', 'App\\Orders');
+
+        $located = $registry->locate($request);
+
+        static::assertTrue($registry->hasProvider($request));
+        static::assertTrue((new Binding(StubClass::class, 'audit', Binding::GLOBAL))->equals($located));
+    }
+
+    /**
+     * @covers ::inject
+     * @covers ::findEnhancements
+     * @covers ::__construct
+     */
+    public function testUntaggedInjectionAppliesToTaggedBinding(): void
+    {
+        $injection = $this->mockInjection('slot');
+        $binding   = new Binding(StubClass::class, 'audit', Binding::GLOBAL);
+
+        $registry = (new EagerRegistry())
+            ->inject(StubClass::class)
+            ->withInjection($injection)
+            ->withDefaultPriority();
+
+        $enhancements = $this->toArray($registry->findEnhancements($binding));
+
+        static::assertCount(1, $enhancements);
+        static::assertSame($injection, $enhancements[0]->getValue());
     }
 }

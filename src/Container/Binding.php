@@ -90,15 +90,8 @@ final class Binding implements Equality
     {
         if (! $this->couldBeWidened()) {
             throw new CannotBeWidened(
-                'Binding(' . $this->type . ', ' . $this->tag . ', ' . $this->context . ') cannot be widened further.',
+                'Binding ' . $this . ' cannot be widened further.',
             );
-        }
-
-        if ($this->tag !== self::DEFAULT) {
-            $binding      = clone $this;
-            $binding->tag = self::DEFAULT;
-
-            return $binding;
         }
 
         $pos = strrpos($this->context, '\\');
@@ -134,8 +127,7 @@ final class Binding implements Equality
 
     public function couldBeWidened(): bool
     {
-        return $this->tag !== self::DEFAULT ||
-               $this->context !== self::GLOBAL;
+        return $this->context !== self::GLOBAL;
     }
 
     /**
@@ -166,7 +158,7 @@ final class Binding implements Equality
         while ($extend !== false) {
             $extends[] = new Binding(
                 $extend,
-                self::DEFAULT,
+                $this->tag,
                 $this->getContext(),
             );
 
@@ -183,7 +175,7 @@ final class Binding implements Equality
         foreach (class_implements($this->type) as $interface) {
             $interfaces[] = new Binding(
                 $interface,
-                self::DEFAULT,
+                $this->tag,
                 $this->getContext(),
             );
         }
