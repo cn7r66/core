@@ -13,11 +13,9 @@ namespace Vivarium\Container\Binding;
 use ReflectionFunction;
 use Vivarium\Assertion\Boolean\IsTrue;
 use Vivarium\Assertion\Conditional\IsNotNull;
-use Vivarium\Assertion\Object\HasMethod;
 use Vivarium\Assertion\Object\IsInstanceOf;
 use Vivarium\Assertion\Type\IsAssignableTo;
 use Vivarium\Container\Binding;
-use Vivarium\Container\Method;
 use Vivarium\Container\Provider;
 use Vivarium\Container\Provider\ClassConstant;
 use Vivarium\Container\Provider\Constant;
@@ -74,11 +72,8 @@ final class ProviderBinder
     {
         $class = $this->source->getType();
 
-        (new HasMethod('__construct'))
-            ->assert($class);
-
         if ($configure === null) {
-            $configure = static fn (Method $method) => $method;
+            $configure = static fn (Constructor $constructor): Constructor => $constructor;
         }
 
         return $this->toProvider($configure(new Constructor($class)));

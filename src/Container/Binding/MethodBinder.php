@@ -10,12 +10,12 @@ declare(strict_types=1);
 
 namespace Vivarium\Container\Binding;
 
-use Vivarium\Container\Method;
+use Vivarium\Container\Caller;
 
 /** @template T */
 final class MethodBinder
 {
-    /** @var callable(string, callable(Method):Method): T */
+    /** @var callable(string, callable(Caller):Caller): T */
     private $create;
 
     public function __construct(callable $create)
@@ -27,7 +27,7 @@ final class MethodBinder
     public function method(string $method, callable|null $configure = null)
     {
         if ($configure === null) {
-            $configure = static fn (Method $method) => $method;
+            $configure = static fn (Caller $caller): Caller => $caller;
         }
 
         return ($this->create)($method, $configure);

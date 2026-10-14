@@ -16,6 +16,7 @@ use Vivarium\Container\Binding;
 use Vivarium\Container\Capability;
 use Vivarium\Container\Container;
 use Vivarium\Container\Provider;
+use Vivarium\Type\Type;
 
 final class Fallback implements Provider
 {
@@ -33,7 +34,10 @@ final class Fallback implements Provider
 
     public function getTarget(): string
     {
-        return $this->primary->getType() . '|' . $this->secondary->getTarget();
+        return Type::union(
+            $this->primary->getType(),
+            $this->secondary->getTarget(),
+        );
     }
 
     public function getCapabilities(): Set

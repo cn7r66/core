@@ -11,34 +11,133 @@ declare(strict_types=1);
 namespace Vivarium\Container\Injection;
 
 use ReflectionClass;
+use Vivarium\Assertion\Object\HasPublicMethod;
 use Vivarium\Assertion\Type\IsAssignableTo;
-use Vivarium\Container\BaseMethod;
+use Vivarium\Container\Binding;
+use Vivarium\Container\Binding\ProviderBinder;
+use Vivarium\Container\Caller;
 use Vivarium\Container\Container;
 use Vivarium\Container\Injection;
+use Vivarium\Container\Parameter;
 use Vivarium\Container\Provider;
+use Vivarium\Container\Signature;
+use Vivarium\Equality\Equality;
+use Vivarium\Equality\EqualsBuilder;
+use Vivarium\Equality\HashBuilder;
+use Vivarium\Type\Type;
 
+use function array_pop;
+use function array_values;
 use function class_exists;
 
-final class MethodCall extends BaseMethod implements Injection
+/**
+ * Invokes a method on the resolved instance, mutating it in place for its
+ * side effects rather than producing a value.
+ */
+final class MethodCall implements Injection, Caller, Equality
 {
+    private Signature $signature;
+
+    public function __construct(private string $class, private string $method)
+    {
+        $this->signature = Signature::ofMethod($class, $method);
+
+        // Invocability is the Caller's concern, not Signature::ofMethod's: the guard
+        // deliberately does not live there so signatures stay extractable from any method.
+        (new HasPublicMethod($this->method))
+            ->assert($this->class);
+    }
+
     public function getSlot(): string
     {
-        return $this->getName();
+        return $this->method;
+    }
+
+    /**
+     * Binds an argument provider to the method parameter named $name.
+     *
+     * $name must be a parameter of the method; an unknown name is a
+     * precondition violation.
+     */
+    public function bindArgument(string $name): ProviderBinder
+    {
+        return $this->bindArgumentAtPosition(
+            $this->signature->positionOf($name),
+        );
+    }
+
+    /**
+     * Binds an argument provider to the method parameter at the zero-based
+     * $position.
+     *
+     * A provider bound to a variadic position promises the whole collected
+     * array the slot receives, not the element type.
+     */
+    public function bindArgumentAtPosition(int $position): ProviderBinder
+    {
+        $parameter = $this->signature->getParameter($position);
+
+        $type = $parameter instanceof Parameter\Variadic ?
+            Type::ARRAY : $parameter->getType();
+
+        $binding = new Binding($type);
+
+        return new ProviderBinder(
+            $binding,
+            function (Binding $source, Provider $provider) use ($position): self {
+                $methodCall            = clone $this;
+                $methodCall->signature = $this->signature->withArgument($position, $provider);
+
+                return $methodCall;
+            },
+        );
     }
 
     public function enhance(mixed $instance, Container $container): mixed
     {
-        (new IsAssignableTo($this->getClass()))
+        (new IsAssignableTo($this->class))
             ->assert($instance::class);
 
+        // The configured signature is merged onto the runtime override per PHP's
+        // parameter-override rules: the runtime signature wins per position.
+        $signature = $this->signature->project(
+            Signature::ofMethod($instance::class, $this->method),
+        );
+
         (new ReflectionClass($instance::class))
-            ->getMethod($this->getName())
-            ->invokeArgs(
-                $instance,
-                $this->getArgumentsValue($container, $instance::class)->toArray(),
-            );
+            ->getMethod($this->method)
+            ->invokeArgs($instance, $this->resolveArguments($signature, $container));
 
         return $instance;
+    }
+
+    /** @return array<mixed> */
+    private function resolveArguments(Signature $signature, Container $container): array
+    {
+        $providers = $signature->getArguments();
+
+        $values = [];
+        for ($position = 0; $position < $signature->count(); $position++) {
+            $values[] = $providers[$position]->provide($container);
+        }
+
+        if ($signature->count() === 0) {
+            return $values;
+        }
+
+        $lastParameter = $signature->getParameter($signature->count() - 1);
+
+        if (! $lastParameter instanceof Parameter\Variadic) {
+            return $values;
+        }
+
+        $variadicValues = array_pop($values);
+
+        foreach (array_values($variadicValues) as $variadicValue) {
+            $values[] = $variadicValue;
+        }
+
+        return $values;
     }
 
     public function accept(Provider $provider): bool
@@ -46,6 +145,32 @@ final class MethodCall extends BaseMethod implements Injection
         $target = $provider->getTarget();
 
         return class_exists($target)
-            && (new ReflectionClass($target))->hasMethod($this->getName());
+            && (new ReflectionClass($target))->hasMethod($this->method);
+    }
+
+    public function equals(object $object): bool
+    {
+        if ($object === $this) {
+            return true;
+        }
+
+        if ($object::class !== $this::class) {
+            return false;
+        }
+
+        $other = $object;
+
+        return (new EqualsBuilder())
+            ->append($this->class, $other->class)
+            ->append($this->method, $other->method)
+            ->isEquals();
+    }
+
+    public function hash(): string
+    {
+        return (new HashBuilder())
+            ->append($this->class)
+            ->append($this->method)
+            ->getHashCode();
     }
 }

@@ -16,4 +16,9 @@ final class StubWithUntypedRequiredArg
     public function __construct(private $value)
     {
     }
+
+    public function getValue(): mixed
+    {
+        return $this->value;
+    }
 }

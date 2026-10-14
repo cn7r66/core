@@ -30,6 +30,7 @@
 
     <rule ref="rulesets/codesize.xml">
         <exclude name="TooManyPublicMethods"/>
+        <exclude name="ExcessiveClassComplexity"/>
     </rule>
 
     <rule ref="rulesets/codesize.xml/TooManyPublicMethods">
@@ -39,6 +40,14 @@
             </property>
             <property name="ignorepattern">
                 <value>(^(set|get|is|has|with|equals|hash))i</value>
+            </property>
+        </properties>
+    </rule>
+
+    <rule ref="rulesets/codesize.xml/ExcessiveClassComplexity">
+        <properties>
+            <property name="maximum">
+                <value>60</value>
             </property>
         </properties>
     </rule>

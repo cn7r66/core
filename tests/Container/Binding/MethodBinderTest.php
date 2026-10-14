@@ -13,7 +13,7 @@ namespace Vivarium\Test\Container\Binding;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Container\Binding\MethodBinder;
-use Vivarium\Container\Method;
+use Vivarium\Container\Caller;
 
 /** @coversDefaultClass \Vivarium\Container\Binding\MethodBinder */
 final class MethodBinderTest extends TestCase
@@ -42,7 +42,6 @@ final class MethodBinderTest extends TestCase
     /** @covers ::method */
     public function testMethodWithoutConfigureUsesIdentityFunction(): void
     {
-        $methodMock     = $this->createMock(Method::class);
         $capturedConfig = null;
 
         $binder = new MethodBinder(
@@ -55,13 +54,15 @@ final class MethodBinderTest extends TestCase
 
         $binder->method('setFoo');
 
-        static::assertSame($methodMock, ($capturedConfig)($methodMock));
+        $caller = $this->createMock(Caller::class);
+
+        static::assertSame($caller, $capturedConfig($caller));
     }
 
     /** @covers ::method */
     public function testMethodWithConfigureForwardsCallbackToCreate(): void
     {
-        $configure      = static fn (Method $m): Method => $m;
+        $configure      = static fn (Caller $c): Caller => $c;
         $capturedConfig = null;
 
         $binder = new MethodBinder(

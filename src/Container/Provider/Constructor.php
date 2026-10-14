@@ -11,43 +11,128 @@ declare(strict_types=1);
 namespace Vivarium\Container\Provider;
 
 use ReflectionClass;
-use Vivarium\Collection\Sequence\ArraySequence;
-use Vivarium\Collection\Sequence\Sequence;
+use Vivarium\Assertion\Boolean\IsTrue;
 use Vivarium\Collection\Set\HashSet;
 use Vivarium\Collection\Set\Set;
-use Vivarium\Container\BaseMethod;
+use Vivarium\Container\Binding;
+use Vivarium\Container\Binding\ProviderBinder;
+use Vivarium\Container\Caller;
 use Vivarium\Container\Capability;
 use Vivarium\Container\Container;
-use Vivarium\Container\Method;
+use Vivarium\Container\Parameter;
 use Vivarium\Container\Provider;
+use Vivarium\Container\Signature;
+use Vivarium\Equality\Equality;
+use Vivarium\Equality\EqualsBuilder;
+use Vivarium\Equality\HashBuilder;
+use Vivarium\Type\Type;
 
-final class Constructor extends BaseMethod implements Provider
+use function array_pop;
+use function array_values;
+use function sprintf;
+
+/**
+ * Builds an instance of a class through its constructor.
+ *
+ * When the class has no constructor, it instantiates with zero arguments.
+ */
+final class Constructor implements Provider, Caller, Equality
 {
-    public function __construct(string $class)
+    private Signature $signature;
+
+    public function __construct(private string $class)
     {
-        parent::__construct($class, Method::CONSTRUCT);
+        $this->signature = Signature::ofConstructor($class);
+
+        // Instantiability lives here, not on Signature::ofConstructor: signatures
+        // must remain extractable from abstract classes for hierarchy projection.
+        (new IsTrue())
+            ->assert(
+                (new ReflectionClass($class))->isInstantiable(),
+                sprintf('Class %s is not instantiable.', $class),
+            );
     }
 
-    public function getArguments(string|null $class = null): Sequence
+    /**
+     * Binds an argument provider to the constructor parameter named $name.
+     *
+     * $name must be a parameter of the constructor; an unknown name is a
+     * precondition violation.
+     */
+    public function bindArgument(string $name): ProviderBinder
     {
-        if (! (new ReflectionClass($this->getClass()))->hasMethod(Method::CONSTRUCT)) {
-            return ArraySequence::fromArray([]);
-        }
+        return $this->bindArgumentAtPosition(
+            $this->signature->positionOf($name),
+        );
+    }
 
-        return parent::getArguments($class);
+    /**
+     * Binds an argument provider to the constructor parameter at the
+     * zero-based $position.
+     *
+     * A provider bound to a variadic position promises the whole collected
+     * array the slot receives, not the element type.
+     */
+    public function bindArgumentAtPosition(int $position): ProviderBinder
+    {
+        $parameter = $this->signature->getParameter($position);
+
+        $type = $parameter instanceof Parameter\Variadic ?
+            Type::ARRAY : $parameter->getType();
+
+        $binding = new Binding($type);
+
+        return new ProviderBinder(
+            $binding,
+            function (Binding $source, Provider $provider) use ($position): self {
+                $constructor            = clone $this;
+                $constructor->signature = $this->signature->withArgument($position, $provider);
+
+                return $constructor;
+            },
+        );
     }
 
     public function provide(Container $container): mixed
     {
-        return (new ReflectionClass($this->getClass()))
+        return (new ReflectionClass($this->class))
             ->newInstanceArgs(
-                $this->getArgumentsValue($container)->toArray(),
+                $this->resolveArguments($container),
             );
+    }
+
+    /** @return array<mixed> */
+    private function resolveArguments(Container $container): array
+    {
+        $providers = $this->signature->getArguments();
+
+        $values = [];
+        for ($position = 0; $position < $this->signature->count(); $position++) {
+            $values[] = $providers[$position]->provide($container);
+        }
+
+        if ($this->signature->count() === 0) {
+            return $values;
+        }
+
+        $lastParameter = $this->signature->getParameter($this->signature->count() - 1);
+
+        if (! $lastParameter instanceof Parameter\Variadic) {
+            return $values;
+        }
+
+        $variadicValues = array_pop($values);
+
+        foreach (array_values($variadicValues) as $variadicValue) {
+            $values[] = $variadicValue;
+        }
+
+        return $values;
     }
 
     public function getTarget(): string
     {
-        return $this->getClass();
+        return $this->class;
     }
 
     public function getCapabilities(): Set
@@ -57,5 +142,29 @@ final class Constructor extends BaseMethod implements Provider
             Capability::INTERCEPTABLE,
             Capability::DECORABLE,
         ]);
+    }
+
+    public function equals(object $object): bool
+    {
+        if ($object === $this) {
+            return true;
+        }
+
+        if ($object::class !== $this::class) {
+            return false;
+        }
+
+        $other = $object;
+
+        return (new EqualsBuilder())
+            ->append($this->class, $other->class)
+            ->isEquals();
+    }
+
+    public function hash(): string
+    {
+        return (new HashBuilder())
+            ->append($this->class)
+            ->getHashCode();
     }
 }
