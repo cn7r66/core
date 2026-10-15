@@ -94,7 +94,10 @@ final class LazyRegistryTest extends TestCase
         self::assertSame(1, $called);
     }
 
-    /** @covers ::hasProvider */
+    /**
+     * @covers ::hasProvider
+     * @covers ::getRealRegistry
+     */
     public function testHasProviderDelegatesToInnerRegistry(): void
     {
         $binding = new Binding(StubClass::class);
@@ -109,7 +112,10 @@ final class LazyRegistryTest extends TestCase
         self::assertTrue($registry->hasProvider($binding));
     }
 
-    /** @covers ::hasProvider */
+    /**
+     * @covers ::hasProvider
+     * @covers ::getRealRegistry
+     */
     public function testHasProviderReturnsFalseWhenInnerRegistryReturnsFalse(): void
     {
         $binding = new Binding(StubClass::class);
@@ -121,7 +127,10 @@ final class LazyRegistryTest extends TestCase
         self::assertFalse($registry->hasProvider($binding));
     }
 
-    /** @covers ::findProvider */
+    /**
+     * @covers ::findProvider
+     * @covers ::getRealRegistry
+     */
     public function testFindProviderDelegatesToInnerRegistry(): void
     {
         $binding  = new Binding(StubClass::class);
@@ -137,7 +146,10 @@ final class LazyRegistryTest extends TestCase
         self::assertSame($provider, $registry->findProvider($binding));
     }
 
-    /** @covers ::findScope */
+    /**
+     * @covers ::findScope
+     * @covers ::getRealRegistry
+     */
     public function testFindScopeDelegatesToInnerRegistry(): void
     {
         $binding = new Binding(StubClass::class);
@@ -152,7 +164,10 @@ final class LazyRegistryTest extends TestCase
         self::assertSame(Scope::SERVICE, $registry->findScope($binding));
     }
 
-    /** @covers ::findInjections */
+    /**
+     * @covers ::findInjections
+     * @covers ::getRealRegistry
+     */
     public function testFindInjectionsDelegatesToInnerRegistry(): void
     {
         $binding   = new Binding(StubClass::class);
@@ -168,7 +183,10 @@ final class LazyRegistryTest extends TestCase
         self::assertSame([$injection], $registry->findInjections($binding));
     }
 
-    /** @covers ::findCalls */
+    /**
+     * @covers ::findCalls
+     * @covers ::getRealRegistry
+     */
     public function testFindCallsDelegatesToInnerRegistry(): void
     {
         $binding = new Binding(StubClass::class);
@@ -184,7 +202,10 @@ final class LazyRegistryTest extends TestCase
         self::assertSame([$call], $registry->findCalls($binding));
     }
 
-    /** @covers ::findDecorations */
+    /**
+     * @covers ::findDecorations
+     * @covers ::getRealRegistry
+     */
     public function testFindDecorationsDelegatesToInnerRegistry(): void
     {
         $binding   = new Binding(StubClass::class);
@@ -198,5 +219,25 @@ final class LazyRegistryTest extends TestCase
         $registry = new LazyRegistry(static fn (): Registry => $inner);
 
         self::assertSame([$decorator], $registry->findDecorations($binding));
+    }
+
+    /**
+     * @covers ::locate
+     * @covers ::getRealRegistry
+     * @covers ::__construct
+     */
+    public function testLocateDelegatesToInnerRegistry(): void
+    {
+        $binding = new Binding(StubClass::class);
+        $located = new Binding(StubClass::class);
+        $inner   = $this->createMock(Registry::class);
+        $inner->expects($this->once())
+            ->method('locate')
+            ->with($binding)
+            ->willReturn($located);
+
+        $registry = new LazyRegistry(static fn (): Registry => $inner);
+
+        self::assertSame($located, $registry->locate($binding));
     }
 }

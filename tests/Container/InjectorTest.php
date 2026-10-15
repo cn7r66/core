@@ -60,7 +60,9 @@ final class InjectorTest extends TestCase
      * @covers ::makeBinding
      * @covers ::getProvider
      * @covers ::applyScope
-     * @covers ::applyEnhancements
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     * @covers ::locate
      */
     public function testAutoWiresConcreteClassWithNoArgs(): void
     {
@@ -73,6 +75,9 @@ final class InjectorTest extends TestCase
     /**
      * @covers ::get
      * @covers ::has
+     * @covers ::locate
+     * @covers ::getProvider
+     * @covers ::makeBinding
      */
     public function testAutoWiresConcreteClassWithDependency(): void
     {
@@ -87,6 +92,7 @@ final class InjectorTest extends TestCase
     /**
      * @covers ::get
      * @covers ::getProvider
+     * @covers ::locate
      */
     public function testExplicitBindingOverridesAutoWiring(): void
     {
@@ -105,6 +111,8 @@ final class InjectorTest extends TestCase
     /**
      * @covers ::get
      * @covers ::applyScope
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testServiceScopeReturnsSameInstance(): void
     {
@@ -122,6 +130,8 @@ final class InjectorTest extends TestCase
     /**
      * @covers ::get
      * @covers ::applyScope
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testTransientScopeReturnsDifferentInstances(): void
     {
@@ -136,7 +146,10 @@ final class InjectorTest extends TestCase
         );
     }
 
-    /** @covers ::has */
+    /**
+     * @covers ::has
+     * @covers ::makeBinding
+     */
     public function testHasReturnsFalseForUnknownInterface(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -146,7 +159,10 @@ final class InjectorTest extends TestCase
 
     /**
      * @covers ::get
-     * @covers ::applyEnhancements
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testPropertyInjectionIsAppliedOnGet(): void
     {
@@ -165,6 +181,8 @@ final class InjectorTest extends TestCase
 
     /**
      * @covers ::get
+     * @covers ::locate
+     * @covers ::getProvider
      * @dataProvider provideMethodInjectionRegistries
      */
     public function testMethodInjectionIsAppliedOnGet(Registry $registry): void
@@ -192,7 +210,11 @@ final class InjectorTest extends TestCase
         ];
     }
 
-    /** @covers ::get */
+    /**
+     * @covers ::get
+     * @covers ::locate
+     * @covers ::getProvider
+     */
     public function testEnhancementsAppliedBeforeScopeCaching(): void
     {
         $registry = (new EagerRegistry())
@@ -211,6 +233,8 @@ final class InjectorTest extends TestCase
     /**
      * @covers ::get
      * @covers ::makeBinding
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testGetAcceptsBindingObject(): void
     {
@@ -240,7 +264,12 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubWithNoArgs::class, $withCollector->get(StubWithNoArgs::class));
     }
 
-    /** @covers ::get */
+    /**
+     * @covers ::get
+     * @covers ::locate
+     * @covers ::resolve
+     * @covers ::withCache
+     */
     public function testGetReturnsRestoredDefinitionOnCacheHit(): void
     {
         $expected   = new StubWithNoArgs();
@@ -256,7 +285,10 @@ final class InjectorTest extends TestCase
         static::assertSame($expected, $container->get(StubWithNoArgs::class));
     }
 
-    /** @covers ::has */
+    /**
+     * @covers ::has
+     * @covers ::makeBinding
+     */
     public function testHasReturnsTrueWhenAlreadySolved(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -265,7 +297,10 @@ final class InjectorTest extends TestCase
         static::assertTrue($container->has(StubWithNoArgs::class));
     }
 
-    /** @covers ::has */
+    /**
+     * @covers ::has
+     * @covers ::makeBinding
+     */
     public function testHasReturnsTrueOnCacheHit(): void
     {
         $cache = $this->createMock(Cache::class);
@@ -276,7 +311,10 @@ final class InjectorTest extends TestCase
         static::assertTrue($container->has(StubWithNoArgs::class));
     }
 
-    /** @covers ::has */
+    /**
+     * @covers ::has
+     * @covers ::makeBinding
+     */
     public function testHasReturnsTrueWhenRegistryHasProvider(): void
     {
         $registry = (new EagerRegistry())
@@ -290,6 +328,7 @@ final class InjectorTest extends TestCase
     /**
      * @covers ::get
      * @covers ::getProvider
+     * @covers ::locate
      */
     public function testGetThrowsWhenProviderNotFoundAndTypeIsNotAClass(): void
     {
@@ -308,7 +347,10 @@ final class InjectorTest extends TestCase
 
     /**
      * @covers ::get
-     * @covers ::applyEnhancements
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testGetSkipsEnhancementThatRejectsProvider(): void
     {
@@ -331,7 +373,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::getProvider
      * @covers ::applyScope
-     * @covers ::applyEnhancements
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
      */
     public function testServiceIsSharedAcrossDependentsInDifferentClasses(): void
     {
@@ -353,7 +396,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::getProvider
      * @covers ::applyScope
-     * @covers ::applyEnhancements
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
      */
     public function testCircularDependencyIsDetectedOnFirstRepeat(): void
     {
@@ -392,7 +436,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::getProvider
      * @covers ::applyScope
-     * @covers ::applyEnhancements
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
      */
     public function testDiamondDependencyIsNotACycle(): void
     {
@@ -408,7 +453,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::getProvider
      * @covers ::applyScope
-     * @covers ::applyEnhancements
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
      */
     public function testMissingDependencyFailureCarriesResolutionPath(): void
     {
@@ -433,6 +479,7 @@ final class InjectorTest extends TestCase
      * @covers ::get
      * @covers ::locate
      * @covers ::resolve
+     * @covers ::getProvider
      * @dataProvider provideRegistriesWithoutOtherTagRegistration
      */
     public function testTaggedClassWithoutRegistrationIsNotAutowired(Registry $registry): void
@@ -453,6 +500,7 @@ final class InjectorTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::has
+     * @covers ::makeBinding
      * @dataProvider provideRegistriesWithoutOtherTagRegistration
      */
     public function testHasIsFalseForTaggedClassWithoutRegistration(Registry $registry): void
@@ -477,6 +525,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::applyAlterations
      * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testInjectionThroughBindingChainIsAppliedOnce(): void
     {
@@ -497,6 +547,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::applyAlterations
      * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testCallOnAliasBindingIsAppliedOnce(): void
     {
@@ -520,6 +572,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::applyAlterations
      * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testInjectionIsNotAppliedToSuppliedInstance(): void
     {
@@ -539,6 +593,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::applyAlterations
      * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testDefaultOrderIsInjectionThenCallThenDecoration(): void
     {
@@ -560,6 +616,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::applyAlterations
      * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      * @dataProvider provideInterfaceInjectionRegistries
      */
     public function testInjectionRegisteredOnAnInterfaceAppliesToItsImplementation(
@@ -598,6 +656,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::applyAlterations
      * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      * @dataProvider provideWrappingDecoratorRegistries
      */
     public function testDecoratorWrapsResolvedObjectAndAutowiresOtherParameters(Registry $registry): void
@@ -640,6 +700,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::applyAlterations
      * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testDecoratorConfigureCallbackBindsAnotherConstructorArgument(): void
     {
@@ -664,6 +726,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::applyAlterations
      * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testLaterRegisteredDecoratorIsOutermostWithDefaultPriority(): void
     {
@@ -685,6 +749,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::applyAlterations
      * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testComposedDecoratorFeedsCallableResultToNextFunction(): void
     {
@@ -704,6 +770,8 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::applyAlterations
      * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      */
     public function testServiceScopedBindingIsDecoratedOnce(): void
     {

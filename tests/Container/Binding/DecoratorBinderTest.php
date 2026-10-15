@@ -175,6 +175,8 @@ final class DecoratorBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::with
+     * @covers ::assertSlot
+     * @covers ::slotParameter
      * @covers \Vivarium\Container\Binding\PriorityBinder::withDefaultPriority
      */
     public function testWithCreatesWrapperDecorator(): void
@@ -190,6 +192,8 @@ final class DecoratorBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::with
+     * @covers ::assertSlot
+     * @covers ::slotParameter
      * @covers \Vivarium\Container\Binding\PriorityBinder::withPriority
      */
     public function testWithReturnsValueFromCreateAndForwardsPriority(): void
@@ -213,6 +217,8 @@ final class DecoratorBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::with
+     * @covers ::assertSlot
+     * @covers ::slotParameter
      * @covers \Vivarium\Container\Binding\PriorityBinder::withDefaultPriority
      * @dataProvider provideValidSlots
      */
@@ -241,6 +247,8 @@ final class DecoratorBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::with
+     * @covers ::assertSlot
+     * @covers ::slotParameter
      * @covers \Vivarium\Container\Binding\PriorityBinder::withDefaultPriority
      */
     public function testWithAppliesConfigureCallback(): void
@@ -262,6 +270,8 @@ final class DecoratorBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::with
+     * @covers ::assertSlot
+     * @covers ::slotParameter
      * @dataProvider provideInvalidWithArguments
      */
     public function testWithRejectsInvalidRegistration(string $class, string|int $slot): void
@@ -293,6 +303,8 @@ final class DecoratorBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::withFunction
+     * @covers ::assertSlot
+     * @covers ::slotParameter
      * @covers \Vivarium\Container\Binding\PriorityBinder::withDefaultPriority
      * @dataProvider provideValidFunctions
      */
@@ -318,6 +330,8 @@ final class DecoratorBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::withFunction
+     * @covers ::assertSlot
+     * @covers ::slotParameter
      * @covers \Vivarium\Container\Binding\PriorityBinder::withDefaultPriority
      */
     public function testWithFunctionPutsDecoratedObjectInSlot(): void
@@ -339,6 +353,8 @@ final class DecoratorBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::withFunction
+     * @covers ::assertSlot
+     * @covers ::slotParameter
      * @dataProvider provideInvalidFunctions
      */
     public function testWithFunctionRejectsInvalidRegistration(Closure $fn, string|int $slot): void
@@ -371,6 +387,7 @@ final class DecoratorBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::compose
+     * @covers ::slotParameter
      * @covers \Vivarium\Container\Binding\PriorityBinder::withDefaultPriority
      * @dataProvider provideCallableTypes
      */
@@ -396,6 +413,7 @@ final class DecoratorBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::compose
+     * @covers ::slotParameter
      * @covers \Vivarium\Container\Binding\PriorityBinder::withDefaultPriority
      * @dataProvider provideValidSlotsForCompose
      */
@@ -425,6 +443,7 @@ final class DecoratorBinderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::compose
+     * @covers ::slotParameter
      * @dataProvider provideInvalidComposeArguments
      */
     public function testComposeRejectsInvalidRegistration(string $type, Closure $fn, string|int $slot): void

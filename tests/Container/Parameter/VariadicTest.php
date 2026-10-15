@@ -95,6 +95,7 @@ final class VariadicTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::withArgument
+     * @covers ::getArgument
      */
     public function testWithArgument(): void
     {
@@ -113,6 +114,7 @@ final class VariadicTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::withArgument
+     * @covers ::getArgument
      */
     public function testWithArgumentException(): void
     {
@@ -128,6 +130,7 @@ final class VariadicTest extends TestCase
      * @covers ::__construct
      * @covers ::withArgument
      * @covers ::isExplicit
+     * @covers ::getArgument
      * @dataProvider provideFreshAndBoundParameters
      */
     public function testIsExplicit(Variadic $parameter, bool $expected): void

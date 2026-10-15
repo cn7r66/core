@@ -62,7 +62,10 @@ final class FunTest extends TestCase
         static::assertCount(3, $capabilities);
     }
 
-    /** @covers ::provide */
+    /**
+     * @covers ::provide
+     * @covers ::resolveArguments
+     */
     public function testProvideInvokesZeroArgumentClosureWithoutConsultingContainer(): void
     {
         $container = $this->createMock(Container::class);
@@ -74,7 +77,10 @@ final class FunTest extends TestCase
         static::assertSame('value', $result);
     }
 
-    /** @covers ::provide */
+    /**
+     * @covers ::provide
+     * @covers ::resolveArguments
+     */
     public function testProvideAutowiresRequiredTypedParameter(): void
     {
         $service   = new StubService();
@@ -86,7 +92,10 @@ final class FunTest extends TestCase
         static::assertSame($service, $result);
     }
 
-    /** @covers ::provide */
+    /**
+     * @covers ::provide
+     * @covers ::resolveArguments
+     */
     public function testProvideUsesContainerValueForOptionalParameter(): void
     {
         $container = $this->createMock(Container::class);
@@ -98,7 +107,10 @@ final class FunTest extends TestCase
         static::assertSame('custom', $result);
     }
 
-    /** @covers ::provide */
+    /**
+     * @covers ::provide
+     * @covers ::resolveArguments
+     */
     public function testProvideUsesDefaultWhenOptionalParameterNotInContainer(): void
     {
         $container = $this->createMock(Container::class);
@@ -113,6 +125,7 @@ final class FunTest extends TestCase
     /**
      * @covers ::provide
      * @covers ::bindArgument
+     * @covers ::resolveArguments
      */
     public function testProvidePrefersExplicitlyBoundArgumentOverAutoResolution(): void
     {

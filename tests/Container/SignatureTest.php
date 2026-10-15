@@ -433,6 +433,8 @@ final class SignatureTest extends TestCase
 
     /**
      * @covers ::project
+     * @covers ::projectParameters
+     * @covers ::projectParameter
      * @dataProvider provideExplicitBindingProjections
      */
     public function testProjectKeepsTheWinningExplicitBinding(
@@ -470,7 +472,11 @@ final class SignatureTest extends TestCase
         ];
     }
 
-    /** @covers ::project */
+    /**
+     * @covers ::project
+     * @covers ::projectParameters
+     * @covers ::projectParameter
+     */
     public function testProjectLeavesTheTargetDefaultWhenNeitherIsBound(): void
     {
         $projected = Signature::ofConstructor(StubWithRequiredStringArg::class)
@@ -483,7 +489,11 @@ final class SignatureTest extends TestCase
         );
     }
 
-    /** @covers ::project */
+    /**
+     * @covers ::project
+     * @covers ::projectParameters
+     * @covers ::projectParameter
+     */
     public function testProjectResolvesNamesThroughTheTarget(): void
     {
         $projected = Signature::ofConstructor(StubWithRequiredStringArg::class)
@@ -492,7 +502,11 @@ final class SignatureTest extends TestCase
         static::assertSame(0, $projected->positionOf('value'));
     }
 
-    /** @covers ::project */
+    /**
+     * @covers ::project
+     * @covers ::projectParameters
+     * @covers ::projectParameter
+     */
     public function testProjectLetsAClassTypedTargetWidenFromASubclassTypedSource(): void
     {
         $projected = Signature::ofConstructor(StubWithSubclassTypedArg::class)
@@ -502,7 +516,11 @@ final class SignatureTest extends TestCase
         static::assertSame(StubBase::class, $projected->getParameter(0)->getType());
     }
 
-    /** @covers ::project */
+    /**
+     * @covers ::project
+     * @covers ::projectParameters
+     * @covers ::projectParameter
+     */
     public function testProjectLetsAVariadicTargetShadowAnOptionalSource(): void
     {
         $projected = Signature::ofConstructor(StubForVariadicShadowSource::class)
@@ -513,7 +531,11 @@ final class SignatureTest extends TestCase
         static::assertSame('array', $projected->getArguments()[0]->getTarget());
     }
 
-    /** @covers ::project */
+    /**
+     * @covers ::project
+     * @covers ::projectParameters
+     * @covers ::projectParameter
+     */
     public function testProjectOmitsAnExtraOptionalTargetPosition(): void
     {
         $projected = Signature::ofConstructor(StubWithNoArgs::class)
@@ -523,7 +545,11 @@ final class SignatureTest extends TestCase
         static::assertFalse($projected->hasArgument(0));
     }
 
-    /** @covers ::project */
+    /**
+     * @covers ::project
+     * @covers ::projectParameters
+     * @covers ::projectParameter
+     */
     public function testProjectOmitsAnExtraVariadicTargetPosition(): void
     {
         $projected = Signature::ofConstructor(StubWithNoArgs::class)
@@ -536,6 +562,8 @@ final class SignatureTest extends TestCase
      * @param class-string<Throwable> $exception
      *
      * @covers ::project
+     * @covers ::projectParameters
+     * @covers ::projectParameter
      * @dataProvider provideIncompatibleProjections
      */
     public function testProjectException(Signature $source, Signature $target, string $exception): void

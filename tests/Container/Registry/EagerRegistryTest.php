@@ -35,7 +35,10 @@ use Vivarium\Test\Container\Stub\StubWithNoArgs;
 /** @coversDefaultClass \Vivarium\Container\Registry\EagerRegistry */
 final class EagerRegistryTest extends TestCase
 {
-    /** @covers ::bind */
+    /**
+     * @covers ::bind
+     * @covers ::scopedRegistration
+     */
     public function testBindReturnsProviderBinder(): void
     {
         $registry = new EagerRegistry();
@@ -45,7 +48,10 @@ final class EagerRegistryTest extends TestCase
         static::assertInstanceOf(ProviderBinder::class, $binder);
     }
 
-    /** @covers ::bind */
+    /**
+     * @covers ::bind
+     * @covers ::scopedRegistration
+     */
     public function testAfterBindingProviderHasProviderReturnsTrue(): void
     {
         $provider = $this->createMock(Provider::class);
@@ -58,7 +64,10 @@ final class EagerRegistryTest extends TestCase
         static::assertTrue($registry->hasProvider($binding));
     }
 
-    /** @covers ::bind */
+    /**
+     * @covers ::bind
+     * @covers ::scopedRegistration
+     */
     public function testBindIsImmutableOriginalHasNoProvider(): void
     {
         $provider = $this->createMock(Provider::class);
@@ -70,7 +79,10 @@ final class EagerRegistryTest extends TestCase
         static::assertFalse($original->hasProvider($binding));
     }
 
-    /** @covers ::bind */
+    /**
+     * @covers ::bind
+     * @covers ::scopedRegistration
+     */
     public function testBindWithTagCreatesDistinctBinding(): void
     {
         $provider       = $this->createMock(Provider::class);
@@ -104,7 +116,10 @@ final class EagerRegistryTest extends TestCase
         static::assertFalse($original->hasProvider($binding));
     }
 
-    /** @covers ::extend */
+    /**
+     * @covers ::extend
+     * @covers ::scopedRegistration
+     */
     public function testExtendReturnsProviderBinder(): void
     {
         $provider = $this->createMock(Provider::class);
@@ -117,7 +132,10 @@ final class EagerRegistryTest extends TestCase
         static::assertInstanceOf(ProviderBinder::class, $binder);
     }
 
-    /** @covers ::extend */
+    /**
+     * @covers ::extend
+     * @covers ::scopedRegistration
+     */
     public function testExtendReplacesExistingProvider(): void
     {
         $first   = $this->createMock(Provider::class);
@@ -133,7 +151,10 @@ final class EagerRegistryTest extends TestCase
         static::assertSame($second, $registry->findProvider($binding));
     }
 
-    /** @covers ::extend */
+    /**
+     * @covers ::extend
+     * @covers ::scopedRegistration
+     */
     public function testExtendThrowsWhenBindingNotFound(): void
     {
         $this->expectException(AssertionFailed::class);
@@ -149,7 +170,10 @@ final class EagerRegistryTest extends TestCase
         static::assertInstanceOf(ScopeBinder::class, $binder);
     }
 
-    /** @covers ::bind */
+    /**
+     * @covers ::bind
+     * @covers ::scopedRegistration
+     */
     public function testBindingProviderReturnsScopeBinder(): void
     {
         $binder = (new EagerRegistry())
@@ -159,7 +183,10 @@ final class EagerRegistryTest extends TestCase
         static::assertInstanceOf(ScopeBinder::class, $binder);
     }
 
-    /** @covers ::bind */
+    /**
+     * @covers ::bind
+     * @covers ::scopedRegistration
+     */
     public function testAfterRegisteringWithScopeFindScopeReturnsChosenScope(): void
     {
         $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
@@ -171,7 +198,10 @@ final class EagerRegistryTest extends TestCase
         static::assertSame(Scope::SERVICE, $registry->findScope($binding));
     }
 
-    /** @covers ::bind */
+    /**
+     * @covers ::bind
+     * @covers ::scopedRegistration
+     */
     public function testRegisteringWithScopeIsImmutableOriginalReturnsTransient(): void
     {
         $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
@@ -181,7 +211,10 @@ final class EagerRegistryTest extends TestCase
         static::assertSame(Scope::TRANSIENT, $original->findScope($binding));
     }
 
-    /** @covers ::bind */
+    /**
+     * @covers ::bind
+     * @covers ::scopedRegistration
+     */
     public function testCloneableScopeRegistered(): void
     {
         $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
@@ -681,6 +714,7 @@ final class EagerRegistryTest extends TestCase
     /**
      * @covers ::bind
      * @covers ::__construct
+     * @covers ::scopedRegistration
      */
     public function testBindingTheSameBindingTwiceIsRejected(): void
     {
@@ -702,6 +736,7 @@ final class EagerRegistryTest extends TestCase
      * @covers ::define
      * @covers ::bind
      * @covers ::__construct
+     * @covers ::scopedRegistration
      */
     public function testDefiningTheSameClassTwiceIsRejected(): void
     {
@@ -720,6 +755,7 @@ final class EagerRegistryTest extends TestCase
      * @covers ::extend
      * @covers ::bind
      * @covers ::__construct
+     * @covers ::scopedRegistration
      */
     public function testExtendReplacesARegistrationWithoutDuplicateError(): void
     {

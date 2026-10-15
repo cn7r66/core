@@ -47,6 +47,7 @@ final class ImmutableMethodCallTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::enhance
+     * @covers ::resolveArguments
      */
     public function testEnhanceReturnsNewInstanceWithDependencyInjected(): void
     {
@@ -68,6 +69,7 @@ final class ImmutableMethodCallTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::enhance
+     * @covers ::resolveArguments
      */
     public function testEnhanceFailsWhenInstanceTypeIsWrong(): void
     {
@@ -81,6 +83,7 @@ final class ImmutableMethodCallTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::enhance
+     * @covers ::resolveArguments
      */
     public function testEnhanceFailsWhenMethodReturnsWrongType(): void
     {

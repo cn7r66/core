@@ -124,6 +124,7 @@ final class OptionalTest extends TestCase
     /**
      * @covers ::withArgument
      * @covers ::__construct
+     * @covers ::getArgument
      */
     public function testWithArgument(): void
     {
@@ -142,6 +143,7 @@ final class OptionalTest extends TestCase
     /**
      * @covers ::withArgument
      * @covers ::__construct
+     * @covers ::getArgument
      */
     public function testWithArgumentException(): void
     {
@@ -157,6 +159,7 @@ final class OptionalTest extends TestCase
      * @covers ::isExplicit
      * @covers ::__construct
      * @covers ::withArgument
+     * @covers ::getArgument
      * @dataProvider provideFreshAndBoundParameters
      */
     public function testIsExplicit(Optional $parameter, bool $expected): void

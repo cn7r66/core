@@ -273,9 +273,6 @@ final class EagerRegistry implements Registry, Binder
 
             foreach ($this->injections->get($candidate) as $entry) {
                 $slot = $entry->getValue()->getSlot();
-                if (isset($bySlot[$slot][$candidate->hash()])) {
-                    continue;
-                }
 
                 $bySlot[$slot][$candidate->hash()] = [$candidate, $entry];
             }

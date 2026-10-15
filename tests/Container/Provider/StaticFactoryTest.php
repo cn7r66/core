@@ -30,6 +30,7 @@ final class StaticFactoryTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::provide
+     * @covers ::resolveArguments
      */
     public function testProvideCallsStaticMethodAndReturnsResult(): void
     {

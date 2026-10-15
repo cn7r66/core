@@ -90,6 +90,7 @@ final class RequiredTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::withArgument
+     * @covers ::getArgument
      */
     public function testWithArgument(): void
     {
@@ -108,6 +109,7 @@ final class RequiredTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::withArgument
+     * @covers ::getArgument
      */
     public function testWithArgumentException(): void
     {
@@ -123,6 +125,7 @@ final class RequiredTest extends TestCase
      * @covers ::__construct
      * @covers ::withArgument
      * @covers ::isExplicit
+     * @covers ::getArgument
      * @dataProvider provideFreshAndBoundParameters
      */
     public function testIsExplicit(Required $parameter, bool $expected): void
