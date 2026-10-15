@@ -21,7 +21,7 @@ final class FunTest extends TestCase
     {
         static::expectNotToPerformAssertions();
 
-        new Fun(static fn (Container $c): string => 'test');
+        new Fun(static fn (Container $container): string => 'test');
     }
 
     /** @covers ::__construct */
@@ -32,26 +32,28 @@ final class FunTest extends TestCase
         new Fun('nonexistent_function');
     }
 
-    /** @covers ::getTarget */
-    public function testGetTargetReturnsReturnType(): void
+    /**
+     * @dataProvider provideFunctionsAndTheirTargets
+     * @covers ::getTarget
+     */
+    public function testGetTargetReturnsReturnType(callable $function, string $expected): void
     {
-        $provider = new Fun(static fn (Container $c): string => 'hello');
-
-        static::assertSame('string', $provider->getTarget());
+        static::assertSame($expected, (new Fun($function))->getTarget());
     }
 
-    /** @covers ::getTarget */
-    public function testGetTargetReturnsMixedForNoReturnType(): void
+    /** @return array<string, array{callable, string}> */
+    public static function provideFunctionsAndTheirTargets(): array
     {
-        $provider = new Fun(static fn (Container $c) => 'hello');
-
-        static::assertSame('mixed', $provider->getTarget());
+        return [
+            'declared return type' => [static fn (Container $container): string => 'hello', 'string'],
+            'no declared return type' => [static fn (Container $container) => 'hello', 'mixed'],
+        ];
     }
 
     /** @covers ::getCapabilities */
     public function testGetCapabilitiesReturnsInjectableInterceptableAndDecorable(): void
     {
-        $provider     = new Fun(static fn (Container $c): string => 'test');
+        $provider     = new Fun(static fn (Container $container): string => 'test');
         $capabilities = $provider->getCapabilities();
 
         static::assertTrue($capabilities->contains(Capability::INJECTABLE));
@@ -164,45 +166,37 @@ final class FunTest extends TestCase
     }
 
     /**
-     * @dataProvider provideEqualsCases
+     * @dataProvider provideEqualFunPairs
      * @covers ::equals
      */
-    public function testEquals(Fun $a, object $b, bool $expected): void
+    public function testEqualsReturnsTrueForEqualFuns(Fun $first, Fun $second): void
     {
-        static::assertSame($expected, $a->equals($b));
+        static::assertTrue($first->equals($second));
+    }
+
+    /**
+     * @dataProvider provideUnequalPairs
+     * @covers ::equals
+     */
+    public function testEqualsReturnsFalseForUnequalObjects(Fun $first, object $second): void
+    {
+        static::assertFalse($first->equals($second));
     }
 
     /**
      * @dataProvider provideEqualFunPairs
      * @covers ::hash
      */
-    public function testHash(Fun $a, Fun $b): void
+    public function testHashIsSameForEqualFuns(Fun $first, Fun $second): void
     {
-        static::assertSame($a->hash(), $b->hash());
+        static::assertSame($first->hash(), $second->hash());
     }
 
-    /** @return iterable<string, array{0: Fun, 1: object, 2: bool}> */
-    public static function provideEqualsCases(): iterable
+    /** @return array<string, array{Fun, Fun}> */
+    public static function provideEqualFunPairs(): array
     {
-        $shared = static fn (): string => 'shared';
-
-        yield 'same closure instance' => [new Fun($shared), new Fun($shared), true];
-
-        $reflexive = new Fun(static fn (): string => 'x');
-
-        yield 'same instance' => [$reflexive, $reflexive, true];
-
-        yield 'distinct closures with identical bodies' => [
-            new Fun(static fn (): string => 'a'),
-            new Fun(static fn (): string => 'a'),
-            false,
-        ];
-
-        yield 'same named function' => [new Fun('strlen'), new Fun('strlen'), true];
-
-        yield 'different named function' => [new Fun('strlen'), new Fun('trim'), false];
-
-        yield 'different class' => [new Fun($shared), new stdClass(), false];
+        $shared   = static fn (): string => 'shared';
+        $instance = new Fun(static fn (): string => 'x');
 
         $provider = self::createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
@@ -211,22 +205,24 @@ final class FunTest extends TestCase
         $withoutBinding = new Fun(static fn (string $name = 'default'): string => $name);
         $withBinding    = $withoutBinding->bindArgument('name')->toProvider($provider);
 
-        yield 'argument bindings excluded from identity' => [$withoutBinding, $withBinding, true];
+        return [
+            'same closure instance' => [new Fun($shared), new Fun($shared)],
+            'same instance' => [$instance, $instance],
+            'same named function' => [new Fun('strlen'), new Fun('strlen')],
+            'argument bindings excluded from identity' => [$withoutBinding, $withBinding],
+        ];
     }
 
-    /** @return iterable<string, array{0: Fun, 1: Fun}> */
-    public static function provideEqualFunPairs(): iterable
+    /** @return array<string, array{Fun, object}> */
+    public static function provideUnequalPairs(): array
     {
-        foreach (self::provideEqualsCases() as $key => $case) {
-            if ($case[2] !== true) {
-                continue;
-            }
-
-            if (! $case[1] instanceof Fun) {
-                continue;
-            }
-
-            yield $key => [$case[0], $case[1]];
-        }
+        return [
+            'distinct closures with identical bodies' => [
+                new Fun(static fn (): string => 'a'),
+                new Fun(static fn (): string => 'a'),
+            ],
+            'different named function' => [new Fun('strlen'), new Fun('trim')],
+            'different class' => [new Fun(static fn (): string => 'shared'), new stdClass()],
+        ];
     }
 }

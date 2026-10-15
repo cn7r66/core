@@ -55,20 +55,27 @@ final class StaticFactoryTest extends TestCase
         );
     }
 
-    /** @covers ::__construct */
-    public function testThrowsForNonExistentMethod(): void
+    /**
+     * @param class-string $class
+     *
+     * @dataProvider provideUncallableStaticMethods
+     * @covers ::__construct
+     */
+    public function testThrowsForUncallableStaticMethod(string $class, string $method): void
     {
         static::expectException(AssertionFailed::class);
 
-        new StaticFactory(StubStaticFactory::class, 'nonExistent');
+        new StaticFactory($class, $method);
     }
 
-    /** @covers ::__construct */
-    public function testThrowsForPrivateMethod(): void
+    /** @return array<string, array{class-string, string}> */
+    public static function provideUncallableStaticMethods(): array
     {
-        static::expectException(AssertionFailed::class);
-
-        new StaticFactory(StubStaticFactoryWithPrivateMethod::class, 'create');
+        return [
+            'method does not exist' => [StubStaticFactory::class, 'nonExistent'],
+            'private method' => [StubStaticFactoryWithPrivateMethod::class, 'create'],
+            'non-static method' => [StubFactory::class, 'create'],
+        ];
     }
 
     /**
@@ -83,14 +90,6 @@ final class StaticFactoryTest extends TestCase
         static::assertTrue($capabilities->contains(Capability::INTERCEPTABLE));
         static::assertTrue($capabilities->contains(Capability::DECORABLE));
         static::assertCount(3, $capabilities);
-    }
-
-    /** @covers ::__construct */
-    public function testConstructorException(): void
-    {
-        static::expectException(AssertionFailed::class);
-
-        new StaticFactory(StubFactory::class, 'create');
     }
 
     /**
@@ -134,13 +133,23 @@ final class StaticFactoryTest extends TestCase
     }
 
     /**
-     * @dataProvider provideEqualsCases
+     * @dataProvider provideEqualStaticFactoryPairs
      * @covers ::__construct
      * @covers ::equals
      */
-    public function testEquals(StaticFactory $a, object $b, bool $expected): void
+    public function testEqualsReturnsTrueForEqualStaticFactories(StaticFactory $first, StaticFactory $second): void
     {
-        static::assertSame($expected, $a->equals($b));
+        static::assertTrue($first->equals($second));
+    }
+
+    /**
+     * @dataProvider provideUnequalPairs
+     * @covers ::__construct
+     * @covers ::equals
+     */
+    public function testEqualsReturnsFalseForUnequalObjects(StaticFactory $first, object $second): void
+    {
+        static::assertFalse($first->equals($second));
     }
 
     /**
@@ -148,41 +157,15 @@ final class StaticFactoryTest extends TestCase
      * @covers ::__construct
      * @covers ::hash
      */
-    public function testHash(StaticFactory $a, StaticFactory $b): void
+    public function testHashIsSameForEqualStaticFactories(StaticFactory $first, StaticFactory $second): void
     {
-        static::assertSame($a->hash(), $b->hash());
+        static::assertSame($first->hash(), $second->hash());
     }
 
-    /** @return iterable<string, array{0: StaticFactory, 1: object, 2: bool}> */
-    public static function provideEqualsCases(): iterable
+    /** @return array<string, array{StaticFactory, StaticFactory}> */
+    public static function provideEqualStaticFactoryPairs(): array
     {
-        $reflexive = new StaticFactory(StubStaticFactory::class, 'create');
-
-        yield 'same instance' => [$reflexive, $reflexive, true];
-
-        yield 'same class and method' => [
-            new StaticFactory(StubStaticFactory::class, 'create'),
-            new StaticFactory(StubStaticFactory::class, 'create'),
-            true,
-        ];
-
-        yield 'same class, different method' => [
-            new StaticFactory(StubStaticFactoryWithBindableArgs::class, 'create'),
-            new StaticFactory(StubStaticFactoryWithBindableArgs::class, 'createVariadic'),
-            false,
-        ];
-
-        yield 'different class, same method' => [
-            new StaticFactory(StubStaticFactory::class, 'create'),
-            new StaticFactory(StubStaticFactoryWithBindableArgs::class, 'create'),
-            false,
-        ];
-
-        yield 'different class' => [
-            new StaticFactory(StubStaticFactory::class, 'create'),
-            new stdClass(),
-            false,
-        ];
+        $instance = new StaticFactory(StubStaticFactory::class, 'create');
 
         $provider = self::createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
@@ -191,22 +174,32 @@ final class StaticFactoryTest extends TestCase
         $withoutBinding = new StaticFactory(StubStaticFactoryWithBindableArgs::class, 'create');
         $withBinding    = $withoutBinding->bindArgument('name')->toProvider($provider);
 
-        yield 'argument bindings excluded from identity' => [$withoutBinding, $withBinding, true];
+        return [
+            'same instance' => [$instance, $instance],
+            'same class and method' => [
+                new StaticFactory(StubStaticFactory::class, 'create'),
+                new StaticFactory(StubStaticFactory::class, 'create'),
+            ],
+            'argument bindings excluded from identity' => [$withoutBinding, $withBinding],
+        ];
     }
 
-    /** @return iterable<string, array{0: StaticFactory, 1: StaticFactory}> */
-    public static function provideEqualStaticFactoryPairs(): iterable
+    /** @return array<string, array{StaticFactory, object}> */
+    public static function provideUnequalPairs(): array
     {
-        foreach (self::provideEqualsCases() as $key => $case) {
-            if ($case[2] !== true) {
-                continue;
-            }
-
-            if (! $case[1] instanceof StaticFactory) {
-                continue;
-            }
-
-            yield $key => [$case[0], $case[1]];
-        }
+        return [
+            'same class, different method' => [
+                new StaticFactory(StubStaticFactoryWithBindableArgs::class, 'create'),
+                new StaticFactory(StubStaticFactoryWithBindableArgs::class, 'createVariadic'),
+            ],
+            'different class, same method' => [
+                new StaticFactory(StubStaticFactory::class, 'create'),
+                new StaticFactory(StubStaticFactoryWithBindableArgs::class, 'create'),
+            ],
+            'different class' => [
+                new StaticFactory(StubStaticFactory::class, 'create'),
+                new stdClass(),
+            ],
+        ];
     }
 }

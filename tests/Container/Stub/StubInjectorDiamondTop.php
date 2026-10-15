@@ -13,8 +13,8 @@ namespace Vivarium\Test\Container\Stub;
 final class StubInjectorDiamondTop
 {
     public function __construct(
-        public readonly StubInjectorSharedUserB $b,
-        public readonly StubInjectorSharedUserC $c,
+        public readonly StubInjectorSharedUserB $sharedUserB,
+        public readonly StubInjectorSharedUserC $sharedUserC,
     ) {
     }
 }

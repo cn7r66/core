@@ -174,8 +174,8 @@ final class EagerRegistryAlterationLookupTest extends TestCase
 
         $result = $this->toArray($registry->findInjections(new Binding(StubClass::class)));
 
-        $values = array_map(static function (ValueAndPriority $vp): mixed {
-            return $vp->getValue();
+        $values = array_map(static function (ValueAndPriority $entry): mixed {
+            return $entry->getValue();
         }, $result);
 
         static::assertContains($parentInjection, $values);
@@ -326,12 +326,14 @@ final class EagerRegistryAlterationLookupTest extends TestCase
         static::assertSame($expected, $result[0]->getPriority());
     }
 
-    /** @return iterable<string, array{string, int}> */
-    public static function provideChannelDefaultPriorities(): iterable
+    /** @return array<string, array{string, int}> */
+    public static function provideChannelDefaultPriorities(): array
     {
-        yield 'injection' => ['injection', Priority::LOW];
-        yield 'call' => ['call', Priority::NORMAL];
-        yield 'decoration' => ['decoration', Priority::HIGH];
+        return [
+            'injection' => ['injection', Priority::LOW],
+            'call' => ['call', Priority::NORMAL],
+            'decoration' => ['decoration', Priority::HIGH],
+        ];
     }
 
     /**

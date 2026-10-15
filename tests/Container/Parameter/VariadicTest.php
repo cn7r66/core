@@ -10,7 +10,6 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Parameter;
 
-use Generator;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -45,11 +44,13 @@ final class VariadicTest extends TestCase
         new Variadic($name, $type, 'App\\Context');
     }
 
-    /** @return Generator<string, array{string, string}> */
-    public static function provideInvalidConstructorArguments(): Generator
+    /** @return array<string, array{string, string}> */
+    public static function provideInvalidConstructorArguments(): array
     {
-        yield 'empty name' => ['', 'string'];
-        yield 'empty type' => ['name', ''];
+        return [
+            'empty name' => ['', 'string'],
+            'empty type' => ['name', ''],
+        ];
     }
 
     /**
@@ -127,60 +128,62 @@ final class VariadicTest extends TestCase
      * @covers ::__construct
      * @covers ::withArgument
      * @covers ::isExplicit
-     * @dataProvider provideIsExplicit
+     * @dataProvider provideFreshAndBoundParameters
      */
     public function testIsExplicit(Variadic $parameter, bool $expected): void
     {
         static::assertSame($expected, $parameter->isExplicit());
     }
 
-    /** @return Generator<string, array{Variadic, bool}> */
-    public static function provideIsExplicit(): Generator
+    /** @return array<string, array{Variadic, bool}> */
+    public static function provideFreshAndBoundParameters(): array
     {
         $provider = self::createStub(Provider::class);
         $provider->method('getTarget')->willReturn('array');
 
-        yield 'freshly constructed' => [new Variadic('name', 'string', 'App\\Context'), false];
-        yield 'explicit argument bound' => [
-            (new Variadic('name', 'string', 'App\\Context'))->withArgument($provider),
-            true,
+        return [
+            'freshly constructed' => [new Variadic('name', 'string', 'App\\Context'), false],
+            'explicit argument bound' => [
+                (new Variadic('name', 'string', 'App\\Context'))->withArgument($provider),
+                true,
+            ],
         ];
     }
 
     /**
      * @covers ::__construct
      * @covers ::canReplace
-     * @dataProvider provideCanReplace
+     * @dataProvider provideReplacementPairs
      */
     public function testCanReplace(Variadic $parameter, ParameterContract $base, bool $expected): void
     {
         static::assertSame($expected, $parameter->canReplace($base));
     }
 
-    /** @return Generator<string, array{Variadic, ParameterContract, bool}> */
-    public static function provideCanReplace(): Generator
+    /** @return array<string, array{Variadic, ParameterContract, bool}> */
+    public static function provideReplacementPairs(): array
     {
         $parameter = new Variadic('name', 'string', 'App\\Context');
-
-        yield 'base is Required' => [
-            $parameter,
-            new Required('name', 'string', 'App\\Context'),
-            true,
-        ];
 
         $reflectionParameter = (new ReflectionMethod(StubWithOptionalArg::class, '__construct'))
             ->getParameters()[0];
 
-        yield 'base is Optional' => [
-            $parameter,
-            new Optional('name', 'string', 'App\\Context', $reflectionParameter),
-            true,
-        ];
-
-        yield 'base is Variadic' => [
-            $parameter,
-            new Variadic('name', 'string', 'App\\Context'),
-            true,
+        return [
+            'base is Required' => [
+                $parameter,
+                new Required('name', 'string', 'App\\Context'),
+                true,
+            ],
+            'base is Optional' => [
+                $parameter,
+                new Optional('name', 'string', 'App\\Context', $reflectionParameter),
+                true,
+            ],
+            'base is Variadic' => [
+                $parameter,
+                new Variadic('name', 'string', 'App\\Context'),
+                true,
+            ],
         ];
     }
 

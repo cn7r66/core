@@ -38,7 +38,7 @@ final class DuplicateInjectionTest extends TestCase
 
     /**
      * @covers ::__construct
-     * @dataProvider provideMessageCases
+     * @dataProvider provideBindingsWithSlots
      */
     public function testMessageSuggestsAMoreSpecificType(Binding $binding, string $description, string $slot): void
     {
@@ -60,29 +60,35 @@ final class DuplicateInjectionTest extends TestCase
         static::assertInstanceOf($type, new DuplicateInjection(new Binding(StubClass::class), 'configure'));
     }
 
-    /** @return iterable<string, array{string}> */
-    public static function provideSlots(): iterable
+    /** @return array<string, array{string}> */
+    public static function provideSlots(): array
     {
-        yield 'method slot' => ['configure'];
-        yield 'property slot' => ['$logger'];
-    }
-
-    /** @return iterable<string, array{Binding, string, string}> */
-    public static function provideMessageCases(): iterable
-    {
-        yield 'method slot, plain binding' => [new Binding(StubClass::class), StubClass::class, 'configure'];
-        yield 'property slot, tagged and contextual binding' => [
-            new Binding(StubClass::class, 'main', 'App\Domain'),
-            StubClass::class . ':main (in App\Domain)',
-            '$logger',
+        return [
+            'method slot' => ['configure'],
+            'property slot' => ['$logger'],
         ];
     }
 
-    /** @return iterable<string, array{string}> */
-    public static function provideExceptionTypes(): iterable
+    /** @return array<string, array{Binding, string, string}> */
+    public static function provideBindingsWithSlots(): array
     {
-        yield 'runtime exception' => [RuntimeException::class];
-        yield 'container exception' => [ContainerException::class];
-        yield 'psr container exception' => [ContainerExceptionInterface::class];
+        return [
+            'method slot, plain binding' => [new Binding(StubClass::class), StubClass::class, 'configure'],
+            'property slot, tagged and contextual binding' => [
+                new Binding(StubClass::class, 'main', 'App\Domain'),
+                StubClass::class . ':main (in App\Domain)',
+                '$logger',
+            ],
+        ];
+    }
+
+    /** @return array<string, array{string}> */
+    public static function provideExceptionTypes(): array
+    {
+        return [
+            'runtime exception' => [RuntimeException::class],
+            'container exception' => [ContainerException::class],
+            'psr container exception' => [ContainerExceptionInterface::class],
+        ];
     }
 }

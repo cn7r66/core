@@ -12,7 +12,7 @@ namespace Vivarium\Test\Container\Stub;
 
 final class StubInjectorNeedsInterface
 {
-    public function __construct(public readonly StubInjectorContract $i)
+    public function __construct(public readonly StubInjectorContract $contract)
     {
     }
 }

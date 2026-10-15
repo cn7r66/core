@@ -10,7 +10,6 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Parameter;
 
-use Generator;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -46,11 +45,13 @@ final class RequiredTest extends TestCase
         new Required($name, $type, 'App\\Context');
     }
 
-    /** @return Generator<string, array{string, string}> */
-    public static function provideInvalidConstructorArguments(): Generator
+    /** @return array<string, array{string, string}> */
+    public static function provideInvalidConstructorArguments(): array
     {
-        yield 'empty name' => ['', 'string'];
-        yield 'empty type' => ['name', ''];
+        return [
+            'empty name' => ['', 'string'],
+            'empty type' => ['name', ''],
+        ];
     }
 
     /**
@@ -122,90 +123,87 @@ final class RequiredTest extends TestCase
      * @covers ::__construct
      * @covers ::withArgument
      * @covers ::isExplicit
-     * @dataProvider provideIsExplicit
+     * @dataProvider provideFreshAndBoundParameters
      */
     public function testIsExplicit(Required $parameter, bool $expected): void
     {
         static::assertSame($expected, $parameter->isExplicit());
     }
 
-    /** @return Generator<string, array{Required, bool}> */
-    public static function provideIsExplicit(): Generator
+    /** @return array<string, array{Required, bool}> */
+    public static function provideFreshAndBoundParameters(): array
     {
         $provider = self::createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
 
-        yield 'freshly constructed' => [new Required('name', 'string', 'App\\Context'), false];
-        yield 'explicit argument bound' => [
-            (new Required('name', 'string', 'App\\Context'))->withArgument($provider),
-            true,
+        return [
+            'freshly constructed' => [new Required('name', 'string', 'App\\Context'), false],
+            'explicit argument bound' => [
+                (new Required('name', 'string', 'App\\Context'))->withArgument($provider),
+                true,
+            ],
         ];
     }
 
     /**
      * @covers ::__construct
      * @covers ::canReplace
-     * @dataProvider provideCanReplace
+     * @dataProvider provideReplacementPairs
      */
     public function testCanReplace(Required $parameter, ParameterContract $base, bool $expected): void
     {
         static::assertSame($expected, $parameter->canReplace($base));
     }
 
-    /** @return Generator<string, array{Required, ParameterContract, bool}> */
-    public static function provideCanReplace(): Generator
+    /** @return array<string, array{Required, ParameterContract, bool}> */
+    public static function provideReplacementPairs(): array
     {
         $parameter = new Required('name', 'string', 'App\\Context');
-
-        yield 'base is Required' => [
-            $parameter,
-            new Required('name', 'string', 'App\\Context'),
-            true,
-        ];
 
         $reflectionParameter = (new ReflectionMethod(StubWithOptionalArg::class, '__construct'))
             ->getParameters()[0];
 
-        yield 'base is Optional' => [
-            $parameter,
-            new Optional('name', 'string', 'App\\Context', $reflectionParameter),
-            false,
-        ];
-
-        yield 'base is Variadic' => [
-            $parameter,
-            new Variadic('name', 'string', 'App\\Context'),
-            false,
-        ];
-
-        yield 'same scalar type on both sides' => [
-            new Required('name', 'int', 'App\\Context'),
-            new Required('name', 'int', 'App\\Context'),
-            true,
-        ];
-
-        yield 'this parameter typed mixed, base typed anything' => [
-            new Required('name', 'mixed', 'App\\Context'),
-            new Required('name', 'int', 'App\\Context'),
-            true,
-        ];
-
-        yield 'this parameter typed with parent, base typed with subclass' => [
-            new Required('name', StubBase::class, 'App\\Context'),
-            new Required('name', StubClass::class, 'App\\Context'),
-            true,
-        ];
-
-        yield 'this parameter typed with subclass, base typed with parent' => [
-            new Required('name', StubClass::class, 'App\\Context'),
-            new Required('name', StubBase::class, 'App\\Context'),
-            false,
-        ];
-
-        yield 'unrelated scalar types' => [
-            new Required('name', 'int', 'App\\Context'),
-            new Required('name', 'string', 'App\\Context'),
-            false,
+        return [
+            'base is Required' => [
+                $parameter,
+                new Required('name', 'string', 'App\\Context'),
+                true,
+            ],
+            'base is Optional' => [
+                $parameter,
+                new Optional('name', 'string', 'App\\Context', $reflectionParameter),
+                false,
+            ],
+            'base is Variadic' => [
+                $parameter,
+                new Variadic('name', 'string', 'App\\Context'),
+                false,
+            ],
+            'same scalar type on both sides' => [
+                new Required('name', 'int', 'App\\Context'),
+                new Required('name', 'int', 'App\\Context'),
+                true,
+            ],
+            'this parameter typed mixed, base typed anything' => [
+                new Required('name', 'mixed', 'App\\Context'),
+                new Required('name', 'int', 'App\\Context'),
+                true,
+            ],
+            'this parameter typed with parent, base typed with subclass' => [
+                new Required('name', StubBase::class, 'App\\Context'),
+                new Required('name', StubClass::class, 'App\\Context'),
+                true,
+            ],
+            'this parameter typed with subclass, base typed with parent' => [
+                new Required('name', StubClass::class, 'App\\Context'),
+                new Required('name', StubBase::class, 'App\\Context'),
+                false,
+            ],
+            'unrelated scalar types' => [
+                new Required('name', 'int', 'App\\Context'),
+                new Required('name', 'string', 'App\\Context'),
+                false,
+            ],
         ];
     }
 

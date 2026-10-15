@@ -17,44 +17,43 @@ use function in_array;
 final class InstanceTest extends TestCase
 {
     /**
+     * @dataProvider provideWrappedValues
      * @covers ::__construct
      * @covers ::provide
      */
-    public function testProvideReturnsObjectInstance(): void
+    public function testProvideReturnsWrappedValue(mixed $value): void
     {
-        $object    = new StubClass();
-        $provider  = new Instance($object);
+        $provider  = new Instance($value);
         $container = $this->createMock(Container::class);
 
-        static::assertSame($object, $provider->provide($container));
+        static::assertSame($value, $provider->provide($container));
+    }
+
+    /** @return array<string, array{mixed}> */
+    public static function provideWrappedValues(): array
+    {
+        return [
+            'object' => [new StubClass()],
+            'primitive' => [42],
+        ];
     }
 
     /**
-     * @covers ::__construct
-     * @covers ::provide
+     * @dataProvider provideValuesAndTheirTargets
+     * @covers ::getTarget
      */
-    public function testProvideReturnsPrimitiveValue(): void
+    public function testGetTargetReturnsTypeOfValue(mixed $value, string $expected): void
     {
-        $provider  = new Instance(42);
-        $container = $this->createMock(Container::class);
-
-        static::assertSame(42, $provider->provide($container));
+        static::assertSame($expected, (new Instance($value))->getTarget());
     }
 
-    /** @covers ::getTarget */
-    public function testGetTargetReturnsClassNameForObject(): void
+    /** @return array<string, array{mixed, string}> */
+    public static function provideValuesAndTheirTargets(): array
     {
-        $provider = new Instance(new StubClass());
-
-        static::assertSame(StubClass::class, $provider->getTarget());
-    }
-
-    /** @covers ::getTarget */
-    public function testGetTargetReturnsNormalizedTypeForPrimitive(): void
-    {
-        $provider = new Instance(42);
-
-        static::assertSame('int', $provider->getTarget());
+        return [
+            'class name for object' => [new StubClass(), StubClass::class],
+            'normalized type for primitive' => [42, 'int'],
+        ];
     }
 
     /**
@@ -69,8 +68,8 @@ final class InstanceTest extends TestCase
         static::assertSame($expected, $capabilities->contains($capability));
     }
 
-    /** @return iterable<string, array{mixed, Capability, bool}> */
-    public static function provideCapabilityCases(): iterable
+    /** @return array<string, array{mixed, Capability, bool}> */
+    public static function provideCapabilityCases(): array
     {
         $values = [
             'object' => [new stdClass(), [Capability::INTERCEPTABLE, Capability::DECORABLE]],
@@ -85,14 +84,17 @@ final class InstanceTest extends TestCase
             'array' => [[1, 2], []],
         ];
 
+        $cases = [];
         foreach ($values as $name => [$value, $granted]) {
             foreach (Capability::cases() as $capability) {
-                yield $name . ' ' . $capability->name => [
+                $cases[$name . ' ' . $capability->name] = [
                     $value,
                     $capability,
                     in_array($capability, $granted, true),
                 ];
             }
         }
+
+        return $cases;
     }
 }

@@ -57,8 +57,11 @@ final class InjectionBinderTest extends TestCase
         $binder->onProperty('property')->withDefaultPriority();
     }
 
-    /** @covers ::onProperty */
-    public function testOnPropertyInfersTypeFromPropertyWhenNotProvided(): void
+    /**
+     * @covers ::onProperty
+     * @dataProvider providePropertyTypesAndTags
+     */
+    public function testOnPropertyBuildsSetPropertyForTypeAndTag(string $type, string $tag): void
     {
         $capturedInjection = null;
 
@@ -72,91 +75,74 @@ final class InjectionBinderTest extends TestCase
             Priority::NORMAL,
         );
 
-        $binder->onProperty('property')->withDefaultPriority();
+        $binder->onProperty('property', $type, $tag)->withDefaultPriority();
 
         static::assertInstanceOf(SetProperty::class, $capturedInjection);
     }
 
-    /** @covers ::onProperty */
-    public function testOnPropertyUsesExplicitTypeWhenProvided(): void
+    /** @return array<string, array{string, string}> */
+    public static function providePropertyTypesAndTags(): array
     {
-        $capturedInjection = null;
-
-        $binder = new InjectionBinder(
-            new Binding(StubClass::class),
-            static function (Injection $injection, int $priority) use (&$capturedInjection): string {
-                $capturedInjection = $injection;
-
-                return 'result';
-            },
-            Priority::NORMAL,
-        );
-
-        $binder->onProperty('property', 'string')->withDefaultPriority();
-
-        static::assertInstanceOf(SetProperty::class, $capturedInjection);
+        return [
+            'type inferred from property' => [Binding::DEFAULT, Binding::DEFAULT],
+            'explicit type' => ['string', Binding::DEFAULT],
+            'explicit tag' => [Binding::DEFAULT, 'myTag'],
+        ];
     }
 
-    /** @covers ::onProperty */
-    public function testOnPropertyUsesExplicitTagWhenProvided(): void
-    {
-        $capturedInjection = null;
-
-        $binder = new InjectionBinder(
-            new Binding(StubClass::class),
-            static function (Injection $injection, int $priority) use (&$capturedInjection): string {
-                $capturedInjection = $injection;
-
-                return 'result';
-            },
-            Priority::NORMAL,
-        );
-
-        $binder->onProperty('property', Binding::DEFAULT, 'myTag')->withDefaultPriority();
-
-        static::assertInstanceOf(SetProperty::class, $capturedInjection);
-    }
-
-    /** @covers ::onProperty */
-    public function testOnPropertyThrowsWhenTypeIsNotAClass(): void
+    /**
+     * @covers ::__construct
+     * @covers ::onProperty
+     * @dataProvider provideInvalidPropertyTargets
+     */
+    public function testOnPropertyThrowsForInvalidTarget(string $type, string $property): void
     {
         $this->expectException(AssertionFailed::class);
 
         $binder = new InjectionBinder(
-            new Binding('string'),
+            new Binding($type),
             static function (Injection $injection, int $priority): void {
             },
             Priority::NORMAL,
         );
 
-        $binder->onProperty('property');
+        $binder->onProperty($property);
     }
 
-    /** @covers ::onProperty */
-    public function testOnPropertyThrowsWhenPropertyDoesNotExist(): void
+    /** @return array<string, array{string, string}> */
+    public static function provideInvalidPropertyTargets(): array
     {
-        $this->expectException(AssertionFailed::class);
-
-        $binder = new InjectionBinder(
-            new Binding(StubClass::class),
-            static function (Injection $injection, int $priority): void {
-            },
-            Priority::NORMAL,
-        );
-
-        $binder->onProperty('nonExistentProperty');
+        return [
+            'type is not a class' => ['string', 'property'],
+            'property does not exist' => [StubClass::class, 'nonExistentProperty'],
+            'type is an interface' => [StubBinderContract::class, 'property'],
+        ];
     }
 
-    /** @covers ::onMethod */
-    public function testOnMethodReturnsPriorityBinder(): void
+    /**
+     * @covers ::__construct
+     * @covers ::onMethod
+     * @covers ::withInjection
+     * @dataProvider provideMethodDeclarers
+     */
+    public function testOnMethodReturnsPriorityBinderForClassOrInterface(string $type, string $method): void
     {
         $binder = new InjectionBinder(
-            new Binding(StubClass::class),
+            new Binding($type),
             static fn (Injection $injection, int $priority): string => 'result',
             Priority::NORMAL,
         );
 
-        static::assertInstanceOf(PriorityBinder::class, $binder->onMethod('setService'));
+        static::assertInstanceOf(PriorityBinder::class, $binder->onMethod($method));
+    }
+
+    /** @return array<string, array{class-string, string}> */
+    public static function provideMethodDeclarers(): array
+    {
+        return [
+            'class' => [StubClass::class, 'setService'],
+            'interface' => [StubBinderContract::class, 'configure'],
+        ];
     }
 
     /** @covers ::onMethod */
@@ -175,46 +161,57 @@ final class InjectionBinderTest extends TestCase
         $binder->onMethod('setService')->withDefaultPriority();
     }
 
-    /** @covers ::onMethod */
-    public function testOnMethodThrowsWhenTypeIsNotAClass(): void
+    /**
+     * @covers ::onMethod
+     * @dataProvider provideInvalidMethodTargets
+     */
+    public function testOnMethodThrowsForInvalidTarget(string $type, string $method): void
     {
         $this->expectException(AssertionFailed::class);
 
         $binder = new InjectionBinder(
-            new Binding('string'),
+            new Binding($type),
             static function (Injection $injection, int $priority): void {
             },
             Priority::NORMAL,
         );
 
-        $binder->onMethod('setService');
+        $binder->onMethod($method);
     }
 
-    /** @covers ::onMethod */
-    public function testOnMethodThrowsWhenMethodDoesNotExist(): void
+    /** @return array<string, array{string, string}> */
+    public static function provideInvalidMethodTargets(): array
     {
-        $this->expectException(AssertionFailed::class);
-
-        $binder = new InjectionBinder(
-            new Binding(StubClass::class),
-            static function (Injection $injection, int $priority): void {
-            },
-            Priority::NORMAL,
-        );
-
-        $binder->onMethod('nonExistentMethod');
+        return [
+            'type is not a class' => ['string', 'setService'],
+            'method does not exist' => [StubClass::class, 'nonExistentMethod'],
+        ];
     }
 
-    /** @covers ::onImmutableMethod */
-    public function testOnImmutableMethodReturnsPriorityBinder(): void
+    /**
+     * @covers ::__construct
+     * @covers ::onImmutableMethod
+     * @covers ::withInjection
+     * @dataProvider provideImmutableMethodDeclarers
+     */
+    public function testOnImmutableMethodReturnsPriorityBinderForClassOrInterface(string $type, string $method): void
     {
         $binder = new InjectionBinder(
-            new Binding(StubClass::class),
+            new Binding($type),
             static fn (Injection $injection, int $priority): string => 'result',
             Priority::NORMAL,
         );
 
-        static::assertInstanceOf(PriorityBinder::class, $binder->onImmutableMethod('withService'));
+        static::assertInstanceOf(PriorityBinder::class, $binder->onImmutableMethod($method));
+    }
+
+    /** @return array<string, array{class-string, string}> */
+    public static function provideImmutableMethodDeclarers(): array
+    {
+        return [
+            'class' => [StubClass::class, 'withService'],
+            'interface' => [StubBinderContract::class, 'configure'],
+        ];
     }
 
     /** @covers ::onImmutableMethod */
@@ -233,34 +230,31 @@ final class InjectionBinderTest extends TestCase
         $binder->onImmutableMethod('withService')->withDefaultPriority();
     }
 
-    /** @covers ::onImmutableMethod */
-    public function testOnImmutableMethodThrowsWhenTypeIsNotAClass(): void
+    /**
+     * @covers ::onImmutableMethod
+     * @dataProvider provideInvalidImmutableMethodTargets
+     */
+    public function testOnImmutableMethodThrowsForInvalidTarget(string $type, string $method): void
     {
         $this->expectException(AssertionFailed::class);
 
         $binder = new InjectionBinder(
-            new Binding('string'),
+            new Binding($type),
             static function (Injection $injection, int $priority): void {
             },
             Priority::NORMAL,
         );
 
-        $binder->onImmutableMethod('withService');
+        $binder->onImmutableMethod($method);
     }
 
-    /** @covers ::onImmutableMethod */
-    public function testOnImmutableMethodThrowsWhenMethodDoesNotExist(): void
+    /** @return array<string, array{string, string}> */
+    public static function provideInvalidImmutableMethodTargets(): array
     {
-        $this->expectException(AssertionFailed::class);
-
-        $binder = new InjectionBinder(
-            new Binding(StubClass::class),
-            static function (Injection $injection, int $priority): void {
-            },
-            Priority::NORMAL,
-        );
-
-        $binder->onImmutableMethod('nonExistentMethod');
+        return [
+            'type is not a class' => ['string', 'withService'],
+            'method does not exist' => [StubClass::class, 'nonExistentMethod'],
+        ];
     }
 
     /** @covers ::withInjection */
@@ -292,54 +286,5 @@ final class InjectionBinderTest extends TestCase
         );
 
         $binder->withInjection($injection)->withDefaultPriority();
-    }
-
-    /**
-     * @covers ::onMethod
-     * @covers ::withInjection
-     * @covers ::__construct
-     */
-    public function testOnMethodAcceptsAnInterface(): void
-    {
-        $binder = new InjectionBinder(
-            new Binding(StubBinderContract::class),
-            static fn (Injection $injection, int $priority): string => 'result',
-            Priority::NORMAL,
-        );
-
-        static::assertInstanceOf(PriorityBinder::class, $binder->onMethod('configure'));
-    }
-
-    /**
-     * @covers ::onImmutableMethod
-     * @covers ::withInjection
-     * @covers ::__construct
-     */
-    public function testOnImmutableMethodAcceptsAnInterface(): void
-    {
-        $binder = new InjectionBinder(
-            new Binding(StubBinderContract::class),
-            static fn (Injection $injection, int $priority): string => 'result',
-            Priority::NORMAL,
-        );
-
-        static::assertInstanceOf(PriorityBinder::class, $binder->onImmutableMethod('configure'));
-    }
-
-    /**
-     * @covers ::onProperty
-     * @covers ::__construct
-     */
-    public function testOnPropertyRejectsAnInterface(): void
-    {
-        $this->expectException(AssertionFailed::class);
-
-        $binder = new InjectionBinder(
-            new Binding(StubBinderContract::class),
-            static fn (Injection $injection, int $priority): string => 'result',
-            Priority::NORMAL,
-        );
-
-        $binder->onProperty('property');
     }
 }

@@ -10,7 +10,6 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Parameter;
 
-use Generator;
 use PHPUnit\Framework\TestCase;
 use ReflectionFunction;
 use ReflectionMethod;
@@ -54,12 +53,14 @@ final class OptionalTest extends TestCase
         new Optional($name, $type, $context, $parameter);
     }
 
-    /** @return Generator<string, array{string, string, string, ReflectionParameter}> */
-    public static function provideInvalidConstructorArguments(): Generator
+    /** @return array<string, array{string, string, string, ReflectionParameter}> */
+    public static function provideInvalidConstructorArguments(): array
     {
-        yield 'empty name' => ['', 'string', 'App\\Context', self::parameterWithDefault()];
-        yield 'empty type' => ['name', '', 'App\\Context', self::parameterWithDefault()];
-        yield 'parameter without default value' => ['name', 'string', 'App\\Context', self::parameterWithoutDefault()];
+        return [
+            'empty name' => ['', 'string', 'App\\Context', self::parameterWithDefault()],
+            'empty type' => ['name', '', 'App\\Context', self::parameterWithDefault()],
+            'parameter without default value' => ['name', 'string', 'App\\Context', self::parameterWithoutDefault()],
+        ];
     }
 
     /**
@@ -87,7 +88,7 @@ final class OptionalTest extends TestCase
     /**
      * @covers ::getArgument
      * @covers ::__construct
-     * @dataProvider provideGetArgument
+     * @dataProvider provideParametersWithDefaults
      */
     public function testGetArgument(ReflectionParameter $reflectionParameter, mixed $expectedDefault): void
     {
@@ -109,14 +110,15 @@ final class OptionalTest extends TestCase
         static::assertSame('container-value', $argument->provide($containerWithBinding));
     }
 
-    /** @return Generator<string, array{ReflectionParameter, mixed}> */
-    public static function provideGetArgument(): Generator
+    /** @return array<string, array{ReflectionParameter, mixed}> */
+    public static function provideParametersWithDefaults(): array
     {
-        yield 'string default' => [self::parameterWithDefault(), 'default'];
-
         $closure = static fn (string|null $value = null): string|null => $value;
 
-        yield 'null default' => [(new ReflectionFunction($closure))->getParameters()[0], null];
+        return [
+            'string default' => [self::parameterWithDefault(), 'default'],
+            'null default' => [(new ReflectionFunction($closure))->getParameters()[0], null],
+        ];
     }
 
     /**
@@ -155,91 +157,87 @@ final class OptionalTest extends TestCase
      * @covers ::isExplicit
      * @covers ::__construct
      * @covers ::withArgument
-     * @dataProvider provideIsExplicit
+     * @dataProvider provideFreshAndBoundParameters
      */
     public function testIsExplicit(Optional $parameter, bool $expected): void
     {
         static::assertSame($expected, $parameter->isExplicit());
     }
 
-    /** @return Generator<string, array{Optional, bool}> */
-    public static function provideIsExplicit(): Generator
+    /** @return array<string, array{Optional, bool}> */
+    public static function provideFreshAndBoundParameters(): array
     {
         $provider = self::createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
 
-        yield 'freshly constructed' => [
-            new Optional('name', 'string', 'App\\Context', self::parameterWithDefault()),
-            false,
-        ];
-
-        yield 'explicit argument bound' => [
-            (new Optional('name', 'string', 'App\\Context', self::parameterWithDefault()))->withArgument($provider),
-            true,
+        return [
+            'freshly constructed' => [
+                new Optional('name', 'string', 'App\\Context', self::parameterWithDefault()),
+                false,
+            ],
+            'explicit argument bound' => [
+                (new Optional('name', 'string', 'App\\Context', self::parameterWithDefault()))->withArgument($provider),
+                true,
+            ],
         ];
     }
 
     /**
      * @covers ::canReplace
      * @covers ::__construct
-     * @dataProvider provideCanReplace
+     * @dataProvider provideReplacementPairs
      */
     public function testCanReplace(Optional $parameter, ParameterContract $base, bool $expected): void
     {
         static::assertSame($expected, $parameter->canReplace($base));
     }
 
-    /** @return Generator<string, array{Optional, ParameterContract, bool}> */
-    public static function provideCanReplace(): Generator
+    /** @return array<string, array{Optional, ParameterContract, bool}> */
+    public static function provideReplacementPairs(): array
     {
         $parameter = new Optional('name', 'string', 'App\\Context', self::parameterWithDefault());
 
-        yield 'base is Required' => [
-            $parameter,
-            new Required('name', 'string', 'App\\Context'),
-            true,
-        ];
-
-        yield 'base is Optional' => [
-            $parameter,
-            new Optional('name', 'string', 'App\\Context', self::parameterWithDefault()),
-            true,
-        ];
-
-        yield 'base is Variadic' => [
-            $parameter,
-            new Variadic('name', 'string', 'App\\Context'),
-            false,
-        ];
-
-        yield 'same scalar type on both sides' => [
-            new Optional('name', 'int', 'App\\Context', self::parameterWithDefault()),
-            new Required('name', 'int', 'App\\Context'),
-            true,
-        ];
-
-        yield 'this parameter typed mixed, base typed anything' => [
-            new Optional('name', 'mixed', 'App\\Context', self::parameterWithDefault()),
-            new Required('name', 'int', 'App\\Context'),
-            true,
-        ];
-
-        yield 'this parameter typed with parent, base typed with subclass' => [
-            new Optional('name', StubBase::class, 'App\\Context', self::parameterWithDefault()),
-            new Required('name', StubClass::class, 'App\\Context'),
-            true,
-        ];
-
-        yield 'this parameter typed with subclass, base typed with parent' => [
-            new Optional('name', StubClass::class, 'App\\Context', self::parameterWithDefault()),
-            new Required('name', StubBase::class, 'App\\Context'),
-            false,
-        ];
-
-        yield 'unrelated scalar types' => [
-            new Optional('name', 'int', 'App\\Context', self::parameterWithDefault()),
-            new Required('name', 'string', 'App\\Context'),
-            false,
+        return [
+            'base is Required' => [
+                $parameter,
+                new Required('name', 'string', 'App\\Context'),
+                true,
+            ],
+            'base is Optional' => [
+                $parameter,
+                new Optional('name', 'string', 'App\\Context', self::parameterWithDefault()),
+                true,
+            ],
+            'base is Variadic' => [
+                $parameter,
+                new Variadic('name', 'string', 'App\\Context'),
+                false,
+            ],
+            'same scalar type on both sides' => [
+                new Optional('name', 'int', 'App\\Context', self::parameterWithDefault()),
+                new Required('name', 'int', 'App\\Context'),
+                true,
+            ],
+            'this parameter typed mixed, base typed anything' => [
+                new Optional('name', 'mixed', 'App\\Context', self::parameterWithDefault()),
+                new Required('name', 'int', 'App\\Context'),
+                true,
+            ],
+            'this parameter typed with parent, base typed with subclass' => [
+                new Optional('name', StubBase::class, 'App\\Context', self::parameterWithDefault()),
+                new Required('name', StubClass::class, 'App\\Context'),
+                true,
+            ],
+            'this parameter typed with subclass, base typed with parent' => [
+                new Optional('name', StubClass::class, 'App\\Context', self::parameterWithDefault()),
+                new Required('name', StubBase::class, 'App\\Context'),
+                false,
+            ],
+            'unrelated scalar types' => [
+                new Optional('name', 'int', 'App\\Context', self::parameterWithDefault()),
+                new Required('name', 'string', 'App\\Context'),
+                false,
+            ],
         ];
     }
 

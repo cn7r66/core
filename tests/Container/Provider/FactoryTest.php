@@ -58,20 +58,27 @@ final class FactoryTest extends TestCase
         );
     }
 
-    /** @covers ::__construct */
-    public function testThrowsForNonExistentMethod(): void
+    /**
+     * @param class-string $class
+     *
+     * @dataProvider provideUncallableFactoryMethods
+     * @covers ::__construct
+     */
+    public function testThrowsForUncallableFactoryMethod(string $class, string $method): void
     {
         static::expectException(AssertionFailed::class);
 
-        new Factory(new Binding(StubFactory::class), 'nonExistent');
+        new Factory(new Binding($class), $method);
     }
 
-    /** @covers ::__construct */
-    public function testThrowsForPrivateMethod(): void
+    /** @return array<string, array{class-string, string}> */
+    public static function provideUncallableFactoryMethods(): array
     {
-        static::expectException(AssertionFailed::class);
-
-        new Factory(new Binding(StubFactoryWithPrivateMethod::class), 'create');
+        return [
+            'method does not exist' => [StubFactory::class, 'nonExistent'],
+            'private method' => [StubFactoryWithPrivateMethod::class, 'create'],
+            'method not declared by the bound interface' => [Stub::class, 'create'],
+        ];
     }
 
     /** @covers ::getCapabilities */
@@ -83,14 +90,6 @@ final class FactoryTest extends TestCase
         static::assertTrue($capabilities->contains(Capability::INTERCEPTABLE));
         static::assertTrue($capabilities->contains(Capability::DECORABLE));
         static::assertCount(3, $capabilities);
-    }
-
-    /** @covers ::__construct */
-    public function testConstructorException(): void
-    {
-        static::expectException(AssertionFailed::class);
-
-        new Factory(new Binding(Stub::class), 'create');
     }
 
     /**
@@ -141,13 +140,23 @@ final class FactoryTest extends TestCase
     }
 
     /**
-     * @dataProvider provideEqualsCases
+     * @dataProvider provideEqualFactoryPairs
      * @covers ::__construct
      * @covers ::equals
      */
-    public function testEquals(Factory $a, object $b, bool $expected): void
+    public function testEqualsReturnsTrueForEqualFactories(Factory $first, Factory $second): void
     {
-        static::assertSame($expected, $a->equals($b));
+        static::assertTrue($first->equals($second));
+    }
+
+    /**
+     * @dataProvider provideUnequalPairs
+     * @covers ::__construct
+     * @covers ::equals
+     */
+    public function testEqualsReturnsFalseForUnequalObjects(Factory $first, object $second): void
+    {
+        static::assertFalse($first->equals($second));
     }
 
     /**
@@ -155,41 +164,15 @@ final class FactoryTest extends TestCase
      * @covers ::__construct
      * @covers ::hash
      */
-    public function testHash(Factory $a, Factory $b): void
+    public function testHashIsSameForEqualFactories(Factory $first, Factory $second): void
     {
-        static::assertSame($a->hash(), $b->hash());
+        static::assertSame($first->hash(), $second->hash());
     }
 
-    /** @return iterable<string, array{0: Factory, 1: object, 2: bool}> */
-    public static function provideEqualsCases(): iterable
+    /** @return array<string, array{Factory, Factory}> */
+    public static function provideEqualFactoryPairs(): array
     {
-        $reflexive = new Factory(new Binding(StubFactory::class), 'create');
-
-        yield 'same instance' => [$reflexive, $reflexive, true];
-
-        yield 'same binding and method' => [
-            new Factory(new Binding(StubFactory::class), 'create'),
-            new Factory(new Binding(StubFactory::class), 'create'),
-            true,
-        ];
-
-        yield 'same binding, different method' => [
-            new Factory(new Binding(StubFactoryWithBindableArgs::class), 'create'),
-            new Factory(new Binding(StubFactoryWithBindableArgs::class), 'createVariadic'),
-            false,
-        ];
-
-        yield 'different binding, same method' => [
-            new Factory(new Binding(StubFactory::class), 'create'),
-            new Factory(new Binding(StubStaticFactory::class), 'create'),
-            false,
-        ];
-
-        yield 'different class' => [
-            new Factory(new Binding(StubFactory::class), 'create'),
-            new stdClass(),
-            false,
-        ];
+        $instance = new Factory(new Binding(StubFactory::class), 'create');
 
         $provider = self::createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
@@ -198,22 +181,32 @@ final class FactoryTest extends TestCase
         $withoutBinding = new Factory(new Binding(StubFactoryWithBindableArgs::class), 'create');
         $withBinding    = $withoutBinding->bindArgument('name')->toProvider($provider);
 
-        yield 'argument bindings excluded from identity' => [$withoutBinding, $withBinding, true];
+        return [
+            'same instance' => [$instance, $instance],
+            'same binding and method' => [
+                new Factory(new Binding(StubFactory::class), 'create'),
+                new Factory(new Binding(StubFactory::class), 'create'),
+            ],
+            'argument bindings excluded from identity' => [$withoutBinding, $withBinding],
+        ];
     }
 
-    /** @return iterable<string, array{0: Factory, 1: Factory}> */
-    public static function provideEqualFactoryPairs(): iterable
+    /** @return array<string, array{Factory, object}> */
+    public static function provideUnequalPairs(): array
     {
-        foreach (self::provideEqualsCases() as $key => $case) {
-            if ($case[2] !== true) {
-                continue;
-            }
-
-            if (! $case[1] instanceof Factory) {
-                continue;
-            }
-
-            yield $key => [$case[0], $case[1]];
-        }
+        return [
+            'same binding, different method' => [
+                new Factory(new Binding(StubFactoryWithBindableArgs::class), 'create'),
+                new Factory(new Binding(StubFactoryWithBindableArgs::class), 'createVariadic'),
+            ],
+            'different binding, same method' => [
+                new Factory(new Binding(StubFactory::class), 'create'),
+                new Factory(new Binding(StubStaticFactory::class), 'create'),
+            ],
+            'different class' => [
+                new Factory(new Binding(StubFactory::class), 'create'),
+                new stdClass(),
+            ],
+        ];
     }
 }

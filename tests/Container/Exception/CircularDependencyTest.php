@@ -52,33 +52,41 @@ final class CircularDependencyTest extends TestCase
         new CircularDependency($path);
     }
 
-    /** @return iterable<string, array{list<Binding>}> */
-    public static function provideValidPaths(): iterable
+    /** @return array<string, array{list<Binding>}> */
+    public static function provideValidPaths(): array
     {
-        $a = new Binding(StubService::class);
-        $b = new Binding(StubWithNoArgs::class);
-        $c = new Binding(StubService::class, 'tag');
-        $d = new Binding(StubService::class, Binding::DEFAULT, 'App\\Orders');
+        $service           = new Binding(StubService::class);
+        $noArgs            = new Binding(StubWithNoArgs::class);
+        $taggedService     = new Binding(StubService::class, 'tag');
+        $contextualService = new Binding(StubService::class, Binding::DEFAULT, 'App\\Orders');
 
-        yield 'direct self loop' => [[$a, new Binding(StubService::class)]];
-        yield 'loop of two' => [[$a, $b, new Binding(StubService::class)]];
-        yield 'loop with prefix' => [[$a, $b, $c, new Binding(StubWithNoArgs::class)]];
-        yield 'tagged binding loop' => [[$a, $c, new Binding(StubService::class, 'tag')]];
-        yield 'contextual binding loop' => [[$a, $d, new Binding(StubService::class, Binding::DEFAULT, 'App\\Orders')]];
+        return [
+            'direct self loop' => [[$service, new Binding(StubService::class)]],
+            'loop of two' => [[$service, $noArgs, new Binding(StubService::class)]],
+            'loop with prefix' => [[$service, $noArgs, $taggedService, new Binding(StubWithNoArgs::class)]],
+            'tagged binding loop' => [[$service, $taggedService, new Binding(StubService::class, 'tag')]],
+            'contextual binding loop' => [
+                [$service, $contextualService, new Binding(StubService::class, Binding::DEFAULT, 'App\\Orders')],
+            ],
+        ];
     }
 
-    /** @return iterable<string, array{list<Binding>}> */
-    public static function provideInvalidPaths(): iterable
+    /** @return array<string, array{list<Binding>}> */
+    public static function provideInvalidPaths(): array
     {
-        $a = new Binding(StubService::class);
-        $b = new Binding(StubWithNoArgs::class);
+        $service = new Binding(StubService::class);
+        $noArgs  = new Binding(StubWithNoArgs::class);
 
-        yield 'empty path' => [[]];
-        yield 'single binding' => [[$a]];
-        yield 'two distinct bindings' => [[$a, $b]];
-        yield 'three distinct bindings' => [[$a, $b, new Binding(StubService::class, 'tag')]];
-        yield 'same type different context' => [[$a, new Binding(StubService::class, Binding::DEFAULT, 'App\\Orders')]];
-        yield 'repeat only in the middle' => [[$a, $a, $b]];
+        return [
+            'empty path' => [[]],
+            'single binding' => [[$service]],
+            'two distinct bindings' => [[$service, $noArgs]],
+            'three distinct bindings' => [[$service, $noArgs, new Binding(StubService::class, 'tag')]],
+            'same type different context' => [
+                [$service, new Binding(StubService::class, Binding::DEFAULT, 'App\\Orders')],
+            ],
+            'repeat only in the middle' => [[$service, $service, $noArgs]],
+        ];
     }
 
     /**
@@ -95,52 +103,64 @@ final class CircularDependencyTest extends TestCase
         self::assertSame($expected, $exception->getMessage());
     }
 
-    /** @return iterable<string, array{list<Binding>, string}> */
-    public static function provideMessages(): iterable
+    /** @return array<string, array{list<Binding>, string}> */
+    public static function provideMessages(): array
     {
         $service = StubService::class;
         $noArgs  = StubWithNoArgs::class;
         $arrow   = ' → ';
 
-        yield 'direct self loop' => [
-            [new Binding($service), new Binding($service)],
-            'Circular dependency: [' . $service . $arrow . $service . ']',
-        ];
-
-        yield 'loop of two' => [
-            [new Binding($service), new Binding($noArgs), new Binding($service)],
-            'Circular dependency: [' . $service . $arrow . $noArgs . $arrow . $service . ']',
-        ];
-
-        yield 'loop with prefix' => [
-            [new Binding($service), new Binding($noArgs), new Binding($service, 'tag'), new Binding($noArgs)],
-            'Circular dependency: ' . $service . $arrow
-                . '[' . $noArgs . $arrow . $service . ':tag' . $arrow . $noArgs . ']',
-        ];
-
-        yield 'tagged loop' => [
-            [new Binding($service, 'tag'), new Binding($noArgs), new Binding($service, 'tag')],
-            'Circular dependency: [' . $service . ':tag' . $arrow . $noArgs . $arrow . $service . ':tag]',
-        ];
-
-        yield 'contextual loop' => [
-            [
-                new Binding($noArgs),
-                new Binding($service, Binding::DEFAULT, 'App\\Orders'),
-                new Binding($service, Binding::DEFAULT, 'App\\Orders'),
+        return [
+            'direct self loop' => [
+                [new Binding($service), new Binding($service)],
+                'Circular dependency: [' . $service . $arrow . $service . ']',
             ],
-            'Circular dependency: ' . $noArgs . $arrow
-                . '[' . $service . ' (in App\\Orders)' . $arrow . $service . ' (in App\\Orders)]',
+            'loop of two' => [
+                [new Binding($service), new Binding($noArgs), new Binding($service)],
+                'Circular dependency: [' . $service . $arrow . $noArgs . $arrow . $service . ']',
+            ],
+            'loop with prefix' => [
+                [new Binding($service), new Binding($noArgs), new Binding($service, 'tag'), new Binding($noArgs)],
+                'Circular dependency: ' . $service . $arrow
+                    . '[' . $noArgs . $arrow . $service . ':tag' . $arrow . $noArgs . ']',
+            ],
+            'tagged loop' => [
+                [new Binding($service, 'tag'), new Binding($noArgs), new Binding($service, 'tag')],
+                'Circular dependency: [' . $service . ':tag' . $arrow . $noArgs . $arrow . $service . ':tag]',
+            ],
+            'contextual loop' => [
+                [
+                    new Binding($noArgs),
+                    new Binding($service, Binding::DEFAULT, 'App\\Orders'),
+                    new Binding($service, Binding::DEFAULT, 'App\\Orders'),
+                ],
+                'Circular dependency: ' . $noArgs . $arrow
+                    . '[' . $service . ' (in App\\Orders)' . $arrow . $service . ' (in App\\Orders)]',
+            ],
         ];
     }
 
-    /** @covers ::__construct */
-    public function testIsAContainerException(): void
+    /**
+     * @param class-string $expected
+     *
+     * @covers ::__construct
+     *
+     * @dataProvider provideExceptionTypes
+     */
+    public function testIsAContainerException(string $expected): void
     {
         $exception = new CircularDependency([new Binding(StubService::class), new Binding(StubService::class)]);
 
-        self::assertInstanceOf(RuntimeException::class, $exception);
-        self::assertInstanceOf(ContainerException::class, $exception);
-        self::assertInstanceOf(ContainerExceptionInterface::class, $exception);
+        self::assertInstanceOf($expected, $exception);
+    }
+
+    /** @return array<string, array{class-string}> */
+    public static function provideExceptionTypes(): array
+    {
+        return [
+            'runtime exception' => [RuntimeException::class],
+            'container exception' => [ContainerException::class],
+            'psr container exception' => [ContainerExceptionInterface::class],
+        ];
     }
 }

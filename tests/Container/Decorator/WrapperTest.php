@@ -28,26 +28,32 @@ use Vivarium\Test\Container\Stub\StubWrapperSubject;
 /** @coversDefaultClass \Vivarium\Container\Decorator\Wrapper */
 final class WrapperTest extends TestCase
 {
-    /** @return iterable<string, array{string|int}> */
-    public static function provideValidSlots(): iterable
+    /** @return array<string, array{string|int}> */
+    public static function provideValidSlots(): array
     {
-        yield 'by name' => ['inner'];
-        yield 'by position' => [0];
+        return [
+            'by name' => ['inner'],
+            'by position' => [0],
+        ];
     }
 
-    /** @return iterable<string, array{string|int}> */
-    public static function provideInvalidSlots(): iterable
+    /** @return array<string, array{string|int}> */
+    public static function provideInvalidSlots(): array
     {
-        yield 'unknown name' => ['missing'];
-        yield 'position out of range' => [5];
-        yield 'negative position' => [-1];
+        return [
+            'unknown name' => ['missing'],
+            'position out of range' => [5],
+            'negative position' => [-1],
+        ];
     }
 
-    /** @return iterable<string, array{callable(): Provider}> */
-    public static function provideProviders(): iterable
+    /** @return array<string, array{Provider}> */
+    public static function provideProviders(): array
     {
-        yield 'constructor' => [static fn () => new Constructor(StubWrapperDecorator::class)];
-        yield 'function' => [static fn () => new Fun(static fn (StubWrapperSubject $inner): string => 'x')];
+        return [
+            'constructor' => [new Constructor(StubWrapperDecorator::class)],
+            'function' => [new Fun(static fn (StubWrapperSubject $inner): string => 'x')],
+        ];
     }
 
     /**
@@ -161,10 +167,10 @@ final class WrapperTest extends TestCase
      * @covers ::accept
      * @covers ::__construct
      */
-    public function testAcceptsAnyProvider(callable $factory): void
+    public function testAcceptsAnyProvider(Provider $provider): void
     {
         $wrapper = new Wrapper(new Constructor(StubWrapperDecorator::class), 'inner');
 
-        self::assertTrue($wrapper->accept($factory()));
+        self::assertTrue($wrapper->accept($provider));
     }
 }

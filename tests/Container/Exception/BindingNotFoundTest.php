@@ -34,39 +34,40 @@ final class BindingNotFoundTest extends TestCase
         self::assertSame($binding, $exception->getBinding());
     }
 
-    /** @return iterable<string, array{Binding}> */
-    public static function provideBindings(): iterable
+    /** @return array<string, array{Binding}> */
+    public static function provideBindings(): array
     {
-        yield 'default tag and global context' => [new Binding(StubClass::class)];
-        yield 'custom tag' => [new Binding(StubClass::class, 'audit')];
-        yield 'custom context' => [new Binding(StubService::class, Binding::DEFAULT, 'App\\Orders')];
-        yield 'custom tag and context' => [new Binding(StubService::class, 'audit', 'App\\Orders')];
+        return [
+            'default tag and global context' => [new Binding(StubClass::class)],
+            'custom tag' => [new Binding(StubClass::class, 'audit')],
+            'custom context' => [new Binding(StubService::class, Binding::DEFAULT, 'App\\Orders')],
+            'custom tag and context' => [new Binding(StubService::class, 'audit', 'App\\Orders')],
+        ];
     }
 
-    /** @return iterable<string, array{Binding, string}> */
-    public static function provideBindingMessages(): iterable
+    /** @return array<string, array{Binding, string}> */
+    public static function provideBindingMessages(): array
     {
         $class   = StubClass::class;
         $service = StubService::class;
 
-        yield 'default tag and global context' => [
-            new Binding($class),
-            'No binding found for ' . $class . '.',
-        ];
-
-        yield 'custom tag' => [
-            new Binding($class, 'audit'),
-            'No binding found for ' . $class . ':audit.',
-        ];
-
-        yield 'custom context' => [
-            new Binding($service, Binding::DEFAULT, 'App\\Orders'),
-            'No binding found for ' . $service . ' (in App\\Orders).',
-        ];
-
-        yield 'custom tag and context' => [
-            new Binding($service, 'audit', 'App\\Orders'),
-            'No binding found for ' . $service . ':audit (in App\\Orders).',
+        return [
+            'default tag and global context' => [
+                new Binding($class),
+                'No binding found for ' . $class . '.',
+            ],
+            'custom tag' => [
+                new Binding($class, 'audit'),
+                'No binding found for ' . $class . ':audit.',
+            ],
+            'custom context' => [
+                new Binding($service, Binding::DEFAULT, 'App\\Orders'),
+                'No binding found for ' . $service . ' (in App\\Orders).',
+            ],
+            'custom tag and context' => [
+                new Binding($service, 'audit', 'App\\Orders'),
+                'No binding found for ' . $service . ':audit (in App\\Orders).',
+            ],
         ];
     }
 
@@ -81,13 +82,26 @@ final class BindingNotFoundTest extends TestCase
         self::assertSame($message, $exception->getMessage());
     }
 
-    /** @covers ::__construct */
-    public function testIsAContainerException(): void
+    /**
+     * @param class-string $expected
+     *
+     * @covers ::__construct
+     * @dataProvider provideExceptionTypes
+     */
+    public function testIsAContainerException(string $expected): void
     {
         $exception = new BindingNotFound(new Binding(StubClass::class));
 
-        self::assertInstanceOf(RuntimeException::class, $exception);
-        self::assertInstanceOf(ContainerException::class, $exception);
-        self::assertInstanceOf(ContainerExceptionInterface::class, $exception);
+        self::assertInstanceOf($expected, $exception);
+    }
+
+    /** @return array<string, array{class-string}> */
+    public static function provideExceptionTypes(): array
+    {
+        return [
+            'runtime exception' => [RuntimeException::class],
+            'container exception' => [ContainerException::class],
+            'psr container exception' => [ContainerExceptionInterface::class],
+        ];
     }
 }

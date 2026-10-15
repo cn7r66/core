@@ -27,42 +27,59 @@ final class SetPropertyTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::enhance
+     * @dataProvider providePublicPropertiesByDeclaredType
      */
-    public function testEnhanceSuccessfully(): void
-    {
-        $instance = new StubClass(new StubService());
-
+    public function testEnhanceAssignsDependencyToPublicProperty(
+        object $instance,
+        string $property,
+        string $value,
+    ): void {
         $binding   = new Binding('string');
         $container = $this->createMock(Container::class);
-        $container->method('get')->willReturn('injected-value');
+        $container->method('get')->willReturn($value);
 
-        $enhancement = new SetProperty('property', $binding);
+        $enhancement = new SetProperty($property, $binding);
         $result      = $enhancement->enhance($instance, $container);
 
         static::assertSame($instance, $result);
-        static::assertSame('injected-value', $instance->property);
+        static::assertSame($value, $instance->$property);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     */
-    public function testEnhanceOnUntypedPropertyTreatsDependencyAsMixed(): void
+    /** @return array<string, array{object, string, string}> */
+    public static function providePublicPropertiesByDeclaredType(): array
     {
-        // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint
-        $instance = new class {
-            public $untypedProperty; // phpcs:ignore
-        };
-
-        $binding   = new Binding('string');
-        $container = $this->createMock(Container::class);
-        $container->method('get')->willReturn('injected-value');
-
-        $enhancement = new SetProperty('untypedProperty', $binding);
-        $result      = $enhancement->enhance($instance, $container);
-
-        static::assertSame($instance, $result);
-        static::assertSame('injected-value', $instance->untypedProperty);
+        return [
+            'typed property' => [new StubClass(new StubService()), 'property', 'injected-value'],
+            'untyped property' => [
+                // phpcs:ignore SlevomatCodingStandard.TypeHints.PropertyTypeHint
+                new class {
+                    public $untypedProperty; // phpcs:ignore
+                },
+                'untypedProperty',
+                'injected-value',
+            ],
+            'nullable type' => [
+                new class {
+                    public string|null $dependency = null;
+                },
+                'dependency',
+                'nullable-value',
+            ],
+            'union type' => [
+                new class {
+                    public string|int $dependency;
+                },
+                'dependency',
+                'union-value',
+            ],
+            'mixed type' => [
+                new class {
+                    public mixed $dependency;
+                },
+                'dependency',
+                'any-value',
+            ],
+        ];
     }
 
     /**
@@ -89,66 +106,6 @@ final class SetPropertyTest extends TestCase
 
         static::assertSame($instance, $result);
         static::assertSame('private-value', $result->getDependency());
-    }
-
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     */
-    public function testEnhanceWithNullableType(): void
-    {
-        $instance = new class {
-            public string|null $dependency = null;
-        };
-
-        $binding   = new Binding('string');
-        $container = $this->createMock(Container::class);
-        $container->method('get')->willReturn('nullable-value');
-
-        $enhancement = new SetProperty('dependency', $binding);
-        $result      = $enhancement->enhance($instance, $container);
-
-        static::assertSame('nullable-value', $instance->dependency);
-    }
-
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     */
-    public function testEnhanceWithUnionType(): void
-    {
-        $instance = new class {
-            public string|int $dependency;
-        };
-
-        $binding   = new Binding('string');
-        $container = $this->createMock(Container::class);
-        $container->method('get')->willReturn('union-value');
-
-        $enhancement = new SetProperty('dependency', $binding);
-        $result      = $enhancement->enhance($instance, $container);
-
-        static::assertSame('union-value', $instance->dependency);
-    }
-
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     */
-    public function testEnhanceWithUntypedProperty(): void
-    {
-        $instance = new class {
-            public mixed $dependency;
-        };
-
-        $binding   = new Binding('string');
-        $container = $this->createMock(Container::class);
-        $container->method('get')->willReturn('any-value');
-
-        $enhancement = new SetProperty('dependency', $binding);
-        $result      = $enhancement->enhance($instance, $container);
-
-        static::assertSame('any-value', $instance->dependency);
     }
 
     /**
@@ -206,42 +163,6 @@ final class SetPropertyTest extends TestCase
      * @covers ::__construct
      * @covers ::accept
      */
-    public function testAcceptReturnsTrueWhenProviderHasPropertyAndIsInjectable(): void
-    {
-        $provider = $this->createMock(Provider::class);
-        $provider->method('getTarget')->willReturn(StubClass::class);
-        $provider->method('getCapabilities')->willReturn(
-            HashSet::fromArray([Capability::INJECTABLE]),
-        );
-
-        $binding     = new Binding('string');
-        $enhancement = new SetProperty('property', $binding);
-
-        static::assertTrue($enhancement->accept($provider));
-    }
-
-    /**
-     * @covers ::__construct
-     * @covers ::accept
-     */
-    public function testAcceptReturnsTrueWhenProviderHasPropertyAndIsInterceptable(): void
-    {
-        $provider = $this->createMock(Provider::class);
-        $provider->method('getTarget')->willReturn(StubClass::class);
-        $provider->method('getCapabilities')->willReturn(
-            HashSet::fromArray([Capability::INTERCEPTABLE]),
-        );
-
-        $binding     = new Binding('string');
-        $enhancement = new SetProperty('property', $binding);
-
-        static::assertTrue($enhancement->accept($provider));
-    }
-
-    /**
-     * @covers ::__construct
-     * @covers ::accept
-     */
     public function testAcceptReturnsFalseWhenProviderDoesNotHaveProperty(): void
     {
         $provider = $this->createMock(Provider::class);
@@ -272,7 +193,7 @@ final class SetPropertyTest extends TestCase
      *
      * @covers ::__construct
      * @covers ::accept
-     * @dataProvider capabilitySetsProvider
+     * @dataProvider provideCapabilitySets
      */
     public function testAcceptIgnoresProviderCapabilities(array $capabilities): void
     {
@@ -289,12 +210,13 @@ final class SetPropertyTest extends TestCase
     }
 
     /** @return array<string, array{array<Capability>}> */
-    public static function capabilitySetsProvider(): array
+    public static function provideCapabilitySets(): array
     {
         return [
             'none' => [[]],
             'decorable only' => [[Capability::DECORABLE]],
             'injectable only' => [[Capability::INJECTABLE]],
+            'interceptable only' => [[Capability::INTERCEPTABLE]],
             'all' => [[Capability::INJECTABLE, Capability::INTERCEPTABLE, Capability::DECORABLE]],
         ];
     }

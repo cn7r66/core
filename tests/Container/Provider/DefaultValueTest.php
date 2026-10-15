@@ -49,24 +49,47 @@ final class DefaultValueTest extends TestCase
     /**
      * @covers ::provide
      * @covers ::__construct
-     * @dataProvider provideProvideCases
      */
-    public function testProvide(callable $parameterFactory, callable $assertion): void
+    public function testProvideReturnsScalarDefaultOnEveryCall(): void
     {
-        $provider  = new DefaultValue($parameterFactory());
+        $provider  = new DefaultValue(self::parameterOf(
+            static function (string $value = 'expected'): void {
+            },
+        ));
         $container = $this->createMock(Container::class);
 
-        $assertion($provider, $container);
+        self::assertSame('expected', $provider->provide($container));
+        self::assertSame('expected', $provider->provide($container));
+    }
+
+    /**
+     * @covers ::provide
+     * @covers ::__construct
+     */
+    public function testProvideBuildsFreshObjectDefaultOnEveryCall(): void
+    {
+        $provider  = new DefaultValue(self::parameterOf(
+            static function (StubDefaultValueTarget $value = new StubDefaultValueSource()): void {
+            },
+        ));
+        $container = $this->createMock(Container::class);
+
+        $first  = $provider->provide($container);
+        $second = $provider->provide($container);
+
+        self::assertInstanceOf(StubDefaultValueSource::class, $first);
+        self::assertInstanceOf(StubDefaultValueSource::class, $second);
+        self::assertNotSame($first, $second);
     }
 
     /**
      * @covers ::getTarget
      * @covers ::__construct
-     * @dataProvider provideGetTargetCases
+     * @dataProvider provideDefaultedParameterTargets
      */
-    public function testGetTarget(string $expected, callable $parameterFactory): void
+    public function testGetTarget(string $expected, ReflectionParameter $parameter): void
     {
-        $provider = new DefaultValue($parameterFactory());
+        $provider = new DefaultValue($parameter);
 
         self::assertSame($expected, $provider->getTarget());
     }
@@ -89,62 +112,32 @@ final class DefaultValueTest extends TestCase
         self::assertCount(2, $capabilities);
     }
 
-    /** @return iterable<string, array{0: callable(): ReflectionParameter, 1: callable(DefaultValue, Container): void}> */
-    public static function provideProvideCases(): iterable
+    /** @return array<string, array{string, ReflectionParameter}> */
+    public static function provideDefaultedParameterTargets(): array
     {
-        yield 'scalar default' => [
-            static fn (): ReflectionParameter => self::parameterOf(
-                static function (string $value = 'expected'): void {
-                },
-            ),
-            static function (DefaultValue $provider, Container $container): void {
-                self::assertSame('expected', $provider->provide($container));
-                self::assertSame('expected', $provider->provide($container));
-            },
-        ];
-
-        yield 'object-creating default' => [
-            static fn (): ReflectionParameter => self::parameterOf(
-                static function (StubDefaultValueTarget $value = new StubDefaultValueSource()): void {
-                },
-            ),
-            static function (DefaultValue $provider, Container $container): void {
-                $first  = $provider->provide($container);
-                $second = $provider->provide($container);
-
-                self::assertInstanceOf(StubDefaultValueSource::class, $first);
-                self::assertInstanceOf(StubDefaultValueSource::class, $second);
-                self::assertNotSame($first, $second);
-            },
-        ];
-    }
-
-    /** @return iterable<string, array{0: string, 1: callable(): ReflectionParameter}> */
-    public static function provideGetTargetCases(): iterable
-    {
-        yield 'typed parameter with object-creating default from subclass' => [
-            StubDefaultValueTarget::class,
-            static fn (): ReflectionParameter => self::parameterOf(
-                static function (StubDefaultValueTarget $value = new StubDefaultValueSource()): void {
-                },
-            ),
-        ];
-
-        yield 'untyped parameter' => [
-            'mixed',
-            static fn (): ReflectionParameter => self::parameterOf(
-                // phpcs:ignore
-                static function ($value = 'default'): void {
-                },
-            ),
-        ];
-
-        yield 'nullable typed parameter' => [
-            StubDefaultValueTarget::class . '|null',
-            static fn (): ReflectionParameter => self::parameterOf(
-                static function (StubDefaultValueTarget|null $value = null): void {
-                },
-            ),
+        return [
+            'typed parameter with object-creating default from subclass' => [
+                StubDefaultValueTarget::class,
+                self::parameterOf(
+                    static function (StubDefaultValueTarget $value = new StubDefaultValueSource()): void {
+                    },
+                ),
+            ],
+            'untyped parameter' => [
+                'mixed',
+                self::parameterOf(
+                    // phpcs:ignore
+                    static function ($value = 'default'): void {
+                    },
+                ),
+            ],
+            'nullable typed parameter' => [
+                StubDefaultValueTarget::class . '|null',
+                self::parameterOf(
+                    static function (StubDefaultValueTarget|null $value = null): void {
+                    },
+                ),
+            ],
         ];
     }
 

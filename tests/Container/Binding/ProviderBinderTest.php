@@ -59,10 +59,10 @@ final class ProviderBinderTest extends TestCase
 
         $binder = new ProviderBinder(
             new Binding(StubWithNoArgs::class),
-            static function (Binding $binding, Provider $p) use (&$captured): Provider {
-                $captured = $p;
+            static function (Binding $binding, Provider $forwarded) use (&$captured): Provider {
+                $captured = $forwarded;
 
-                return $p;
+                return $forwarded;
             },
         );
 
@@ -155,22 +155,23 @@ final class ProviderBinderTest extends TestCase
         static::assertSame($value, $provider->provide($this->createMock(Container::class)));
     }
 
-    /** @return iterable<string, array{string, mixed}> */
-    public static function provideAssignableInstances(): iterable
+    /** @return array<string, array{string, mixed}> */
+    public static function provideAssignableInstances(): array
     {
-        yield 'class' => [StubWithNoArgs::class, new StubWithNoArgs()];
-        yield 'callable from closure' => [
-            'callable',
-            static function (): void {
-            },
-        ];
-
-        yield 'int' => ['int', 5432];
-        yield 'string' => ['string', 'x'];
-        yield 'closure' => [
-            Closure::class,
-            static function (): void {
-            },
+        return [
+            'class' => [StubWithNoArgs::class, new StubWithNoArgs()],
+            'callable from closure' => [
+                'callable',
+                static function (): void {
+                },
+            ],
+            'int' => ['int', 5432],
+            'string' => ['string', 'x'],
+            'closure' => [
+                Closure::class,
+                static function (): void {
+                },
+            ],
         ];
     }
 
@@ -187,13 +188,15 @@ final class ProviderBinderTest extends TestCase
         $binder->toInstance($value);
     }
 
-    /** @return iterable<string, array{string, mixed}> */
-    public static function provideRejectedInstances(): iterable
+    /** @return array<string, array{string, mixed}> */
+    public static function provideRejectedInstances(): array
     {
-        yield 'null for class' => [StubWithNoArgs::class, null];
-        yield 'null for int' => ['int', null];
-        yield 'string for int' => ['int', 'nope'];
-        yield 'unrelated object for class' => [StubWithNoArgs::class, new stdClass()];
+        return [
+            'null for class' => [StubWithNoArgs::class, null],
+            'null for int' => ['int', null],
+            'string for int' => ['int', 'nope'],
+            'unrelated object for class' => [StubWithNoArgs::class, new stdClass()],
+        ];
     }
 
     /** @covers ::toFunction */

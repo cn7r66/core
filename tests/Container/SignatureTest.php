@@ -10,8 +10,6 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container;
 
-use Closure;
-use Generator;
 use PHPUnit\Framework\TestCase;
 use Throwable;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -81,7 +79,7 @@ final class SignatureTest extends TestCase
      * @covers ::__construct
      * @covers ::fromReflector
      * @covers ::fromParameter
-     * @dataProvider provideOfConstructorExceptions
+     * @dataProvider provideUnsupportedClasses
      */
     public function testOfConstructorException(string $class, string $exception): void
     {
@@ -90,11 +88,13 @@ final class SignatureTest extends TestCase
         Signature::ofConstructor($class);
     }
 
-    /** @return Generator<string, array{string, string}> */
-    public static function provideOfConstructorExceptions(): Generator
+    /** @return array<string, array{string, string}> */
+    public static function provideUnsupportedClasses(): array
     {
-        yield 'non-existent class' => ['Vivarium\\Test\\Container\\Stub\\NonExistentStub', AssertionFailed::class];
-        yield 'union parameter type' => [StubWithUnionTypedArg::class, NotAType::class];
+        return [
+            'non-existent class' => ['Vivarium\\Test\\Container\\Stub\\NonExistentStub', AssertionFailed::class],
+            'union parameter type' => [StubWithUnionTypedArg::class, NotAType::class],
+        ];
     }
 
     /**
@@ -153,7 +153,7 @@ final class SignatureTest extends TestCase
      * @covers ::__construct
      * @covers ::fromReflector
      * @covers ::fromParameter
-     * @dataProvider provideOfFunction
+     * @dataProvider provideFunctionsWithParameterCount
      */
     public function testOfFunction(callable $fn, int $expectedCount): void
     {
@@ -162,14 +162,16 @@ final class SignatureTest extends TestCase
         static::assertSame($expectedCount, $signature->count());
     }
 
-    /** @return Generator<string, array{callable, int}> */
-    public static function provideOfFunction(): Generator
+    /** @return array<string, array{callable, int}> */
+    public static function provideFunctionsWithParameterCount(): array
     {
         $closure = static function (string $name, int $count = 1): void {
         };
 
-        yield 'closure' => [$closure, 2];
-        yield 'named function' => ['strlen', 1];
+        return [
+            'closure' => [$closure, 2],
+            'named function' => ['strlen', 1],
+        ];
     }
 
     /**
@@ -177,7 +179,7 @@ final class SignatureTest extends TestCase
      * @covers ::__construct
      * @covers ::fromReflector
      * @covers ::fromParameter
-     * @dataProvider provideOfFunctionException
+     * @dataProvider provideNonFunctionCallables
      */
     public function testOfFunctionException(callable $fn): void
     {
@@ -186,51 +188,61 @@ final class SignatureTest extends TestCase
         Signature::ofFunction($fn);
     }
 
-    /** @return Generator<string, array{callable}> */
-    public static function provideOfFunctionException(): Generator
+    /** @return array<string, array{callable}> */
+    public static function provideNonFunctionCallables(): array
     {
-        yield 'method-array callable' => [[new StubFactory(), 'create']];
-        yield 'invokable object' => [new StubInvokable()];
+        return [
+            'method-array callable' => [[new StubFactory(), 'create']],
+            'invokable object' => [new StubInvokable()],
+        ];
     }
 
     /**
      * @covers ::count
-     * @dataProvider provideCount
+     * @dataProvider provideClassesWithParameterCount
      */
     public function testCount(string $class, int $expected): void
     {
         static::assertSame($expected, Signature::ofConstructor($class)->count());
     }
 
-    /** @return Generator<string, array{string, int}> */
-    public static function provideCount(): Generator
+    /** @return array<string, array{string, int}> */
+    public static function provideClassesWithParameterCount(): array
     {
-        yield 'no parameters' => [StubWithNoArgs::class, 0];
-        yield 'three parameters' => [StubWithValidFullSignature::class, 3];
+        return [
+            'no parameters' => [StubWithNoArgs::class, 0],
+            'three parameters' => [StubWithValidFullSignature::class, 3],
+        ];
     }
 
     /**
      * @covers ::getParameter
-     * @dataProvider provideGetParameter
+     * @dataProvider provideMultipleArgsPositionsAndNames
      */
-    public function testGetParameter(int $position, string $expectedName): void
+    public function testGetParameter(int $position, string $name): void
     {
         $signature = Signature::ofConstructor(StubWithMultipleArgs::class);
 
-        static::assertSame($expectedName, $signature->getParameter($position)->getName());
+        static::assertSame($name, $signature->getParameter($position)->getName());
     }
 
-    /** @return Generator<string, array{int, string}> */
-    public static function provideGetParameter(): Generator
+    /**
+     * The parameters of StubWithMultipleArgs: position and the name declared there.
+     *
+     * @return array<string, array{int, string}>
+     */
+    public static function provideMultipleArgsPositionsAndNames(): array
     {
-        yield 'position 0' => [0, 'service'];
-        yield 'position 1' => [1, 'name'];
-        yield 'position 2' => [2, 'count'];
+        return [
+            'service at position 0' => [0, 'service'],
+            'name at position 1' => [1, 'name'],
+            'count at position 2' => [2, 'count'],
+        ];
     }
 
     /**
      * @covers ::getParameter
-     * @dataProvider provideGetParameterException
+     * @dataProvider provideInvalidPositions
      */
     public function testGetParameterException(int $position): void
     {
@@ -239,28 +251,26 @@ final class SignatureTest extends TestCase
         Signature::ofConstructor(StubWithMultipleArgs::class)->getParameter($position);
     }
 
-    /** @return Generator<string, array{int}> */
-    public static function provideGetParameterException(): Generator
+    /**
+     * Positions outside StubWithMultipleArgs' three parameters.
+     *
+     * @return array<string, array{int}>
+     */
+    public static function provideInvalidPositions(): array
     {
-        yield 'negative position' => [-1];
-        yield 'out of range position' => [3];
+        return [
+            'negative position' => [-1],
+            'out of range position' => [3],
+        ];
     }
 
     /**
      * @covers ::positionOf
-     * @dataProvider providePositionOf
+     * @dataProvider provideMultipleArgsPositionsAndNames
      */
-    public function testPositionOf(string $name, int $expected): void
+    public function testPositionOf(int $position, string $name): void
     {
-        static::assertSame($expected, Signature::ofConstructor(StubWithMultipleArgs::class)->positionOf($name));
-    }
-
-    /** @return Generator<string, array{string, int}> */
-    public static function providePositionOf(): Generator
-    {
-        yield 'service' => ['service', 0];
-        yield 'name' => ['name', 1];
-        yield 'count' => ['count', 2];
+        static::assertSame($position, Signature::ofConstructor(StubWithMultipleArgs::class)->positionOf($name));
     }
 
     /** @covers ::positionOf */
@@ -273,35 +283,36 @@ final class SignatureTest extends TestCase
 
     /**
      * @covers ::hasArgument
-     * @dataProvider provideHasArgument
+     * @dataProvider provideFreshAndBoundPositions
      */
     public function testHasArgument(Signature $signature, int $position, bool $expected): void
     {
         static::assertSame($expected, $signature->hasArgument($position));
     }
 
-    /** @return Generator<string, array{Signature, int, bool}> */
-    public static function provideHasArgument(): Generator
+    /** @return array<string, array{Signature, int, bool}> */
+    public static function provideFreshAndBoundPositions(): array
     {
         $fresh = Signature::ofConstructor(StubWithMultipleArgs::class);
-
-        yield 'fresh position 0' => [$fresh, 0, false];
-        yield 'fresh position 1' => [$fresh, 1, false];
-        yield 'fresh position 2' => [$fresh, 2, false];
 
         $provider = self::createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
 
         $bound = $fresh->withArgument(1, $provider);
 
-        yield 'bound position 0' => [$bound, 0, false];
-        yield 'bound position 1' => [$bound, 1, true];
-        yield 'bound position 2' => [$bound, 2, false];
+        return [
+            'fresh position 0' => [$fresh, 0, false],
+            'fresh position 1' => [$fresh, 1, false],
+            'fresh position 2' => [$fresh, 2, false],
+            'bound position 0' => [$bound, 0, false],
+            'bound position 1' => [$bound, 1, true],
+            'bound position 2' => [$bound, 2, false],
+        ];
     }
 
     /**
      * @covers ::hasArgument
-     * @dataProvider provideHasArgumentException
+     * @dataProvider provideInvalidPositions
      */
     public function testHasArgumentException(int $position): void
     {
@@ -310,16 +321,9 @@ final class SignatureTest extends TestCase
         Signature::ofConstructor(StubWithMultipleArgs::class)->hasArgument($position);
     }
 
-    /** @return Generator<string, array{int}> */
-    public static function provideHasArgumentException(): Generator
-    {
-        yield 'negative position' => [-1];
-        yield 'out of range position' => [3];
-    }
-
     /**
      * @covers ::withArgument
-     * @dataProvider provideWithArgument
+     * @dataProvider provideAcceptedBindings
      */
     public function testWithArgument(
         Signature $signature,
@@ -335,28 +339,14 @@ final class SignatureTest extends TestCase
         static::assertSame($provider, $modified->getArguments()[$position]);
     }
 
-    /** @return Generator<string, array{Signature, int, Provider, bool}> */
-    public static function provideWithArgument(): Generator
+    /** @return array<string, array{Signature, int, Provider, bool}> */
+    public static function provideAcceptedBindings(): array
     {
         $stringProvider = self::createStub(Provider::class);
         $stringProvider->method('getTarget')->willReturn('string');
 
-        yield 'required scalar position' => [
-            Signature::ofConstructor(StubWithRequiredStringArg::class),
-            0,
-            $stringProvider,
-            false,
-        ];
-
         $arrayProvider = self::createStub(Provider::class);
         $arrayProvider->method('getTarget')->willReturn('array');
-
-        yield 'variadic position bound with array-targeting provider' => [
-            Signature::ofConstructor(StubForVariadicShadowTarget::class),
-            0,
-            $arrayProvider,
-            false,
-        ];
 
         $firstProvider = self::createStub(Provider::class);
         $firstProvider->method('getTarget')->willReturn('string');
@@ -367,12 +357,26 @@ final class SignatureTest extends TestCase
         $alreadyBound = Signature::ofConstructor(StubWithRequiredStringArg::class)
             ->withArgument(0, $firstProvider);
 
-        yield 'rebind replaces previous provider' => [$alreadyBound, 0, $secondProvider, true];
+        return [
+            'required scalar position' => [
+                Signature::ofConstructor(StubWithRequiredStringArg::class),
+                0,
+                $stringProvider,
+                false,
+            ],
+            'variadic position bound with array-targeting provider' => [
+                Signature::ofConstructor(StubForVariadicShadowTarget::class),
+                0,
+                $arrayProvider,
+                false,
+            ],
+            'rebind replaces previous provider' => [$alreadyBound, 0, $secondProvider, true],
+        ];
     }
 
     /**
      * @covers ::withArgument
-     * @dataProvider provideWithArgumentException
+     * @dataProvider provideRejectedBindings
      */
     public function testWithArgumentException(Signature $signature, int $position, Provider $provider): void
     {
@@ -381,25 +385,25 @@ final class SignatureTest extends TestCase
         $signature->withArgument($position, $provider);
     }
 
-    /** @return Generator<string, array{Signature, int, Provider}> */
-    public static function provideWithArgumentException(): Generator
+    /** @return array<string, array{Signature, int, Provider}> */
+    public static function provideRejectedBindings(): array
     {
         $stringProvider = self::createStub(Provider::class);
         $stringProvider->method('getTarget')->willReturn('string');
 
         $signature = Signature::ofConstructor(StubWithRequiredStringArg::class);
 
-        yield 'negative position' => [$signature, -1, $stringProvider];
-        yield 'out of range position' => [$signature, $signature->count(), $stringProvider];
-
         $intProvider = self::createStub(Provider::class);
         $intProvider->method('getTarget')->willReturn('int');
 
-        yield 'mismatched target type' => [$signature, 0, $intProvider];
-
         $variadicSignature = Signature::ofConstructor(StubForVariadicShadowTarget::class);
 
-        yield 'variadic position bound with element-type provider' => [$variadicSignature, 0, $stringProvider];
+        return [
+            'negative position' => [$signature, -1, $stringProvider],
+            'out of range position' => [$signature, $signature->count(), $stringProvider],
+            'mismatched target type' => [$signature, 0, $intProvider],
+            'variadic position bound with element-type provider' => [$variadicSignature, 0, $stringProvider],
+        ];
     }
 
     /** @covers ::getArguments */
@@ -429,15 +433,21 @@ final class SignatureTest extends TestCase
 
     /**
      * @covers ::project
-     * @dataProvider provideProject
+     * @dataProvider provideExplicitBindingProjections
      */
-    public function testProject(Signature $source, Signature $target, Closure $assert): void
-    {
-        $assert($source->project($target));
+    public function testProjectKeepsTheWinningExplicitBinding(
+        Signature $source,
+        Signature $target,
+        Provider $expected,
+    ): void {
+        $projected = $source->project($target);
+
+        static::assertTrue($projected->hasArgument(0));
+        static::assertSame($expected, $projected->getArguments()[0]);
     }
 
-    /** @return Generator<string, array{Signature, Signature, Closure}> */
-    public static function provideProject(): Generator
+    /** @return array<string, array{Signature, Signature, Provider}> */
+    public static function provideExplicitBindingProjections(): array
     {
         $sourceProvider = self::createStub(Provider::class);
         $sourceProvider->method('getTarget')->willReturn('string');
@@ -450,88 +460,83 @@ final class SignatureTest extends TestCase
         $targetBound = Signature::ofConstructor(StubWithOptionalArg::class)
             ->withArgument(0, $targetProvider);
 
-        yield 'target explicit binding wins over source' => [
-            $sourceBound,
-            $targetBound,
-            static function (Signature $projected) use ($targetProvider): void {
-                static::assertTrue($projected->hasArgument(0));
-                static::assertSame($targetProvider, $projected->getArguments()[0]);
-            },
+        return [
+            'target explicit binding wins over source' => [$sourceBound, $targetBound, $targetProvider],
+            'source explicit binding transplants when target has none' => [
+                $sourceBound,
+                Signature::ofConstructor(StubWithOptionalArg::class),
+                $sourceProvider,
+            ],
         ];
+    }
 
-        $unboundTarget = Signature::ofConstructor(StubWithOptionalArg::class);
+    /** @covers ::project */
+    public function testProjectLeavesTheTargetDefaultWhenNeitherIsBound(): void
+    {
+        $projected = Signature::ofConstructor(StubWithRequiredStringArg::class)
+            ->project(Signature::ofConstructor(StubWithOptionalArg::class));
 
-        yield 'source explicit binding transplants when target has none' => [
-            $sourceBound,
-            $unboundTarget,
-            static function (Signature $projected) use ($sourceProvider): void {
-                static::assertTrue($projected->hasArgument(0));
-                static::assertSame($sourceProvider, $projected->getArguments()[0]);
-            },
-        ];
+        static::assertFalse($projected->hasArgument(0));
+        static::assertSame(
+            'default',
+            $projected->getArguments()[0]->provide(self::createStub(Container::class)),
+        );
+    }
 
-        yield 'neither explicit binding leaves the target default standing' => [
-            Signature::ofConstructor(StubWithRequiredStringArg::class),
-            Signature::ofConstructor(StubWithOptionalArg::class),
-            static function (Signature $projected): void {
-                static::assertFalse($projected->hasArgument(0));
-                static::assertSame(
-                    'default',
-                    $projected->getArguments()[0]->provide(self::createStub(Container::class)),
-                );
-            },
-        ];
+    /** @covers ::project */
+    public function testProjectResolvesNamesThroughTheTarget(): void
+    {
+        $projected = Signature::ofConstructor(StubWithRequiredStringArg::class)
+            ->project(Signature::ofConstructor(StubWithOptionalArgNamedValue::class));
 
-        yield 'result names resolve through the target' => [
-            Signature::ofConstructor(StubWithRequiredStringArg::class),
-            Signature::ofConstructor(StubWithOptionalArgNamedValue::class),
-            static function (Signature $projected): void {
-                static::assertSame(0, $projected->positionOf('value'));
-            },
-        ];
+        static::assertSame(0, $projected->positionOf('value'));
+    }
 
-        yield 'a class-typed target may widen from a subclass-typed source' => [
-            Signature::ofConstructor(StubWithSubclassTypedArg::class),
-            Signature::ofConstructor(StubWithBaseTypedArg::class),
-            static function (Signature $projected): void {
-                static::assertSame(1, $projected->count());
-                static::assertSame(StubBase::class, $projected->getParameter(0)->getType());
-            },
-        ];
+    /** @covers ::project */
+    public function testProjectLetsAClassTypedTargetWidenFromASubclassTypedSource(): void
+    {
+        $projected = Signature::ofConstructor(StubWithSubclassTypedArg::class)
+            ->project(Signature::ofConstructor(StubWithBaseTypedArg::class));
 
-        yield 'a variadic target may shadow an optional source' => [
-            Signature::ofConstructor(StubForVariadicShadowSource::class),
-            Signature::ofConstructor(StubForVariadicShadowTarget::class),
-            static function (Signature $projected): void {
-                static::assertSame(1, $projected->count());
-                static::assertFalse($projected->hasArgument(0));
-                static::assertSame('array', $projected->getArguments()[0]->getTarget());
-            },
-        ];
+        static::assertSame(1, $projected->count());
+        static::assertSame(StubBase::class, $projected->getParameter(0)->getType());
+    }
 
-        yield 'an extra optional target position beyond source is omittable' => [
-            Signature::ofConstructor(StubWithNoArgs::class),
-            Signature::ofConstructor(StubWithOptionalArg::class),
-            static function (Signature $projected): void {
-                static::assertSame(1, $projected->count());
-                static::assertFalse($projected->hasArgument(0));
-            },
-        ];
+    /** @covers ::project */
+    public function testProjectLetsAVariadicTargetShadowAnOptionalSource(): void
+    {
+        $projected = Signature::ofConstructor(StubForVariadicShadowSource::class)
+            ->project(Signature::ofConstructor(StubForVariadicShadowTarget::class));
 
-        yield 'an extra variadic target position beyond source is omittable' => [
-            Signature::ofConstructor(StubWithNoArgs::class),
-            Signature::ofConstructor(StubForVariadicShadowTarget::class),
-            static function (Signature $projected): void {
-                static::assertSame(1, $projected->count());
-            },
-        ];
+        static::assertSame(1, $projected->count());
+        static::assertFalse($projected->hasArgument(0));
+        static::assertSame('array', $projected->getArguments()[0]->getTarget());
+    }
+
+    /** @covers ::project */
+    public function testProjectOmitsAnExtraOptionalTargetPosition(): void
+    {
+        $projected = Signature::ofConstructor(StubWithNoArgs::class)
+            ->project(Signature::ofConstructor(StubWithOptionalArg::class));
+
+        static::assertSame(1, $projected->count());
+        static::assertFalse($projected->hasArgument(0));
+    }
+
+    /** @covers ::project */
+    public function testProjectOmitsAnExtraVariadicTargetPosition(): void
+    {
+        $projected = Signature::ofConstructor(StubWithNoArgs::class)
+            ->project(Signature::ofConstructor(StubForVariadicShadowTarget::class));
+
+        static::assertSame(1, $projected->count());
     }
 
     /**
      * @param class-string<Throwable> $exception
      *
      * @covers ::project
-     * @dataProvider provideProjectException
+     * @dataProvider provideIncompatibleProjections
      */
     public function testProjectException(Signature $source, Signature $target, string $exception): void
     {
@@ -540,40 +545,38 @@ final class SignatureTest extends TestCase
         $source->project($target);
     }
 
-    /** @return Generator<string, array{Signature, Signature, class-string<Throwable>}> */
-    public static function provideProjectException(): Generator
+    /** @return array<string, array{Signature, Signature, class-string<Throwable>}> */
+    public static function provideIncompatibleProjections(): array
     {
-        yield 'target has fewer positions than source' => [
-            Signature::ofConstructor(StubWithRequiredStringArg::class),
-            Signature::ofConstructor(StubWithNoArgs::class),
-            CannotBeProjected::class,
-        ];
-
-        yield 'an extra required target position beyond source is not omittable' => [
-            Signature::ofConstructor(StubWithNoArgs::class),
-            Signature::ofConstructor(StubWithRequiredStringArg::class),
-            CannotBeOmitted::class,
-        ];
-
-        yield 'a required target cannot replace an optional source' => [
-            Signature::ofConstructor(StubWithOptionalArg::class),
-            Signature::ofConstructor(StubWithRequiredStringArg::class),
-            CannotBeReplaced::class,
-        ];
-
-        yield 'a subclass-typed target cannot replace a base-typed source' => [
-            Signature::ofConstructor(StubWithBaseTypedArg::class),
-            Signature::ofConstructor(StubWithSubclassTypedArg::class),
-            CannotBeReplaced::class,
-        ];
-
         $mismatchedProvider = self::createStub(Provider::class);
         $mismatchedProvider->method('getTarget')->willReturn('string');
 
-        yield 'a transplanted source binding must still fit the target variadic slot' => [
-            Signature::ofConstructor(StubWithRequiredStringArg::class)->withArgument(0, $mismatchedProvider),
-            Signature::ofConstructor(StubForVariadicShadowTarget::class),
-            AssertionFailed::class,
+        return [
+            'target has fewer positions than source' => [
+                Signature::ofConstructor(StubWithRequiredStringArg::class),
+                Signature::ofConstructor(StubWithNoArgs::class),
+                CannotBeProjected::class,
+            ],
+            'an extra required target position beyond source is not omittable' => [
+                Signature::ofConstructor(StubWithNoArgs::class),
+                Signature::ofConstructor(StubWithRequiredStringArg::class),
+                CannotBeOmitted::class,
+            ],
+            'a required target cannot replace an optional source' => [
+                Signature::ofConstructor(StubWithOptionalArg::class),
+                Signature::ofConstructor(StubWithRequiredStringArg::class),
+                CannotBeReplaced::class,
+            ],
+            'a subclass-typed target cannot replace a base-typed source' => [
+                Signature::ofConstructor(StubWithBaseTypedArg::class),
+                Signature::ofConstructor(StubWithSubclassTypedArg::class),
+                CannotBeReplaced::class,
+            ],
+            'a transplanted source binding must still fit the target variadic slot' => [
+                Signature::ofConstructor(StubWithRequiredStringArg::class)->withArgument(0, $mismatchedProvider),
+                Signature::ofConstructor(StubForVariadicShadowTarget::class),
+                AssertionFailed::class,
+            ],
         ];
     }
 }

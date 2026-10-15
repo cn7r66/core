@@ -33,7 +33,7 @@ final class ResolutionFailedTest extends TestCase
      * @covers ::__construct
      * @dataProvider providePaths
      */
-    public function testConstructor(array $path, string $previousMessage): void
+    public function testMessageRendersThePathAndThePreviousMessage(array $path, string $previousMessage): void
     {
         $rendered = [];
 
@@ -63,22 +63,23 @@ final class ResolutionFailedTest extends TestCase
         self::assertSame($path, $exception->getPath());
     }
 
-    /** @return iterable<string, array{non-empty-list<Binding>, string}> */
-    public static function providePaths(): iterable
+    /** @return array<string, array{non-empty-list<Binding>, string}> */
+    public static function providePaths(): array
     {
-        $a = new Binding(StubClass::class);
-        $b = new Binding(StubService::class);
+        $classBinding   = new Binding(StubClass::class);
+        $serviceBinding = new Binding(StubService::class);
 
-        yield 'single default binding' => [[$a], 'boom'];
-        yield 'two default bindings' => [[$a, $b], 'boom'];
-        yield 'tagged binding' => [[$a, new Binding(StubService::class, 'special')], 'failure'];
-        yield 'contextual binding' => [[new Binding(StubClass::class, Binding::DEFAULT, 'Some\\Ns')], 'failure'];
-        yield 'tagged contextual binding' => [
-            [$a, new Binding(StubService::class, 'special', 'Some\\Ns')],
-            'nested failure',
+        return [
+            'single default binding' => [[$classBinding], 'boom'],
+            'two default bindings' => [[$classBinding, $serviceBinding], 'boom'],
+            'tagged binding' => [[$classBinding, new Binding(StubService::class, 'special')], 'failure'],
+            'contextual binding' => [[new Binding(StubClass::class, Binding::DEFAULT, 'Some\\Ns')], 'failure'],
+            'tagged contextual binding' => [
+                [$classBinding, new Binding(StubService::class, 'special', 'Some\\Ns')],
+                'nested failure',
+            ],
+            'empty previous message' => [[$classBinding, $serviceBinding], ''],
         ];
-
-        yield 'empty previous message' => [[$a, $b], ''];
     }
 
     /**
@@ -93,13 +94,15 @@ final class ResolutionFailedTest extends TestCase
         self::assertSame(0, $exception->getCode());
     }
 
-    /** @return iterable<string, array{Throwable}> */
-    public static function provideThrowables(): iterable
+    /** @return array<string, array{Throwable}> */
+    public static function provideThrowables(): array
     {
-        yield 'runtime exception' => [new RuntimeException('boom')];
-        yield 'logic exception' => [new LogicException('bad')];
-        yield 'exception with code' => [new RuntimeException('coded', 42)];
-        yield 'error' => [new Error('fatal')];
+        return [
+            'runtime exception' => [new RuntimeException('boom')],
+            'logic exception' => [new LogicException('bad')],
+            'exception with code' => [new RuntimeException('coded', 42)],
+            'error' => [new Error('fatal')],
+        ];
     }
 
     /**
@@ -115,11 +118,13 @@ final class ResolutionFailedTest extends TestCase
         self::assertInstanceOf($expected, $exception);
     }
 
-    /** @return iterable<string, array{class-string}> */
-    public static function provideExceptionTypes(): iterable
+    /** @return array<string, array{class-string}> */
+    public static function provideExceptionTypes(): array
     {
-        yield 'runtime exception' => [RuntimeException::class];
-        yield 'container exception' => [ContainerException::class];
-        yield 'psr container exception' => [ContainerExceptionInterface::class];
+        return [
+            'runtime exception' => [RuntimeException::class],
+            'container exception' => [ContainerException::class],
+            'psr container exception' => [ContainerExceptionInterface::class],
+        ];
     }
 }

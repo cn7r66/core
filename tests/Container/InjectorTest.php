@@ -163,12 +163,12 @@ final class InjectorTest extends TestCase
         static::assertSame(StubClass::STRING_CONSTANT, $result->property);
     }
 
-    /** @covers ::get */
-    public function testMethodInjectionIsAppliedOnGet(): void
+    /**
+     * @covers ::get
+     * @dataProvider provideMethodInjectionRegistries
+     */
+    public function testMethodInjectionIsAppliedOnGet(Registry $registry): void
     {
-        $registry = (new EagerRegistry())
-            ->inject(StubClass::class)->onMethod('setService')->withDefaultPriority();
-
         $container = new Injector($registry);
 
         $result = $container->get(StubClass::class);
@@ -177,18 +177,19 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubService::class, $result->service);
     }
 
-    /** @covers ::get */
-    public function testImmutableMethodInjectionIsAppliedOnGet(): void
+    /** @return array<string, array{Registry}> */
+    public static function provideMethodInjectionRegistries(): array
     {
-        $registry = (new EagerRegistry())
-            ->inject(StubClass::class)->onImmutableMethod('withService')->withDefaultPriority();
-
-        $container = new Injector($registry);
-
-        $result = $container->get(StubClass::class);
-
-        static::assertInstanceOf(StubClass::class, $result);
-        static::assertInstanceOf(StubService::class, $result->service);
+        return [
+            'mutable method' => [
+                (new EagerRegistry())
+                    ->inject(StubClass::class)->onMethod('setService')->withDefaultPriority(),
+            ],
+            'immutable method' => [
+                (new EagerRegistry())
+                    ->inject(StubClass::class)->onImmutableMethod('withService')->withDefaultPriority(),
+            ],
+        ];
     }
 
     /** @covers ::get */
@@ -338,11 +339,11 @@ final class InjectorTest extends TestCase
 
         $container = new Injector($registry);
 
-        $b = $container->get(StubInjectorSharedUserB::class);
-        $c = $container->get(StubInjectorSharedUserC::class);
+        $userB = $container->get(StubInjectorSharedUserB::class);
+        $userC = $container->get(StubInjectorSharedUserC::class);
 
-        static::assertSame($b->d, $c->d);
-        static::assertSame($b->d, $container->get(StubInjectorShared::class));
+        static::assertSame($userB->shared, $userC->shared);
+        static::assertSame($userB->shared, $container->get(StubInjectorShared::class));
     }
 
     /**
@@ -461,12 +462,13 @@ final class InjectorTest extends TestCase
         static::assertFalse($container->has(new Binding(StubWithNoArgs::class, 'other')));
     }
 
-    /** @return iterable<string, array{Registry}> */
-    public static function provideRegistriesWithoutOtherTagRegistration(): iterable
+    /** @return array<string, array{Registry}> */
+    public static function provideRegistriesWithoutOtherTagRegistration(): array
     {
-        yield 'empty registry' => [new EagerRegistry()];
-
-        yield 'default tag registered' => [(new EagerRegistry())->define(StubWithNoArgs::class)->transient()];
+        return [
+            'empty registry' => [new EagerRegistry()],
+            'default tag registered' => [(new EagerRegistry())->define(StubWithNoArgs::class)->transient()],
+        ];
     }
 
     /**
@@ -572,20 +574,21 @@ final class InjectorTest extends TestCase
         static::assertSame(1, $result->calls);
     }
 
-    /** @return iterable<string, array{Registry, string}> */
-    public static function provideInterfaceInjectionRegistries(): iterable
+    /** @return array<string, array{Registry, string}> */
+    public static function provideInterfaceInjectionRegistries(): array
     {
-        yield 'implementation resolved directly' => [
-            (new EagerRegistry())
-                ->inject(StubContractHook::class)->onMethod('m')->withDefaultPriority(),
-            StubContractHookImplementation::class,
-        ];
-
-        yield 'implementation resolved through the interface binding' => [
-            (new EagerRegistry())
-                ->bind(StubContractHook::class)->to(StubContractHookImplementation::class)->transient()
-                ->inject(StubContractHook::class)->onMethod('m')->withDefaultPriority(),
-            StubContractHook::class,
+        return [
+            'implementation resolved directly' => [
+                (new EagerRegistry())
+                    ->inject(StubContractHook::class)->onMethod('m')->withDefaultPriority(),
+                StubContractHookImplementation::class,
+            ],
+            'implementation resolved through the interface binding' => [
+                (new EagerRegistry())
+                    ->bind(StubContractHook::class)->to(StubContractHookImplementation::class)->transient()
+                    ->inject(StubContractHook::class)->onMethod('m')->withDefaultPriority(),
+                StubContractHook::class,
+            ],
         ];
     }
 
@@ -595,18 +598,40 @@ final class InjectorTest extends TestCase
      * @covers ::resolve
      * @covers ::applyAlterations
      * @covers ::applyChannel
+     * @dataProvider provideWrappingDecoratorRegistries
      */
-    public function testDecoratorWrapsResolvedObjectAndAutowiresOtherParameters(): void
+    public function testDecoratorWrapsResolvedObjectAndAutowiresOtherParameters(Registry $registry): void
     {
-        $registry = (new EagerRegistry())
-            ->bind(StubDecoratedSubject::class)->to(StubDecoratedBase::class)->transient()
-            ->decorate(StubDecoratedSubject::class)->with(StubDecoratedWrapper::class, 'inner')->withDefaultPriority();
-
         $result = (new Injector($registry))->get(StubDecoratedSubject::class);
 
         static::assertInstanceOf(StubDecoratedWrapper::class, $result);
         static::assertInstanceOf(StubDecoratedBase::class, $result->inner);
         static::assertInstanceOf(StubDecoratedDependency::class, $result->dependency);
+    }
+
+    /** @return array<string, array{Registry}> */
+    public static function provideWrappingDecoratorRegistries(): array
+    {
+        $function = static function (
+            StubDecoratedSubject $inner,
+            StubDecoratedDependency $dependency,
+        ): StubDecoratedSubject {
+            return new StubDecoratedWrapper($inner, $dependency);
+        };
+
+        return [
+            'constructor decorator' => [
+                (new EagerRegistry())
+                    ->bind(StubDecoratedSubject::class)->to(StubDecoratedBase::class)->transient()
+                    ->decorate(StubDecoratedSubject::class)->with(StubDecoratedWrapper::class, 'inner')
+                        ->withDefaultPriority(),
+            ],
+            'function decorator' => [
+                (new EagerRegistry())
+                    ->bind(StubDecoratedSubject::class)->to(StubDecoratedBase::class)->transient()
+                    ->decorate(StubDecoratedSubject::class)->withFunction($function, 'inner')->withDefaultPriority(),
+            ],
+        ];
     }
 
     /**
@@ -631,33 +656,6 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubDecoratedWrapper::class, $result);
         static::assertInstanceOf(StubDecoratedBase::class, $result->inner);
         static::assertSame(3, $result->level);
-    }
-
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     */
-    public function testFunctionDecoratorWrapsResolvedObject(): void
-    {
-        $decorator = static function (
-            StubDecoratedSubject $inner,
-            StubDecoratedDependency $d,
-        ): StubDecoratedSubject {
-            return new StubDecoratedWrapper($inner, $d);
-        };
-
-        $registry = (new EagerRegistry())
-            ->bind(StubDecoratedSubject::class)->to(StubDecoratedBase::class)->transient()
-            ->decorate(StubDecoratedSubject::class)->withFunction($decorator, 'inner')->withDefaultPriority();
-
-        $result = (new Injector($registry))->get(StubDecoratedSubject::class);
-
-        static::assertInstanceOf(StubDecoratedWrapper::class, $result);
-        static::assertInstanceOf(StubDecoratedBase::class, $result->inner);
-        static::assertInstanceOf(StubDecoratedDependency::class, $result->dependency);
     }
 
     /**

@@ -179,59 +179,33 @@ final class BindingTest extends TestCase
     /**
      * @covers ::equals
      * @covers ::__construct
+     * @dataProvider provideEqualityComparisons
      */
-    public function testSameInstanceIsEqual(): void
+    public function testEqualsComparesTypeTagAndContext(Binding $binding, object $other, bool $expected): void
+    {
+        static::assertSame($expected, $binding->equals($other));
+    }
+
+    /** @return array<string, array{Binding, object, bool}> */
+    public static function provideEqualityComparisons(): array
     {
         $binding = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
 
-        static::assertTrue($binding->equals($binding));
-    }
-
-    /**
-     * @covers ::equals
-     * @covers ::__construct
-     */
-    public function testBindingsWithIdenticalArgumentsAreEqual(): void
-    {
-        $a = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
-        $b = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
-
-        static::assertTrue($a->equals($b));
-    }
-
-    /**
-     * @covers ::equals
-     * @covers ::__construct
-     */
-    public function testEqualsReturnsFalseForNonBindingObject(): void
-    {
-        $binding = new Binding(StubClass::class);
-
-        static::assertFalse($binding->equals(new stdClass()));
-    }
-
-    /**
-     * @covers ::equals
-     * @covers ::__construct
-     */
-    public function testBindingsWithDifferentContextAreNotEqual(): void
-    {
-        $a = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
-        $b = new Binding(StubClass::class, 'theTag', 'Vivarium\Test');
-
-        static::assertFalse($a->equals($b));
-    }
-
-    /**
-     * @covers ::equals
-     * @covers ::__construct
-     */
-    public function testBindingsWithDifferentTypeAreNotEqual(): void
-    {
-        $a = new Binding(StubClass::class);
-        $b = new Binding(stdClass::class);
-
-        static::assertFalse($a->equals($b));
+        return [
+            'same instance' => [$binding, $binding, true],
+            'identical arguments' => [
+                new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container'),
+                new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container'),
+                true,
+            ],
+            'non-binding object' => [new Binding(StubClass::class), new stdClass(), false],
+            'different context' => [
+                new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container'),
+                new Binding(StubClass::class, 'theTag', 'Vivarium\Test'),
+                false,
+            ],
+            'different type' => [new Binding(StubClass::class), new Binding(stdClass::class), false],
+        ];
     }
 
     /**
@@ -240,10 +214,10 @@ final class BindingTest extends TestCase
      */
     public function testSameArgumentsProduceSameHash(): void
     {
-        $a = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
-        $b = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
+        $first  = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
+        $second = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
 
-        static::assertSame($a->hash(), $b->hash());
+        static::assertSame($first->hash(), $second->hash());
     }
 
     /**
@@ -252,10 +226,10 @@ final class BindingTest extends TestCase
      */
     public function testDifferentArgumentsProduceDifferentHash(): void
     {
-        $a = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
-        $b = new Binding(StubClass::class, 'otherTag', 'Vivarium\Test\Container');
+        $first  = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
+        $second = new Binding(StubClass::class, 'otherTag', 'Vivarium\Test\Container');
 
-        static::assertNotSame($a->hash(), $b->hash());
+        static::assertNotSame($first->hash(), $second->hash());
     }
 
     /**
@@ -275,28 +249,22 @@ final class BindingTest extends TestCase
      * @covers ::extends
      * @covers ::interfaces
      * @covers ::__construct
+     * @dataProvider provideTypesWithHierarchySize
      */
-    public function testHierarchyForInterfaceWithNoParentContainsOnlyItself(): void
+    public function testHierarchyContainsTheTypeAndAllItsAncestors(string $type, int $expectedSize): void
     {
-        $binding   = new Binding(Stub::class);
-        $hierarchy = $binding->hierarchy();
+        $hierarchy = (new Binding($type))->hierarchy();
 
-        static::assertCount(1, $hierarchy);
+        static::assertCount($expectedSize, $hierarchy);
     }
 
-    /**
-     * @covers ::hierarchy
-     * @covers ::expand
-     * @covers ::extends
-     * @covers ::interfaces
-     * @covers ::__construct
-     */
-    public function testHierarchyForClassWithParentsContainsAllAncestors(): void
+    /** @return array<string, array{string, int}> */
+    public static function provideTypesWithHierarchySize(): array
     {
-        $binding   = new Binding(StubClass::class);
-        $hierarchy = $binding->hierarchy();
-
-        static::assertCount(3, $hierarchy);
+        return [
+            'interface with no parent' => [Stub::class, 1],
+            'class with parents' => [StubClass::class, 3],
+        ];
     }
 
     /**

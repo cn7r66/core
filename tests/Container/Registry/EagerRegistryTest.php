@@ -244,38 +244,43 @@ final class EagerRegistryTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::inject
+     * @covers ::findInjections
+     * @dataProvider provideInjectionsReachingStubClass
      */
-    public function testAfterInjectingFindInjectionsContainsInjection(): void
-    {
+    public function testFindInjectionsContainsInjectionRegisteredOnTheTypeOrASupertype(
+        string $injectedType,
+        Binding $requested,
+    ): void {
         $injection = $this->mockInjection('slot');
-        $binding   = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
 
         $registry = (new EagerRegistry())
-            ->inject(StubClass::class, Binding::GLOBAL)
+            ->inject($injectedType)
             ->withInjection($injection)
             ->withDefaultPriority();
 
-        $enhancements = $this->toArray($registry->findInjections($binding));
+        $enhancements = $this->toArray($registry->findInjections($requested));
 
         static::assertCount(1, $enhancements);
         static::assertSame($injection, $enhancements[0]->getValue());
     }
 
-    /** @covers ::inject */
-    public function testInjectWalksTypeHierarchyToChildBinding(): void
+    /** @return array<string, array{string, Binding}> */
+    public static function provideInjectionsReachingStubClass(): array
     {
-        $injection = $this->mockInjection('slot');
-        $binding   = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
-
-        $registry = (new EagerRegistry())
-            ->inject(StubBase::class)
-            ->withInjection($injection)
-            ->withDefaultPriority();
-
-        $enhancements = $this->toArray($registry->findInjections($binding));
-
-        static::assertCount(1, $enhancements);
-        static::assertSame($injection, $enhancements[0]->getValue());
+        return [
+            'injected on the same type' => [
+                StubClass::class,
+                new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL),
+            ],
+            'injected on a parent type' => [
+                StubBase::class,
+                new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL),
+            ],
+            'untagged injection applies to tagged binding' => [
+                StubClass::class,
+                new Binding(StubClass::class, 'audit', Binding::GLOBAL),
+            ],
+        ];
     }
 
     /** @covers ::inject */
@@ -368,82 +373,66 @@ final class EagerRegistryTest extends TestCase
         static::assertFalse($registry->hasProvider($binding));
     }
 
-    /** @covers ::hasProvider */
-    public function testHasProviderReturnsTrueForExactBinding(): void
-    {
-        $provider = $this->createMock(Provider::class);
-        $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
-
+    /**
+     * @covers ::hasProvider
+     * @dataProvider provideRequestsAgainstGlobalDefaultRegistration
+     */
+    public function testHasProviderMatchesTypeAndTagExactlyAndWidensOnlyContext(
+        Binding $requested,
+        bool $expected,
+    ): void {
         $registry = (new EagerRegistry())
-            ->bind(StubClass::class)
-            ->toProvider($provider)->transient();
+            ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
+            ->toProvider($this->createMock(Provider::class))->transient();
 
-        static::assertTrue($registry->hasProvider($binding));
+        static::assertSame($expected, $registry->hasProvider($requested));
     }
 
-    /** @covers ::hasProvider */
-    public function testHasProviderReturnsFalseWhenProviderOnChildNotParent(): void
+    /** @return array<string, array{Binding, bool}> */
+    public static function provideRequestsAgainstGlobalDefaultRegistration(): array
     {
-        $provider = $this->createMock(Provider::class);
-        $binding  = new Binding(StubBase::class, Binding::DEFAULT, Binding::GLOBAL);
-
-        $registry = (new EagerRegistry())
-            ->bind(StubClass::class)
-            ->toProvider($provider)->transient();
-
-        static::assertFalse($registry->hasProvider($binding));
+        return [
+            'exact binding' => [new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL), true],
+            'parent type of the registered class' => [
+                new Binding(StubBase::class, Binding::DEFAULT, Binding::GLOBAL),
+                false,
+            ],
+            'custom tag' => [new Binding(StubClass::class, 'custom', Binding::GLOBAL), false],
+            'namespace context widens to global' => [
+                new Binding(StubClass::class, Binding::DEFAULT, 'Vivarium\Test\Container'),
+                true,
+            ],
+            'custom tag in namespace context' => [
+                new Binding(StubClass::class, 'custom', 'Vivarium\Test\Container'),
+                false,
+            ],
+        ];
     }
 
-    /** @covers ::hasProvider */
-    public function testHasProviderReturnsFalseWhenProviderRegisteredWithDefaultTagAndLookupUsesCustomTag(): void
+    /**
+     * @covers ::findProvider
+     * @dataProvider provideRequestsLocatingGlobalDefaultRegistration
+     */
+    public function testFindProviderReturnsRegisteredProvider(Binding $requested): void
     {
         $provider = $this->createMock(Provider::class);
-        $binding  = new Binding(StubClass::class, 'custom', Binding::GLOBAL);
 
         $registry = (new EagerRegistry())
             ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
             ->toProvider($provider)->transient();
 
-        static::assertFalse($registry->hasProvider($binding));
+        static::assertSame($provider, $registry->findProvider($requested));
     }
 
-    /** @covers ::hasProvider */
-    public function testHasProviderReturnsTrueWhenGlobalProviderFoundViaNamespaceContextLookup(): void
+    /** @return array<string, array{Binding}> */
+    public static function provideRequestsLocatingGlobalDefaultRegistration(): array
     {
-        $provider = $this->createMock(Provider::class);
-        $binding  = new Binding(StubClass::class, Binding::DEFAULT, 'Vivarium\Test\Container');
-
-        $registry = (new EagerRegistry())
-            ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
-            ->toProvider($provider)->transient();
-
-        static::assertTrue($registry->hasProvider($binding));
-    }
-
-    /** @covers ::hasProvider */
-    public function testHasProviderReturnsFalseForCustomTagAndNamespaceContextWhenOnlyDefaultTagRegistered(): void
-    {
-        $provider = $this->createMock(Provider::class);
-        $binding  = new Binding(StubClass::class, 'custom', 'Vivarium\Test\Container');
-
-        $registry = (new EagerRegistry())
-            ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
-            ->toProvider($provider)->transient();
-
-        static::assertFalse($registry->hasProvider($binding));
-    }
-
-    /** @covers ::findProvider */
-    public function testFindProviderReturnsRegisteredProvider(): void
-    {
-        $provider = $this->createMock(Provider::class);
-        $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
-
-        $registry = (new EagerRegistry())
-            ->bind(StubClass::class)
-            ->toProvider($provider)->transient();
-
-        static::assertSame($provider, $registry->findProvider($binding));
+        return [
+            'exact binding' => [new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)],
+            'namespace context widens to global' => [
+                new Binding(StubClass::class, Binding::DEFAULT, 'Vivarium\Test\Container'),
+            ],
+        ];
     }
 
     /** @covers ::findProvider */
@@ -475,19 +464,6 @@ final class EagerRegistryTest extends TestCase
         $this->expectException(BindingNotFound::class);
 
         $registry->findProvider($binding);
-    }
-
-    /** @covers ::findProvider */
-    public function testFindProviderWidensContextToFindProvider(): void
-    {
-        $provider = $this->createMock(Provider::class);
-        $binding  = new Binding(StubClass::class, Binding::DEFAULT, 'Vivarium\Test\Container');
-
-        $registry = (new EagerRegistry())
-            ->bind(StubClass::class, Binding::DEFAULT, Binding::GLOBAL)
-            ->toProvider($provider)->transient();
-
-        static::assertSame($provider, $registry->findProvider($binding));
     }
 
     /** @covers ::findProvider */
@@ -536,28 +512,28 @@ final class EagerRegistryTest extends TestCase
         static::assertSame(Scope::SERVICE, $registry->findScope($binding));
     }
 
-    /** @covers ::findScope */
-    public function testFindScopeDoesNotWalkHierarchyToParentClass(): void
+    /**
+     * @covers ::findScope
+     * @dataProvider provideSupertypesOfStubClass
+     */
+    public function testFindScopeDoesNotWalkHierarchyToSupertype(string $supertype): void
     {
         $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
         $registry = (new EagerRegistry())
-            ->bind(StubBase::class)
+            ->bind($supertype)
             ->toProvider($this->createMock(Provider::class))
             ->service();
 
         static::assertSame(Scope::TRANSIENT, $registry->findScope($binding));
     }
 
-    /** @covers ::findScope */
-    public function testFindScopeDoesNotWalkHierarchyToInterface(): void
+    /** @return array<string, array{string}> */
+    public static function provideSupertypesOfStubClass(): array
     {
-        $binding  = new Binding(StubClass::class, Binding::DEFAULT, Binding::GLOBAL);
-        $registry = (new EagerRegistry())
-            ->bind(Stub::class)
-            ->toProvider($this->createMock(Provider::class))
-            ->service();
-
-        static::assertSame(Scope::TRANSIENT, $registry->findScope($binding));
+        return [
+            'parent class' => [StubBase::class],
+            'interface' => [Stub::class],
+        ];
     }
 
     private function mockInjection(string $slot): Injection
@@ -612,23 +588,24 @@ final class EagerRegistryTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array{list<string>, string, string}> */
-    public static function provideLocatableContexts(): iterable
+    /** @return array<string, array{list<string>, string, string}> */
+    public static function provideLocatableContexts(): array
     {
-        yield 'exact global' => [[Binding::GLOBAL], Binding::GLOBAL, Binding::GLOBAL];
-        yield 'exact namespace' => [['App\\Orders'], 'App\\Orders', 'App\\Orders'];
-        yield 'specific request widens to global' => [[Binding::GLOBAL], 'App\\Orders\\Checkout', Binding::GLOBAL];
-        yield 'specific request widens to namespace' => [['App\\Orders'], 'App\\Orders\\Checkout', 'App\\Orders'];
-        yield 'most specific registration wins' => [
-            [Binding::GLOBAL, 'App\\Orders', 'App\\Orders\\Checkout'],
-            'App\\Orders\\Checkout',
-            'App\\Orders\\Checkout',
-        ];
-
-        yield 'nearest ancestor wins over global' => [
-            [Binding::GLOBAL, 'App\\Orders'],
-            'App\\Orders\\Checkout',
-            'App\\Orders',
+        return [
+            'exact global' => [[Binding::GLOBAL], Binding::GLOBAL, Binding::GLOBAL],
+            'exact namespace' => [['App\\Orders'], 'App\\Orders', 'App\\Orders'],
+            'specific request widens to global' => [[Binding::GLOBAL], 'App\\Orders\\Checkout', Binding::GLOBAL],
+            'specific request widens to namespace' => [['App\\Orders'], 'App\\Orders\\Checkout', 'App\\Orders'],
+            'most specific registration wins' => [
+                [Binding::GLOBAL, 'App\\Orders', 'App\\Orders\\Checkout'],
+                'App\\Orders\\Checkout',
+                'App\\Orders\\Checkout',
+            ],
+            'nearest ancestor wins over global' => [
+                [Binding::GLOBAL, 'App\\Orders'],
+                'App\\Orders\\Checkout',
+                'App\\Orders',
+            ],
         ];
     }
 
@@ -656,11 +633,13 @@ final class EagerRegistryTest extends TestCase
         }
     }
 
-    /** @return iterable<string, array{string, string}> */
-    public static function provideUnlocatableRequests(): iterable
+    /** @return array<string, array{string, string}> */
+    public static function provideUnlocatableRequests(): array
     {
-        yield 'different type, same context' => [Binding::GLOBAL, Binding::GLOBAL];
-        yield 'different type, wider registration' => [Binding::GLOBAL, 'App\\Orders\\Checkout'];
+        return [
+            'different type, same context' => [Binding::GLOBAL, Binding::GLOBAL],
+            'different type, wider registration' => [Binding::GLOBAL, 'App\\Orders\\Checkout'],
+        ];
     }
 
     /**
@@ -697,27 +676,6 @@ final class EagerRegistryTest extends TestCase
 
         static::assertTrue($registry->hasProvider($request));
         static::assertTrue((new Binding(StubClass::class, 'audit', Binding::GLOBAL))->equals($located));
-    }
-
-    /**
-     * @covers ::inject
-     * @covers ::findInjections
-     * @covers ::__construct
-     */
-    public function testUntaggedInjectionAppliesToTaggedBinding(): void
-    {
-        $injection = $this->mockInjection('slot');
-        $binding   = new Binding(StubClass::class, 'audit', Binding::GLOBAL);
-
-        $registry = (new EagerRegistry())
-            ->inject(StubClass::class)
-            ->withInjection($injection)
-            ->withDefaultPriority();
-
-        $enhancements = $this->toArray($registry->findInjections($binding));
-
-        static::assertCount(1, $enhancements);
-        static::assertSame($injection, $enhancements[0]->getValue());
     }
 
     /**

@@ -78,7 +78,7 @@ final class DecoratorBinderTest extends TestCase
      * @covers ::__construct
      * @covers ::withDecorator
      * @covers \Vivarium\Container\Binding\PriorityBinder::withDefaultPriority
-     * @dataProvider defaultPriorityProvider
+     * @dataProvider provideDefaultPriorities
      */
     public function testWithDefaultPriorityPassesTheDefaultGivenAtConstruction(int $defaultPriority): void
     {
@@ -100,7 +100,7 @@ final class DecoratorBinderTest extends TestCase
     }
 
     /** @return array<string, array{int}> */
-    public static function defaultPriorityProvider(): array
+    public static function provideDefaultPriorities(): array
     {
         return [
             'low' => [Priority::LOW],
@@ -310,8 +310,8 @@ final class DecoratorBinderTest extends TestCase
     public static function provideValidFunctions(): array
     {
         return [
-            'with return type' => [static fn (StubDecorating $i): StubDecorating => $i, 'i'],
-            'without return type' => [static fn (StubDecorating $i) => $i, 0],
+            'with return type' => [static fn (StubDecorating $inner): StubDecorating => $inner, 'inner'],
+            'without return type' => [static fn (StubDecorating $inner) => $inner, 0],
         ];
     }
 
@@ -357,12 +357,14 @@ final class DecoratorBinderTest extends TestCase
     /** @return array<string, array{Closure, string|int}> */
     public static function provideInvalidFunctions(): array
     {
+        $wrongReturnType = static fn (StubDecorating $inner): StubService => new StubService();
+
         return [
             'unknown slot name' => [static fn (StubDecorating $inner): StubDecorating => $inner, 'missing'],
             'position out of range' => [static fn (StubDecorating $inner): StubDecorating => $inner, 3],
             'variadic slot' => [static fn (StubDecorating ...$inners): StubDecorating => $inners[0], 'inners'],
-            'slot type not accepting binding type' => [static fn (StubService $i) => $i, 'i'],
-            'return type not assignable' => [static fn (StubDecorating $i): StubService => new StubService(), 'i'],
+            'slot type not accepting binding type' => [static fn (StubService $service) => $service, 'service'],
+            'return type not assignable' => [$wrongReturnType, 'inner'],
         ];
     }
 
@@ -442,10 +444,10 @@ final class DecoratorBinderTest extends TestCase
     public static function provideInvalidComposeArguments(): array
     {
         return [
-            'binding type not callable' => [StubService::class, static fn (string $v): string => $v, 'v'],
-            'unknown slot name' => [Closure::class, static fn (string $v): string => $v, 'missing'],
-            'position out of range' => [Closure::class, static fn (string $v): string => $v, 4],
-            'variadic slot' => [Closure::class, static fn (string ...$v): string => 'x', 'v'],
+            'binding type not callable' => [StubService::class, static fn (string $value): string => $value, 'value'],
+            'unknown slot name' => [Closure::class, static fn (string $value): string => $value, 'missing'],
+            'position out of range' => [Closure::class, static fn (string $value): string => $value, 4],
+            'variadic slot' => [Closure::class, static fn (string ...$values): string => 'x', 'values'],
         ];
     }
 

@@ -26,20 +26,25 @@ use Vivarium\Test\Container\Stub\StubWithPrivateMethodInjection;
 /** @coversDefaultClass \Vivarium\Container\Injection\MethodCall */
 final class MethodCallTest extends TestCase
 {
-    /** @covers ::__construct */
-    public function testThrowsForNonExistentMethod(): void
+    /**
+     * @covers ::__construct
+     * @dataProvider provideUncallableMethods
+     */
+    public function testConstructorThrowsForUncallableMethod(string $class, string $method): void
     {
         static::expectException(AssertionFailed::class);
 
-        new MethodCall(StubClass::class, 'nonExistent');
+        new MethodCall($class, $method);
     }
 
-    /** @covers ::__construct */
-    public function testThrowsForPrivateMethod(): void
+    /** @return array<string, array{class-string, string}> */
+    public static function provideUncallableMethods(): array
     {
-        static::expectException(AssertionFailed::class);
-
-        new MethodCall(StubWithPrivateMethodInjection::class, 'setService');
+        return [
+            'method does not exist' => [StubClass::class, 'nonExistent'],
+            'method is private' => [StubWithPrivateMethodInjection::class, 'setService'],
+            'method not declared by the interface' => [Stub::class, 'setService'],
+        ];
     }
 
     /**
@@ -76,43 +81,27 @@ final class MethodCallTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::accept
+     * @dataProvider provideAcceptTargets
      */
-    public function testAcceptReturnsTrueWhenTargetHasMethod(): void
+    public function testAcceptAnswersWhetherTargetHasMethod(string $target, bool $expected): void
     {
         $provider = $this->createMock(Provider::class);
-        $provider->method('getTarget')->willReturn(StubClass::class);
+        $provider->method('getTarget')->willReturn($target);
 
-        static::assertTrue(
+        static::assertSame(
+            $expected,
             (new MethodCall(StubClass::class, 'setService'))->accept($provider),
         );
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::accept
-     */
-    public function testAcceptReturnsFalseWhenTargetLacksMethod(): void
+    /** @return array<string, array{string, bool}> */
+    public static function provideAcceptTargets(): array
     {
-        $provider = $this->createMock(Provider::class);
-        $provider->method('getTarget')->willReturn(StubService::class);
-
-        static::assertFalse(
-            (new MethodCall(StubClass::class, 'setService'))->accept($provider),
-        );
-    }
-
-    /**
-     * @covers ::__construct
-     * @covers ::accept
-     */
-    public function testAcceptReturnsFalseWhenTargetIsNotAClass(): void
-    {
-        $provider = $this->createMock(Provider::class);
-        $provider->method('getTarget')->willReturn('string');
-
-        static::assertFalse(
-            (new MethodCall(StubClass::class, 'setService'))->accept($provider),
-        );
+        return [
+            'target has the method' => [StubClass::class, true],
+            'target lacks the method' => [StubService::class, false],
+            'target is not a class' => ['string', false],
+        ];
     }
 
     /**
@@ -124,14 +113,6 @@ final class MethodCallTest extends TestCase
         $injection = new MethodCall(StubClass::class, 'setService');
 
         static::assertSame('setService', $injection->getSlot());
-    }
-
-    /** @covers ::__construct */
-    public function testConstructorException(): void
-    {
-        static::expectException(AssertionFailed::class);
-
-        new MethodCall(Stub::class, 'setService');
     }
 
     /** @covers ::bindArgument */
@@ -207,53 +188,36 @@ final class MethodCallTest extends TestCase
     }
 
     /**
-     * @dataProvider provideEqualsCases
+     * @dataProvider provideEqualMethodCalls
      * @covers ::equals
      */
-    public function testEquals(MethodCall $a, object $b, bool $expected): void
+    public function testEqualsReturnsTrueForEqualMethodCalls(MethodCall $first, MethodCall $second): void
     {
-        static::assertSame($expected, $a->equals($b));
+        static::assertTrue($first->equals($second));
     }
 
     /**
-     * @dataProvider provideEqualMethodCallPairs
+     * @dataProvider provideEqualMethodCalls
      * @covers ::hash
      */
-    public function testHash(MethodCall $a, MethodCall $b): void
+    public function testHashIsSameForEqualMethodCalls(MethodCall $first, MethodCall $second): void
     {
-        static::assertSame($a->hash(), $b->hash());
+        static::assertSame($first->hash(), $second->hash());
     }
 
-    /** @return iterable<string, array{0: MethodCall, 1: object, 2: bool}> */
-    public static function provideEqualsCases(): iterable
+    /**
+     * @dataProvider provideDifferentObjects
+     * @covers ::equals
+     */
+    public function testEqualsReturnsFalseForDifferentObjects(MethodCall $first, object $second): void
+    {
+        static::assertFalse($first->equals($second));
+    }
+
+    /** @return array<string, array{MethodCall, MethodCall}> */
+    public static function provideEqualMethodCalls(): array
     {
         $reflexive = new MethodCall(StubClass::class, 'setService');
-
-        yield 'same instance' => [$reflexive, $reflexive, true];
-
-        yield 'same class and method' => [
-            new MethodCall(StubClass::class, 'setService'),
-            new MethodCall(StubClass::class, 'setService'),
-            true,
-        ];
-
-        yield 'same class, different method' => [
-            new MethodCall(StubClass::class, 'setService'),
-            new MethodCall(StubClass::class, 'withService'),
-            false,
-        ];
-
-        yield 'different class, same method' => [
-            new MethodCall(StubMethodCallBase::class, 'apply'),
-            new MethodCall(StubMethodCallSubclass::class, 'apply'),
-            false,
-        ];
-
-        yield 'different class' => [
-            new MethodCall(StubClass::class, 'setService'),
-            new stdClass(),
-            false,
-        ];
 
         $provider = self::createStub(Provider::class);
         $provider->method('getTarget')->willReturn(StubService::class);
@@ -262,22 +226,32 @@ final class MethodCallTest extends TestCase
         $withoutBinding = new MethodCall(StubClass::class, 'setService');
         $withBinding    = $withoutBinding->bindArgument('service')->toProvider($provider);
 
-        yield 'argument bindings excluded from identity' => [$withoutBinding, $withBinding, true];
+        return [
+            'same instance' => [$reflexive, $reflexive],
+            'same class and method' => [
+                new MethodCall(StubClass::class, 'setService'),
+                new MethodCall(StubClass::class, 'setService'),
+            ],
+            'argument bindings excluded from identity' => [$withoutBinding, $withBinding],
+        ];
     }
 
-    /** @return iterable<string, array{0: MethodCall, 1: MethodCall}> */
-    public static function provideEqualMethodCallPairs(): iterable
+    /** @return array<string, array{MethodCall, object}> */
+    public static function provideDifferentObjects(): array
     {
-        foreach (self::provideEqualsCases() as $key => $case) {
-            if ($case[2] !== true) {
-                continue;
-            }
-
-            if (! $case[1] instanceof MethodCall) {
-                continue;
-            }
-
-            yield $key => [$case[0], $case[1]];
-        }
+        return [
+            'same class, different method' => [
+                new MethodCall(StubClass::class, 'setService'),
+                new MethodCall(StubClass::class, 'withService'),
+            ],
+            'different class, same method' => [
+                new MethodCall(StubMethodCallBase::class, 'apply'),
+                new MethodCall(StubMethodCallSubclass::class, 'apply'),
+            ],
+            'different class' => [
+                new MethodCall(StubClass::class, 'setService'),
+                new stdClass(),
+            ],
+        ];
     }
 }

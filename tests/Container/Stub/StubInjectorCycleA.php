@@ -12,7 +12,7 @@ namespace Vivarium\Test\Container\Stub;
 
 final class StubInjectorCycleA
 {
-    public function __construct(public readonly StubInjectorCycleB $b)
+    public function __construct(public readonly StubInjectorCycleB $cycleB)
     {
     }
 }

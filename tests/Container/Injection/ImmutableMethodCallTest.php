@@ -24,20 +24,24 @@ use Vivarium\Test\Container\Stub\StubWithWrongReturn;
 /** @coversDefaultClass \Vivarium\Container\Injection\ImmutableMethodCall */
 final class ImmutableMethodCallTest extends TestCase
 {
-    /** @covers ::__construct */
-    public function testThrowsForNonExistentMethod(): void
+    /**
+     * @covers ::__construct
+     * @dataProvider provideUncallableMethods
+     */
+    public function testConstructorThrowsForUncallableMethod(string $class, string $method): void
     {
         static::expectException(AssertionFailed::class);
 
-        new ImmutableMethodCall(StubClass::class, 'nonExistent');
+        new ImmutableMethodCall($class, $method);
     }
 
-    /** @covers ::__construct */
-    public function testThrowsForPrivateMethod(): void
+    /** @return array<string, array{class-string, string}> */
+    public static function provideUncallableMethods(): array
     {
-        static::expectException(AssertionFailed::class);
-
-        new ImmutableMethodCall(StubWithPrivateMethodInjection::class, 'setService');
+        return [
+            'method does not exist' => [StubClass::class, 'nonExistent'],
+            'method is private' => [StubWithPrivateMethodInjection::class, 'setService'],
+        ];
     }
 
     /**
@@ -93,43 +97,27 @@ final class ImmutableMethodCallTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::accept
+     * @dataProvider provideAcceptTargets
      */
-    public function testAcceptReturnsTrueWhenTargetHasMethod(): void
+    public function testAcceptAnswersWhetherTargetHasMethod(string $target, bool $expected): void
     {
         $provider = $this->createMock(Provider::class);
-        $provider->method('getTarget')->willReturn(StubClass::class);
+        $provider->method('getTarget')->willReturn($target);
 
-        static::assertTrue(
+        static::assertSame(
+            $expected,
             (new ImmutableMethodCall(StubClass::class, 'withService'))->accept($provider),
         );
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::accept
-     */
-    public function testAcceptReturnsFalseWhenTargetLacksMethod(): void
+    /** @return array<string, array{string, bool}> */
+    public static function provideAcceptTargets(): array
     {
-        $provider = $this->createMock(Provider::class);
-        $provider->method('getTarget')->willReturn(StubService::class);
-
-        static::assertFalse(
-            (new ImmutableMethodCall(StubClass::class, 'withService'))->accept($provider),
-        );
-    }
-
-    /**
-     * @covers ::__construct
-     * @covers ::accept
-     */
-    public function testAcceptReturnsFalseWhenTargetIsNotAClass(): void
-    {
-        $provider = $this->createMock(Provider::class);
-        $provider->method('getTarget')->willReturn('string');
-
-        static::assertFalse(
-            (new ImmutableMethodCall(StubClass::class, 'withService'))->accept($provider),
-        );
+        return [
+            'target has the method' => [StubClass::class, true],
+            'target lacks the method' => [StubService::class, false],
+            'target is not a class' => ['string', false],
+        ];
     }
 
     /**
@@ -198,55 +186,41 @@ final class ImmutableMethodCallTest extends TestCase
     }
 
     /**
-     * @dataProvider provideEqualsCases
+     * @dataProvider provideEqualMethodCalls
      * @covers ::__construct
      * @covers ::equals
      */
-    public function testEquals(ImmutableMethodCall $a, object $b, bool $expected): void
-    {
-        static::assertSame($expected, $a->equals($b));
+    public function testEqualsReturnsTrueForEqualMethodCalls(
+        ImmutableMethodCall $first,
+        ImmutableMethodCall $second,
+    ): void {
+        static::assertTrue($first->equals($second));
     }
 
     /**
-     * @dataProvider provideEqualMethodCallPairs
+     * @dataProvider provideEqualMethodCalls
      * @covers ::__construct
      * @covers ::hash
      */
-    public function testHash(ImmutableMethodCall $a, ImmutableMethodCall $b): void
+    public function testHashIsSameForEqualMethodCalls(ImmutableMethodCall $first, ImmutableMethodCall $second): void
     {
-        static::assertSame($a->hash(), $b->hash());
+        static::assertSame($first->hash(), $second->hash());
     }
 
-    /** @return iterable<string, array{0: ImmutableMethodCall, 1: object, 2: bool}> */
-    public static function provideEqualsCases(): iterable
+    /**
+     * @dataProvider provideDifferentObjects
+     * @covers ::__construct
+     * @covers ::equals
+     */
+    public function testEqualsReturnsFalseForDifferentObjects(ImmutableMethodCall $first, object $second): void
+    {
+        static::assertFalse($first->equals($second));
+    }
+
+    /** @return array<string, array{ImmutableMethodCall, ImmutableMethodCall}> */
+    public static function provideEqualMethodCalls(): array
     {
         $reflexive = new ImmutableMethodCall(StubClass::class, 'withService');
-
-        yield 'same instance' => [$reflexive, $reflexive, true];
-
-        yield 'same class and method' => [
-            new ImmutableMethodCall(StubClass::class, 'withService'),
-            new ImmutableMethodCall(StubClass::class, 'withService'),
-            true,
-        ];
-
-        yield 'same class, different method' => [
-            new ImmutableMethodCall(StubClass::class, 'withService'),
-            new ImmutableMethodCall(StubClass::class, 'setService'),
-            false,
-        ];
-
-        yield 'different class, same method name' => [
-            new ImmutableMethodCall(StubClass::class, 'withService'),
-            new ImmutableMethodCall(StubWithWrongReturn::class, 'withSomething'),
-            false,
-        ];
-
-        yield 'not an ImmutableMethodCall' => [
-            new ImmutableMethodCall(StubClass::class, 'withService'),
-            new stdClass(),
-            false,
-        ];
 
         $provider = self::createStub(Provider::class);
         $provider->method('getTarget')->willReturn(StubService::class);
@@ -255,22 +229,32 @@ final class ImmutableMethodCallTest extends TestCase
         $withoutBinding = new ImmutableMethodCall(StubClass::class, 'withService');
         $withBinding    = $withoutBinding->bindArgument('service')->toProvider($provider);
 
-        yield 'argument bindings excluded from identity' => [$withoutBinding, $withBinding, true];
+        return [
+            'same instance' => [$reflexive, $reflexive],
+            'same class and method' => [
+                new ImmutableMethodCall(StubClass::class, 'withService'),
+                new ImmutableMethodCall(StubClass::class, 'withService'),
+            ],
+            'argument bindings excluded from identity' => [$withoutBinding, $withBinding],
+        ];
     }
 
-    /** @return iterable<string, array{0: ImmutableMethodCall, 1: ImmutableMethodCall}> */
-    public static function provideEqualMethodCallPairs(): iterable
+    /** @return array<string, array{ImmutableMethodCall, object}> */
+    public static function provideDifferentObjects(): array
     {
-        foreach (self::provideEqualsCases() as $key => $case) {
-            if ($case[2] !== true) {
-                continue;
-            }
-
-            if (! $case[1] instanceof ImmutableMethodCall) {
-                continue;
-            }
-
-            yield $key => [$case[0], $case[1]];
-        }
+        return [
+            'same class, different method' => [
+                new ImmutableMethodCall(StubClass::class, 'withService'),
+                new ImmutableMethodCall(StubClass::class, 'setService'),
+            ],
+            'different class and method' => [
+                new ImmutableMethodCall(StubClass::class, 'withService'),
+                new ImmutableMethodCall(StubWithWrongReturn::class, 'withSomething'),
+            ],
+            'not an ImmutableMethodCall' => [
+                new ImmutableMethodCall(StubClass::class, 'withService'),
+                new stdClass(),
+            ],
+        ];
     }
 }

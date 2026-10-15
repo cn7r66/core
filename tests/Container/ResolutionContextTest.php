@@ -11,7 +11,6 @@ declare(strict_types=1);
 namespace Vivarium\Test\Container;
 
 use ArrayObject;
-use Closure;
 use DateTime;
 use Exception;
 use LogicException;
@@ -48,6 +47,22 @@ final class ResolutionContextTest extends TestCase
             $this->createMock(Container::class),
             $path,
         );
+    }
+
+    /**
+     * @param list<string> $types
+     *
+     * @return list<Binding>
+     */
+    private static function bindings(array $types): array
+    {
+        $bindings = [];
+
+        foreach ($types as $type) {
+            $bindings[] = new Binding($type);
+        }
+
+        return $bindings;
     }
 
     /**
@@ -125,14 +140,16 @@ final class ResolutionContextTest extends TestCase
         self::assertTrue($located->equals($request));
     }
 
-    /** @return iterable<string, array{mixed}> */
-    public static function provideResolvedValues(): iterable
+    /** @return array<string, array{mixed}> */
+    public static function provideResolvedValues(): array
     {
-        yield 'object' => [new stdClass()];
-        yield 'string' => ['value'];
-        yield 'integer' => [42];
-        yield 'null' => [null];
-        yield 'array' => [[1, 2, 3]];
+        return [
+            'object' => [new stdClass()],
+            'string' => ['value'],
+            'integer' => [42],
+            'null' => [null],
+            'array' => [[1, 2, 3]],
+        ];
     }
 
     /**
@@ -176,24 +193,30 @@ final class ResolutionContextTest extends TestCase
         self::assertNotSame($context, $received[1]);
     }
 
-    /** @return iterable<string, array{array<string, list<string>>, string, list<string>, list<string>}> */
-    public static function provideCircularRequests(): iterable
+    /** @return array<string, array{array<string, list<string>>, string, list<string>, list<string>}> */
+    public static function provideCircularRequests(): array
     {
-        $a = stdClass::class;
-        $b = ArrayObject::class;
-        $c = DateTime::class;
+        $first  = stdClass::class;
+        $second = ArrayObject::class;
+        $third  = DateTime::class;
 
-        yield 'self cycle' => [[$a => [$a]], $a, [], [$a, $a]];
-        yield 'two node cycle' => [[$a => [$b], $b => [$a]], $a, [], [$a, $b, $a]];
-        yield 'cycle not including root' => [
-            [$a => [$b], $b => [$c], $c => [$b]],
-            $a,
-            [],
-            [$a, $b, $c, $b],
+        return [
+            'self cycle' => [[$first => [$first]], $first, [], [$first, $first]],
+            'two node cycle' => [[$first => [$second], $second => [$first]], $first, [], [$first, $second, $first]],
+            'cycle not including root' => [
+                [$first => [$second], $second => [$third], $third => [$second]],
+                $first,
+                [],
+                [$first, $second, $third, $second],
+            ],
+            'cycle through initial path' => [
+                [$first => [$second], $second => [$third]],
+                $first,
+                [$third],
+                [$third, $first, $second, $third],
+            ],
+            'root already on initial path' => [[], $first, [$first], [$first, $first]],
         ];
-
-        yield 'cycle through initial path' => [[$a => [$b], $b => [$c]], $a, [$c], [$c, $a, $b, $c]];
-        yield 'root already on initial path' => [[], $a, [$a], [$a, $a]];
     }
 
     /**
@@ -212,13 +235,7 @@ final class ResolutionContextTest extends TestCase
         array $initial,
         array $expected,
     ): void {
-        $initialPath = [];
-
-        foreach ($initial as $type) {
-            $initialPath[] = new Binding($type);
-        }
-
-        $context = $this->graphContext($graph, $initialPath);
+        $context = $this->graphContext($graph, self::bindings($initial));
 
         try {
             $context->get($root);
@@ -257,13 +274,13 @@ final class ResolutionContextTest extends TestCase
      */
     public function testSiblingRequestsOfSameBindingAreNotACycle(): void
     {
-        $a       = stdClass::class;
-        $b       = ArrayObject::class;
-        $c       = DateTime::class;
-        $d       = Throwable::class;
-        $context = $this->graphContext([$a => [$b, $c], $b => [$d], $c => [$d]]);
+        $root    = stdClass::class;
+        $left    = ArrayObject::class;
+        $right   = DateTime::class;
+        $shared  = Throwable::class;
+        $context = $this->graphContext([$root => [$left, $right], $left => [$shared], $right => [$shared]]);
 
-        self::assertSame($a, $context->get($a));
+        self::assertSame($root, $context->get($root));
     }
 
     /**
@@ -272,21 +289,21 @@ final class ResolutionContextTest extends TestCase
      */
     public function testSameBindingCanBeRequestedAgainAfterItsResolutionCompleted(): void
     {
-        $a       = stdClass::class;
+        $type    = stdClass::class;
         $context = $this->graphContext([]);
 
-        $context->get($a);
+        $context->get($type);
 
-        self::assertSame($a, $context->get($a));
+        self::assertSame($type, $context->get($type));
     }
 
-    /** @return iterable<string, array{bool, list<string>}> */
-    public static function provideFailureOrigins(): iterable
+    /** @return array<string, array{list<string>}> */
+    public static function provideInitialPaths(): array
     {
-        yield 'locate throws, empty path' => [true, []];
-        yield 'resolve throws, empty path' => [false, []];
-        yield 'locate throws, initial path' => [true, [DateTime::class, ArrayObject::class]];
-        yield 'resolve throws, initial path' => [false, [DateTime::class, ArrayObject::class]];
+        return [
+            'empty path' => [[]],
+            'initial path' => [[DateTime::class, ArrayObject::class]],
+        ];
     }
 
     /**
@@ -295,27 +312,18 @@ final class ResolutionContextTest extends TestCase
      * @covers ::get
      * @covers ::__construct
      *
-     * @dataProvider provideFailureOrigins
+     * @dataProvider provideInitialPaths
      */
-    public function testOtherThrowablesAreWrappedInResolutionFailedWithRequestedBinding(
-        bool $locateThrows,
-        array $initial,
-    ): void {
-        $original    = new RuntimeException('boom');
-        $thrower     = static function () use ($original): never {
-            throw $original;
-        };
-        $initialPath = [];
-
-        foreach ($initial as $type) {
-            $initialPath[] = new Binding($type);
-        }
-
-        $context = new ResolutionContext(
-            $locateThrows ? $thrower : static fn (Binding $binding): Binding => $binding,
-            $locateThrows ? static fn (Binding $binding, Container $child): mixed => null : $thrower,
+    public function testThrowableFromLocateIsWrappedInResolutionFailedWithRequestedBinding(array $initial): void
+    {
+        $original = new RuntimeException('boom');
+        $context  = new ResolutionContext(
+            static function () use ($original): never {
+                throw $original;
+            },
+            static fn (Binding $binding, Container $child): mixed => null,
             $this->createMock(Container::class),
-            $initialPath,
+            self::bindings($initial),
         );
 
         try {
@@ -323,10 +331,36 @@ final class ResolutionContextTest extends TestCase
             self::fail('ResolutionFailed expected');
         } catch (ResolutionFailed $e) {
             self::assertSame($original, $e->getPrevious());
-            self::assertSame(
-                [...$initial, stdClass::class],
-                self::render($e->getPath()),
-            );
+            self::assertSame([...$initial, stdClass::class], self::render($e->getPath()));
+        }
+    }
+
+    /**
+     * @param list<string> $initial
+     *
+     * @covers ::get
+     * @covers ::__construct
+     *
+     * @dataProvider provideInitialPaths
+     */
+    public function testThrowableFromResolveIsWrappedInResolutionFailedWithRequestedBinding(array $initial): void
+    {
+        $original = new RuntimeException('boom');
+        $context  = new ResolutionContext(
+            static fn (Binding $binding): Binding => $binding,
+            static function () use ($original): never {
+                throw $original;
+            },
+            $this->createMock(Container::class),
+            self::bindings($initial),
+        );
+
+        try {
+            $context->get(stdClass::class);
+            self::fail('ResolutionFailed expected');
+        } catch (ResolutionFailed $e) {
+            self::assertSame($original, $e->getPrevious());
+            self::assertSame([...$initial, stdClass::class], self::render($e->getPath()));
         }
     }
 
@@ -352,19 +386,21 @@ final class ResolutionContextTest extends TestCase
         }
     }
 
-    /** @return iterable<string, array{Throwable}> */
-    public static function provideThrowablesRethrownUnchanged(): iterable
+    /** @return array<string, array{Throwable}> */
+    public static function provideResolutionExceptions(): array
     {
-        yield 'resolution failed' => [new ResolutionFailed([new Binding(DateTime::class)], new Exception('inner'))];
-        yield 'circular dependency' => [
-            new CircularDependency([new Binding(DateTime::class), new Binding(DateTime::class)]),
+        return [
+            'resolution failed' => [new ResolutionFailed([new Binding(DateTime::class)], new Exception('inner'))],
+            'circular dependency' => [
+                new CircularDependency([new Binding(DateTime::class), new Binding(DateTime::class)]),
+            ],
         ];
     }
 
     /**
      * @covers ::get
      * @covers ::__construct
-     * @dataProvider provideThrowablesRethrownUnchanged
+     * @dataProvider provideResolutionExceptions
      */
     public function testNestedResolutionExceptionsReachTheCallerAsTheSameInstance(Throwable $thrown): void
     {
@@ -388,31 +424,13 @@ final class ResolutionContextTest extends TestCase
         }
     }
 
-    /** @return iterable<string, array{Closure(): Throwable}> */
-    public static function provideDirectlyThrownResolutionExceptions(): iterable
-    {
-        yield 'resolution failed' => [
-            static fn (): Throwable => new ResolutionFailed([new Binding(DateTime::class)], new Exception('inner')),
-        ];
-
-        yield 'circular dependency' => [
-            static fn (): Throwable => new CircularDependency(
-                [new Binding(DateTime::class), new Binding(DateTime::class)],
-            ),
-        ];
-    }
-
     /**
-     * @param Closure(): Throwable $factory
-     *
      * @covers ::get
      * @covers ::__construct
-     *
-     * @dataProvider provideDirectlyThrownResolutionExceptions
+     * @dataProvider provideResolutionExceptions
      */
-    public function testResolutionExceptionsThrownByLocateAreNotRewrapped(Closure $factory): void
+    public function testResolutionExceptionsThrownByLocateAreNotRewrapped(Throwable $thrown): void
     {
-        $thrown  = $factory();
         $context = new ResolutionContext(
             static function (Binding $binding) use ($thrown): never {
                 throw $thrown;
@@ -429,13 +447,15 @@ final class ResolutionContextTest extends TestCase
         }
     }
 
-    /** @return iterable<string, array{Binding|string, bool}> */
-    public static function provideHasRequests(): iterable
+    /** @return array<string, array{Binding|string, bool}> */
+    public static function provideHasRequests(): array
     {
-        yield 'string present' => [stdClass::class, true];
-        yield 'string absent' => [stdClass::class, false];
-        yield 'binding present' => [new Binding(ArrayObject::class, 'audit', 'App'), true];
-        yield 'binding absent' => [new Binding(ArrayObject::class, 'audit', 'App'), false];
+        return [
+            'string present' => [stdClass::class, true],
+            'string absent' => [stdClass::class, false],
+            'binding present' => [new Binding(ArrayObject::class, 'audit', 'App'), true],
+            'binding absent' => [new Binding(ArrayObject::class, 'audit', 'App'), false],
+        ];
     }
 
     /**

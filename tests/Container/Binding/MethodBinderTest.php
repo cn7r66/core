@@ -62,7 +62,7 @@ final class MethodBinderTest extends TestCase
     /** @covers ::method */
     public function testMethodWithConfigureForwardsCallbackToCreate(): void
     {
-        $configure      = static fn (Caller $c): Caller => $c;
+        $configure      = static fn (Caller $caller): Caller => $caller;
         $capturedConfig = null;
 
         $binder = new MethodBinder(

@@ -56,21 +56,25 @@ final class DuplicateBindingTest extends TestCase
         static::assertInstanceOf($type, new DuplicateBinding(new Binding(StubClass::class)));
     }
 
-    /** @return iterable<string, array{Binding, string}> */
-    public static function provideBindings(): iterable
+    /** @return array<string, array{Binding, string}> */
+    public static function provideBindings(): array
     {
-        yield 'plain' => [new Binding(StubClass::class), StubClass::class];
-        yield 'tagged and contextual' => [
-            new Binding(StubClass::class, 'main', 'App\Domain'),
-            StubClass::class . ':main (in App\Domain)',
+        return [
+            'plain' => [new Binding(StubClass::class), StubClass::class],
+            'tagged and contextual' => [
+                new Binding(StubClass::class, 'main', 'App\Domain'),
+                StubClass::class . ':main (in App\Domain)',
+            ],
         ];
     }
 
-    /** @return iterable<string, array{string}> */
-    public static function provideExceptionTypes(): iterable
+    /** @return array<string, array{string}> */
+    public static function provideExceptionTypes(): array
     {
-        yield 'runtime exception' => [RuntimeException::class];
-        yield 'container exception' => [ContainerException::class];
-        yield 'psr container exception' => [ContainerExceptionInterface::class];
+        return [
+            'runtime exception' => [RuntimeException::class],
+            'container exception' => [ContainerException::class],
+            'psr container exception' => [ContainerExceptionInterface::class],
+        ];
     }
 }

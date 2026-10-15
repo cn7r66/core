@@ -50,18 +50,30 @@ final class ConstructorTest extends TestCase
     }
 
     /**
+     * @param class-string $class
+     *
+     * @dataProvider provideClassesWithoutParameters
      * @covers ::__construct
      * @covers ::provide
      * @covers ::resolveArguments
      */
-    public function testProvideCreatesInstanceWithNoArgs(): void
+    public function testProvideCreatesInstanceWithoutResolvingAnyArgument(string $class): void
     {
         $container = $this->createMock(Container::class);
         $container->expects(static::never())->method('get');
 
-        $result = (new Constructor(StubWithNoArgs::class))->provide($container);
+        $result = (new Constructor($class))->provide($container);
 
-        static::assertInstanceOf(StubWithNoArgs::class, $result);
+        static::assertInstanceOf($class, $result);
+    }
+
+    /** @return array<string, array{class-string}> */
+    public static function provideClassesWithoutParameters(): array
+    {
+        return [
+            'constructor without parameters' => [StubWithNoArgs::class],
+            'no explicit constructor' => [StubWithNoConstructor::class],
+        ];
     }
 
     /**
@@ -116,7 +128,7 @@ final class ConstructorTest extends TestCase
      * @covers ::provide
      * @covers ::resolveArguments
      */
-    public function testProvideThrowsForUntypedRequiredArg(): void
+    public function testProvideResolvesUntypedRequiredArgFromContainer(): void
     {
         $container = $this->createMock(Container::class);
         $container->method('get')->willReturn('resolved');
@@ -151,19 +163,37 @@ final class ConstructorTest extends TestCase
         static::assertSame($service, $result->service);
     }
 
-    /** @covers ::getTarget */
-    public function testGetTargetReturnsClassName(): void
+    /**
+     * @param class-string $class
+     *
+     * @dataProvider provideConstructibleClasses
+     * @covers ::__construct
+     * @covers ::getTarget
+     */
+    public function testGetTargetReturnsClassName(string $class): void
     {
-        static::assertSame(
-            StubClass::class,
-            (new Constructor(StubClass::class))->getTarget(),
-        );
+        static::assertSame($class, (new Constructor($class))->getTarget());
     }
 
-    /** @covers ::getCapabilities */
-    public function testGetCapabilitiesIncludesAll(): void
+    /** @return array<string, array{class-string}> */
+    public static function provideConstructibleClasses(): array
     {
-        $capabilities = (new Constructor(StubClass::class))->getCapabilities();
+        return [
+            'constructor with a dependency' => [StubClass::class],
+            'constructor with multiple parameters' => [StubWithMultipleArgs::class],
+            'no explicit constructor' => [StubWithNoConstructor::class],
+        ];
+    }
+
+    /**
+     * @param class-string $class
+     *
+     * @dataProvider provideClassesWithAndWithoutConstructor
+     * @covers ::getCapabilities
+     */
+    public function testGetCapabilitiesIncludesAll(string $class): void
+    {
+        $capabilities = (new Constructor($class))->getCapabilities();
 
         static::assertTrue($capabilities->contains(Capability::INJECTABLE));
         static::assertTrue($capabilities->contains(Capability::INTERCEPTABLE));
@@ -171,78 +201,112 @@ final class ConstructorTest extends TestCase
         static::assertCount(3, $capabilities);
     }
 
+    /** @return array<string, array{class-string}> */
+    public static function provideClassesWithAndWithoutConstructor(): array
+    {
+        return [
+            'constructor with a dependency' => [StubClass::class],
+            'no explicit constructor' => [StubWithNoConstructor::class],
+        ];
+    }
+
     /**
+     * @param class-string $class
+     *
+     * @dataProvider provideNotInstantiableClasses
      * @covers ::__construct
-     * @covers ::provide
-     * @covers ::resolveArguments
      */
-    public function testProvideCreatesInstanceWithNoExplicitConstructor(): void
-    {
-        $container = $this->createMock(Container::class);
-        $container->expects(static::never())->method('get');
-
-        $result = (new Constructor(StubWithNoConstructor::class))->provide($container);
-
-        static::assertInstanceOf(StubWithNoConstructor::class, $result);
-    }
-
-    /** @covers ::__construct */
-    public function testThrowsForNotInstantiableClass(): void
+    public function testThrowsForNotInstantiableClass(string $class): void
     {
         static::expectException(AssertionFailed::class);
 
-        new Constructor(NotInstantiableStub::class);
+        new Constructor($class);
     }
 
-    /** @covers ::bindArgument */
-    public function testBindArgumentThrowsForUnknownParameterName(): void
+    /** @return array<string, array{class-string}> */
+    public static function provideNotInstantiableClasses(): array
+    {
+        return [
+            'private constructor' => [NotInstantiableStub::class],
+            'interface' => [Stub::class],
+        ];
+    }
+
+    /**
+     * @param class-string $class
+     *
+     * @dataProvider provideUnknownParameterNames
+     * @covers ::bindArgument
+     */
+    public function testBindArgumentThrowsForUnknownParameterName(string $class, string $name): void
     {
         static::expectException(AssertionFailed::class);
 
-        (new Constructor(StubClass::class))->bindArgument('nonExistent');
+        (new Constructor($class))->bindArgument($name);
     }
 
-    /** @covers ::bindArgument */
-    public function testBindArgumentThrowsForImplicitConstructor(): void
+    /** @return array<string, array{class-string, string}> */
+    public static function provideUnknownParameterNames(): array
+    {
+        return [
+            'name not among the parameters' => [StubClass::class, 'nonExistent'],
+            'class without constructor' => [StubWithNoConstructor::class, 'value'],
+        ];
+    }
+
+    /**
+     * @param class-string $class
+     *
+     * @dataProvider provideUnknownParameterPositions
+     * @covers ::bindArgumentAtPosition
+     */
+    public function testBindArgumentAtPositionThrowsForUnknownPosition(string $class, int $position): void
     {
         static::expectException(AssertionFailed::class);
 
-        (new Constructor(StubWithNoConstructor::class))->bindArgument('value');
+        (new Constructor($class))->bindArgumentAtPosition($position);
     }
 
-    /** @covers ::bindArgumentAtPosition */
-    public function testBindArgumentAtPositionThrowsForOutOfBoundsPosition(): void
+    /** @return array<string, array{class-string, int}> */
+    public static function provideUnknownParameterPositions(): array
     {
-        static::expectException(AssertionFailed::class);
-
-        (new Constructor(StubWithMultipleArgs::class))->bindArgumentAtPosition(3);
+        return [
+            'position out of bounds' => [StubWithMultipleArgs::class, 3],
+            'negative position' => [StubWithMultipleArgs::class, -1],
+            'class without constructor' => [StubWithNoConstructor::class, 0],
+        ];
     }
 
-    /** @covers ::bindArgumentAtPosition */
-    public function testBindArgumentAtPositionThrowsForNegativePosition(): void
+    /**
+     * @dataProvider provideEqualConstructors
+     * @covers ::equals
+     */
+    public function testEqualsReturnsTrueForEqualConstructors(Constructor $first, Constructor $second): void
     {
-        static::expectException(AssertionFailed::class);
-
-        (new Constructor(StubWithMultipleArgs::class))->bindArgumentAtPosition(-1);
+        static::assertTrue($first->equals($second));
     }
 
-    /** @covers ::equals */
-    public function testEqualsReturnsTrueForSameClassAndMethod(): void
+    /** @return array<string, array{Constructor, Constructor}> */
+    public static function provideEqualConstructors(): array
     {
-        $a = new Constructor(StubClass::class);
-        $b = new Constructor(StubClass::class);
+        $instance = new Constructor(StubClass::class);
 
-        static::assertTrue($a->equals($b));
-        static::assertTrue($a->equals($a));
+        return [
+            'two instances of the same class' => [
+                new Constructor(StubClass::class),
+                new Constructor(StubClass::class),
+            ],
+            'same instance' => [$instance, $instance],
+        ];
     }
 
     /** @covers ::equals */
     public function testEqualsReturnsFalseForDifferentClass(): void
     {
-        $a = new Constructor(StubClass::class);
-        $b = new Constructor(StubWithNoArgs::class);
+        $first  = new Constructor(StubClass::class);
+        $second = new Constructor(StubWithNoArgs::class);
 
-        static::assertFalse($a->equals($b));
+        static::assertFalse($first->equals($second));
     }
 
     /** @covers ::equals */
@@ -253,37 +317,22 @@ final class ConstructorTest extends TestCase
         );
     }
 
-    /** @covers ::hash */
-    public function testHashIsConsistentForSameInstance(): void
+    /**
+     * @dataProvider provideEqualConstructors
+     * @covers ::hash
+     */
+    public function testHashIsSameForEqualConstructors(Constructor $first, Constructor $second): void
     {
-        $a = new Constructor(StubClass::class);
-
-        static::assertSame($a->hash(), $a->hash());
+        static::assertSame($first->hash(), $second->hash());
     }
 
     /** @covers ::hash */
     public function testHashDiffersForDifferentClasses(): void
     {
-        $a = new Constructor(StubClass::class);
-        $b = new Constructor(StubWithNoArgs::class);
+        $first  = new Constructor(StubClass::class);
+        $second = new Constructor(StubWithNoArgs::class);
 
-        static::assertNotSame($a->hash(), $b->hash());
-    }
-
-    /** @covers ::__construct */
-    public function testConstructor(): void
-    {
-        $constructor = new Constructor(StubWithNoConstructor::class);
-
-        static::assertSame(StubWithNoConstructor::class, $constructor->getTarget());
-    }
-
-    /** @covers ::__construct */
-    public function testConstructorException(): void
-    {
-        static::expectException(AssertionFailed::class);
-
-        new Constructor(Stub::class);
+        static::assertNotSame($first->hash(), $second->hash());
     }
 
     /** @covers ::bindArgument */
@@ -334,14 +383,6 @@ final class ConstructorTest extends TestCase
         static::assertSame(['a', 'b', 'c'], $result->names);
     }
 
-    /** @covers ::bindArgumentAtPosition */
-    public function testBindArgumentAtPositionException(): void
-    {
-        static::expectException(AssertionFailed::class);
-
-        (new Constructor(StubWithNoConstructor::class))->bindArgumentAtPosition(0);
-    }
-
     /** @covers ::provide */
     public function testProvide(): void
     {
@@ -352,36 +393,16 @@ final class ConstructorTest extends TestCase
         static::assertSame([], $result->names);
     }
 
-    /** @covers ::getTarget */
-    public function testGetTarget(): void
-    {
-        static::assertSame(
-            StubWithMultipleArgs::class,
-            (new Constructor(StubWithMultipleArgs::class))->getTarget(),
-        );
-    }
-
-    /** @covers ::getCapabilities */
-    public function testGetCapabilities(): void
-    {
-        $capabilities = (new Constructor(StubWithNoConstructor::class))->getCapabilities();
-
-        static::assertTrue($capabilities->contains(Capability::INJECTABLE));
-        static::assertTrue($capabilities->contains(Capability::INTERCEPTABLE));
-        static::assertTrue($capabilities->contains(Capability::DECORABLE));
-        static::assertCount(3, $capabilities);
-    }
-
     /** @covers ::equals */
     public function testEquals(): void
     {
         $provider = $this->createMock(Provider::class);
         $provider->method('getTarget')->willReturn(StubService::class);
 
-        $a = new Constructor(StubClass::class);
-        $b = (new Constructor(StubClass::class))->bindArgument('service')->toProvider($provider);
+        $unbound = new Constructor(StubClass::class);
+        $bound   = (new Constructor(StubClass::class))->bindArgument('service')->toProvider($provider);
 
-        static::assertTrue($a->equals($b));
+        static::assertTrue($unbound->equals($bound));
     }
 
     /** @covers ::hash */
@@ -390,9 +411,9 @@ final class ConstructorTest extends TestCase
         $provider = $this->createMock(Provider::class);
         $provider->method('getTarget')->willReturn(StubService::class);
 
-        $a = new Constructor(StubClass::class);
-        $b = (new Constructor(StubClass::class))->bindArgument('service')->toProvider($provider);
+        $unbound = new Constructor(StubClass::class);
+        $bound   = (new Constructor(StubClass::class))->bindArgument('service')->toProvider($provider);
 
-        static::assertSame($a->hash(), $b->hash());
+        static::assertSame($unbound->hash(), $bound->hash());
     }
 }

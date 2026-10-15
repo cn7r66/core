@@ -12,7 +12,7 @@ namespace Vivarium\Test\Container\Stub;
 
 final class StubInjectorSharedUserB
 {
-    public function __construct(public readonly StubInjectorShared $d)
+    public function __construct(public readonly StubInjectorShared $shared)
     {
     }
 }

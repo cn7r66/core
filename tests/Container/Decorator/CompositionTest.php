@@ -32,29 +32,35 @@ final class CompositionTest extends TestCase
      *
      * @dataProvider provideCompositions
      */
-    public function testEnhance(Closure $g, string|int $slot, callable|string $f, array $args, mixed $expected): void
-    {
-        $composition = new Composition(new Fun($g), $slot);
-        $h           = $composition->enhance($f, new Injector(new EagerRegistry()));
+    public function testEnhance(
+        Closure $outer,
+        string|int $slot,
+        callable|string $inner,
+        array $args,
+        mixed $expected,
+    ): void {
+        $composition = new Composition(new Fun($outer), $slot);
+        $composed    = $composition->enhance($inner, new Injector(new EagerRegistry()));
 
-        self::assertIsCallable($h);
-        self::assertSame($expected, $h(...$args));
+        self::assertIsCallable($composed);
+        self::assertSame($expected, $composed(...$args));
     }
 
-    /** @return iterable<string, array{Closure, string|int, callable|string, list<mixed>, mixed}> */
-    public static function provideCompositions(): iterable
+    /** @return array<string, array{Closure, string|int, callable|string, list<mixed>, mixed}> */
+    public static function provideCompositions(): array
     {
-        $sum = static fn (int $a, int $b): int => $a + $b;
+        $sum            = static fn (int $first, int $second): int => $first + $second;
+        $timesTen       = static fn (int $number): int => $number * 10;
+        $plusDependency = static fn (StubCompositionDependency $dependency, int $number): int => $number
+            + $dependency->value();
 
-        yield 'slot by name' => [static fn (int $n): int => $n * 10, 'n', $sum, [2, 3], 50];
-        yield 'slot by position' => [static fn (int $n): int => $n * 10, 0, $sum, [2, 3], 50];
-        yield 'function name' => [static fn (string $s): string => $s . '!', 's', 'strtoupper', ['a'], 'A!'];
-
-        $dep = static fn (StubCompositionDependency $d, int $n): int => $n + $d->value();
-
-        yield 'extra parameter autowired' => [$dep, 'n', $sum, [1, 2], 10];
-
-        yield 'slot at second position' => [$dep, 1, $sum, [1, 2], 10];
+        return [
+            'slot by name' => [$timesTen, 'number', $sum, [2, 3], 50],
+            'slot by position' => [$timesTen, 0, $sum, [2, 3], 50],
+            'function name' => [static fn (string $text): string => $text . '!', 'text', 'strtoupper', ['a'], 'A!'],
+            'extra parameter autowired' => [$plusDependency, 'number', $sum, [1, 2], 10],
+            'slot at second position' => [$plusDependency, 1, $sum, [1, 2], 10],
+        ];
     }
 
     /**
@@ -64,14 +70,14 @@ final class CompositionTest extends TestCase
      */
     public function testEnhancedCallableIsReusable(): void
     {
-        $composition = new Composition(new Fun(static fn (int $n): int => $n * 10), 'n');
-        $h           = $composition->enhance(
-            static fn (int $a, int $b): int => $a + $b,
+        $composition = new Composition(new Fun(static fn (int $number): int => $number * 10), 'number');
+        $composed    = $composition->enhance(
+            static fn (int $first, int $second): int => $first + $second,
             new Injector(new EagerRegistry()),
         );
 
-        self::assertSame(50, $h(2, 3));
-        self::assertSame(70, $h(3, 4));
+        self::assertSame(50, $composed(2, 3));
+        self::assertSame(70, $composed(3, 4));
     }
 
     /**
@@ -83,14 +89,16 @@ final class CompositionTest extends TestCase
     {
         $this->expectException(AssertionFailed::class);
 
-        new Composition(new Fun(static fn (int $n): int => $n), $slot);
+        new Composition(new Fun(static fn (int $number): int => $number), $slot);
     }
 
-    /** @return iterable<string, array{string|int}> */
-    public static function provideInvalidSlots(): iterable
+    /** @return array<string, array{string|int}> */
+    public static function provideInvalidSlots(): array
     {
-        yield 'unknown name' => ['missing'];
-        yield 'position out of range' => [5];
+        return [
+            'unknown name' => ['missing'],
+            'position out of range' => [5],
+        ];
     }
 
     /**
@@ -98,9 +106,9 @@ final class CompositionTest extends TestCase
      * @covers ::bindSlot
      * @covers ::__construct
      */
-    public function testEnhanceException(): void
+    public function testEnhanceRejectsANonCallableValue(): void
     {
-        $composition = new Composition(new Fun(static fn (int $n): int => $n), 'n');
+        $composition = new Composition(new Fun(static fn (int $number): int => $number), 'number');
 
         $this->expectException(AssertionFailed::class);
         $composition->enhance('not a callable', new Injector(new EagerRegistry()));
@@ -113,11 +121,11 @@ final class CompositionTest extends TestCase
      */
     public function testCallFailsWhenResultIsNotAssignableToSlot(): void
     {
-        $composition = new Composition(new Fun(static fn (int $n): int => $n), 'n');
-        $h           = $composition->enhance(static fn (): string => 'text', new Injector(new EagerRegistry()));
+        $composition = new Composition(new Fun(static fn (int $number): int => $number), 'number');
+        $composed    = $composition->enhance(static fn (): string => 'text', new Injector(new EagerRegistry()));
 
         $this->expectException(AssertionFailed::class);
-        $h();
+        $composed();
     }
 
     /**
@@ -126,7 +134,7 @@ final class CompositionTest extends TestCase
      */
     public function testAccept(): void
     {
-        $composition = new Composition(new Fun(static fn (int $n): int => $n), 'n');
+        $composition = new Composition(new Fun(static fn (int $number): int => $number), 'number');
 
         self::assertTrue($composition->accept($this->createMock(Provider::class)));
     }
