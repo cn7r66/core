@@ -339,7 +339,6 @@ final class EagerRegistryAlterationLookupTest extends TestCase
     /**
      * @covers ::inject
      * @covers ::findInjections
-     * @covers ::isMoreSpecific
      * @covers ::__construct
      */
     public function testUnrelatedSupertypesRegisteringSameSlotAreAmbiguous(): void
@@ -369,7 +368,6 @@ final class EagerRegistryAlterationLookupTest extends TestCase
     /**
      * @covers ::inject
      * @covers ::findInjections
-     * @covers ::isMoreSpecific
      * @covers ::__construct
      */
     public function testRegistrationOnCommonSubtypeResolvesAmbiguity(): void
@@ -396,7 +394,6 @@ final class EagerRegistryAlterationLookupTest extends TestCase
     /**
      * @covers ::inject
      * @covers ::findInjections
-     * @covers ::isMoreSpecific
      * @covers ::__construct
      */
     public function testSubtypeWinsOverSupertypeRegisteredAtNarrowerContext(): void
@@ -419,7 +416,6 @@ final class EagerRegistryAlterationLookupTest extends TestCase
     /**
      * @covers ::inject
      * @covers ::findInjections
-     * @covers ::isMoreSpecific
      * @covers ::__construct
      */
     public function testNarrowerContextWinsForSameType(): void

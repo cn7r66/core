@@ -27,6 +27,8 @@ use Vivarium\Equality\HashBuilder;
 use function array_merge;
 use function class_implements;
 use function get_parent_class;
+use function is_a;
+use function str_starts_with;
 use function strrpos;
 use function substr;
 
@@ -105,6 +107,58 @@ final class Binding implements Equality
         return $binding;
     }
 
+    public function couldBeWidened(): bool
+    {
+        return $this->context !== self::GLOBAL;
+    }
+
+    public function isMoreSpecificThan(Binding $other): bool
+    {
+        if ($this->getTag() !== $other->getTag()) {
+            return false;
+        }
+
+        if ($this->getType() !== $other->getType()) {
+            return is_a($this->getType(), $other->getType(), true);
+        }
+
+        if ($this->getContext() === $other->getContext()) {
+            return false;
+        }
+
+        if ($other->getContext() === self::GLOBAL) {
+            return true;
+        }
+
+        return str_starts_with($this->getContext(), $other->getContext() . '\\');
+    }
+
+    public function equals(object $object): bool
+    {
+        if ($object === $this) {
+            return true;
+        }
+
+        if (! $object instanceof Binding) {
+            return false;
+        }
+
+        return (new EqualsBuilder())
+            ->append($this->type, $object->getType())
+            ->append($this->tag, $object->getTag())
+            ->append($this->context, $object->getContext())
+            ->isEquals();
+    }
+
+    public function hash(): string
+    {
+        return (new HashBuilder())
+            ->append($this->type)
+            ->append($this->tag)
+            ->append($this->context)
+            ->getHashCode();
+    }
+
     /**
      * Renders the binding for error messages: `Type`, with `:tag` appended when the tag is
      * not DEFAULT and ` (in context)` appended when the context is not GLOBAL,
@@ -123,11 +177,6 @@ final class Binding implements Equality
         }
 
         return $text;
-    }
-
-    public function couldBeWidened(): bool
-    {
-        return $this->context !== self::GLOBAL;
     }
 
     /**
@@ -181,31 +230,5 @@ final class Binding implements Equality
         }
 
         return $interfaces;
-    }
-
-    public function equals(object $object): bool
-    {
-        if ($object === $this) {
-            return true;
-        }
-
-        if (! $object instanceof Binding) {
-            return false;
-        }
-
-        return (new EqualsBuilder())
-            ->append($this->type, $object->getType())
-            ->append($this->tag, $object->getTag())
-            ->append($this->context, $object->getContext())
-            ->isEquals();
-    }
-
-    public function hash(): string
-    {
-        return (new HashBuilder())
-            ->append($this->type)
-            ->append($this->tag)
-            ->append($this->context)
-            ->getHashCode();
     }
 }

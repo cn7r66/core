@@ -39,8 +39,6 @@ use function array_filter;
 use function array_map;
 use function array_values;
 use function count;
-use function is_a;
-use function str_starts_with;
 
 final class EagerRegistry implements Registry, Binder
 {
@@ -285,7 +283,7 @@ final class EagerRegistry implements Registry, Binder
                 $candidates,
                 static function (array $one) use ($candidates): bool {
                     foreach ($candidates as $other) {
-                        if (self::isMoreSpecific($other[0], $one[0])) {
+                        if ($other[0]->isMoreSpecificThan($one[0])) {
                             return false;
                         }
                     }
@@ -305,18 +303,6 @@ final class EagerRegistry implements Registry, Binder
         }
 
         return $injections;
-    }
-
-    private static function isMoreSpecific(Binding $first, Binding $second): bool
-    {
-        if ($first->getType() !== $second->getType()) {
-            return is_a($first->getType(), $second->getType(), true);
-        }
-
-        $context = $second->getContext();
-
-        return $first->getContext() !== $context
-            && ($context === Binding::GLOBAL || str_starts_with($first->getContext(), $context . '\\'));
     }
 
     /** @return iterable<ValueAndPriority<Injection>> */

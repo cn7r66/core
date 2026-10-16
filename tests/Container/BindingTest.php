@@ -330,4 +330,62 @@ final class BindingTest extends TestCase
             'custom-tag-context' => [$type, 'audit', 'App\Orders', $type . ':audit (in App\Orders)'],
         ];
     }
+
+    /**
+     * @covers ::isMoreSpecificThan
+     * @covers ::__construct
+     * @dataProvider provideIsMoreSpecificThanCases
+     */
+    public function testIsMoreSpecificThanOrdersBySubtypeThenContext(
+        Binding $subject,
+        Binding $other,
+        bool $expected,
+    ): void {
+        self::assertSame($expected, $subject->isMoreSpecificThan($other));
+    }
+
+    /** @return array<string, array{Binding, Binding, bool}> */
+    public static function provideIsMoreSpecificThanCases(): array
+    {
+        $sub   = StubClass::class;
+        $super = StubBase::class;
+
+        return [
+            'different tags'                 => [new Binding($sub, 'audit'), new Binding($super), false],
+            'subtype vs supertype'           => [new Binding($sub), new Binding($super), true],
+            'supertype vs subtype'           => [new Binding($super), new Binding($sub), false],
+            'unrelated types'                => [new Binding($sub), new Binding(stdClass::class), false],
+            'type beats context'             => [
+                new Binding($sub),
+                new Binding($super, Binding::DEFAULT, 'App\\Foo'),
+                true,
+            ],
+            'identical binding'              => [new Binding($sub), new Binding($sub), false],
+            'namespace vs global'            => [
+                new Binding($sub, Binding::DEFAULT, 'App\\Foo'),
+                new Binding($sub),
+                true,
+            ],
+            'global vs namespace'            => [
+                new Binding($sub),
+                new Binding($sub, Binding::DEFAULT, 'App\\Foo'),
+                false,
+            ],
+            'nested namespace vs parent'     => [
+                new Binding($sub, Binding::DEFAULT, 'App\\Foo\\Bar'),
+                new Binding($sub, Binding::DEFAULT, 'App\\Foo'),
+                true,
+            ],
+            'sibling sharing string prefix'  => [
+                new Binding($sub, Binding::DEFAULT, 'App\\FooBar'),
+                new Binding($sub, Binding::DEFAULT, 'App\\Foo'),
+                false,
+            ],
+            'parent namespace vs nested'     => [
+                new Binding($sub, Binding::DEFAULT, 'App\\Foo'),
+                new Binding($sub, Binding::DEFAULT, 'App\\Foo\\Bar'),
+                false,
+            ],
+        ];
+    }
 }
