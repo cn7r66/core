@@ -36,7 +36,7 @@ use Vivarium\Container\Registry;
 use Vivarium\Container\Scope;
 
 use function array_filter;
-use function array_map;
+use function array_reverse;
 use function array_values;
 use function count;
 
@@ -137,7 +137,7 @@ final class EagerRegistry implements Registry, Binder
         };
     }
 
-    /** @return DecoratorBinder<Registry> */
+    /** @return DecoratorBinder<EagerRegistry> */
     public function decorate(
         string $type,
         string $tag = Binding::DEFAULT,
@@ -262,6 +262,7 @@ final class EagerRegistry implements Registry, Binder
     /** @return iterable<ValueAndPriority<Injection>> */
     public function findInjections(Binding $binding): iterable
     {
+        $holders  = [];
         $bySlot   = [];
         $untagged = new Binding($binding->getType(), Binding::DEFAULT, $binding->getContext());
         foreach ($untagged->hierarchy() as $candidate) {
@@ -269,40 +270,57 @@ final class EagerRegistry implements Registry, Binder
                 continue;
             }
 
+            $holders[] = $candidate;
             foreach ($this->injections->get($candidate) as $entry) {
-                $slot = $entry->getValue()->getSlot();
-
-                $bySlot[$slot][$candidate->hash()] = [$candidate, $entry];
+                $bySlot[$entry->getValue()->getSlot()][] = $candidate;
             }
         }
 
-        $injections = new PriorityQueue(new SortableComparator());
+        $winners = [];
         foreach ($bySlot as $slot => $candidates) {
-            $candidates = array_values($candidates);
-            $winners    = array_values(array_filter(
-                $candidates,
-                static function (array $one) use ($candidates): bool {
-                    foreach ($candidates as $other) {
-                        if ($other[0]->isMoreSpecificThan($one[0])) {
-                            return false;
-                        }
-                    }
+            $mostSpecific = self::mostSpecific($candidates);
 
-                    return true;
-                },
-            ));
-
-            if (count($winners) > 1) {
-                throw new AmbiguousInjection(
-                    (string) $slot,
-                    array_map(static fn (array $winner): Binding => $winner[0], $winners),
-                );
+            if (count($mostSpecific) > 1) {
+                throw new AmbiguousInjection($slot, $mostSpecific);
             }
 
-            $injections = $injections->enqueue($winners[0][1]);
+            $winners[$slot] = $mostSpecific[0];
+        }
+
+        // Equal priorities apply least specific first: supertypes and wider contexts before the class itself.
+        $injections = new PriorityQueue(new SortableComparator());
+        foreach (array_reverse($holders) as $candidate) {
+            foreach ($this->injections->get($candidate) as $entry) {
+                if (! $winners[$entry->getValue()->getSlot()]->equals($candidate)) {
+                    continue;
+                }
+
+                $injections = $injections->enqueue($entry);
+            }
         }
 
         return $injections;
+    }
+
+    /**
+     * @param list<Binding> $candidates
+     *
+     * @return list<Binding>
+     */
+    private static function mostSpecific(array $candidates): array
+    {
+        return array_values(array_filter(
+            $candidates,
+            static function (Binding $one) use ($candidates): bool {
+                foreach ($candidates as $other) {
+                    if ($other->isMoreSpecificThan($one)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            },
+        ));
     }
 
     /** @return iterable<ValueAndPriority<Injection>> */

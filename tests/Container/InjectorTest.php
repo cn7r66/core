@@ -618,6 +618,29 @@ final class InjectorTest extends TestCase
      * @covers ::applyChannel
      * @covers ::locate
      * @covers ::getProvider
+     */
+    public function testEqualPrioritiesAcrossChannelsApplyInChannelOrder(): void
+    {
+        $registry = (new EagerRegistry())
+            ->define(StubBandSubject::class)->transient()
+            ->decorate(StubBandSubject::class)->withDecorator(new StubBandDecorator())->withPriority(0)
+            ->call(StubBandSubject::class)->onMethod('markCall')->withPriority(0)
+            ->inject(StubBandSubject::class)->onMethod('markInjection')->withPriority(0);
+
+        $result = (new Injector($registry))->get(StubBandSubject::class);
+
+        static::assertInstanceOf(StubBandSubject::class, $result);
+        static::assertSame(['injection', 'call', 'decoration'], $result->log);
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::get
+     * @covers ::resolve
+     * @covers ::applyAlterations
+     * @covers ::applyChannel
+     * @covers ::locate
+     * @covers ::getProvider
      * @dataProvider provideInterfaceInjectionRegistries
      */
     public function testInjectionRegisteredOnAnInterfaceAppliesToItsImplementation(
