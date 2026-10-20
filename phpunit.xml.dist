@@ -29,32 +29,35 @@
   </source>
 
   <testsuites>
-    <testsuite name="Assertion Tests">
+    <testsuite name="assertion">
       <directory>tests/Assertion</directory>
     </testsuite>
-    <testsuite name="Check Tests">
+    <testsuite name="check">
       <directory>tests/Check</directory>
     </testsuite>
-    <testsuite name="Collection Tests">
+    <testsuite name="collection">
       <directory>tests/Collection</directory>
     </testsuite>
-    <testsuite name="Comparator Tests">
+    <testsuite name="comparator">
       <directory>tests/Comparator</directory>
     </testsuite>
-    <testsuite name="Container Tests">
+    <testsuite name="container">
       <directory>tests/Container</directory>
     </testsuite>
-    <testsuite name="Dispatcher Tests">
+    <testsuite name="dispatcher">
       <directory>tests/Dispatcher</directory>
     </testsuite>
-    <testsuite name="Equality Tests">
+    <testsuite name="equality">
       <directory>tests/Equality</directory>
     </testsuite>
-    <testsuite name="Float Tests">
+    <testsuite name="float">
       <directory>tests/Float</directory>
     </testsuite>
-    <testsuite name="Type Tests">
+    <testsuite name="type">
       <directory>tests/Type</directory>
+    </testsuite>
+    <testsuite name="core">
+      <directory>tests/Core</directory>
     </testsuite>
   </testsuites>
 

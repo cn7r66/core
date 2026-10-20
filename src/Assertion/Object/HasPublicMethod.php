@@ -47,10 +47,6 @@ final class HasPublicMethod implements Assertion
 
         $reflector = new ReflectionClass($value);
 
-        if ($this->method === '__construct') {
-            return $reflector->isInstantiable();
-        }
-
         return $reflector->hasMethod($this->method)
             && $reflector->getMethod($this->method)->isPublic();
     }

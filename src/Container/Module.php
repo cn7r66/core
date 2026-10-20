@@ -10,9 +10,14 @@ declare(strict_types=1);
 
 namespace Vivarium\Container;
 
-use Vivarium\Container\Binding\Binder;
-
 interface Module
 {
-    public function configure(Binder $binder) : Binder;
+    /**
+     * @param T $binder
+     *
+     * @return T
+     *
+     * @template T of Binder
+     */
+    public function configure(Binder $binder): Binder;
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Vivarium
  * SPDX-License-Identifier: MPL-2.0
@@ -22,7 +24,7 @@ final class AppStart implements Event
 
     public function isPropagationStopped(): bool
     {
-        return $this->exitCode != 0;
+        return $this->exitCode !== 0;
     }
 
     public function getExitCode(): int

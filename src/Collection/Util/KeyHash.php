@@ -17,12 +17,8 @@ use function is_string;
 
 final class KeyHash
 {
-    /**
-     * @param mixed $key
-     *
-     * @return array-key
-     */
-    public static function hash($key)
+    /** @param mixed $key */
+    public static function hash($key): int|string
     {
         return is_int($key) || is_string($key) ? $key : Equal::hash($key);
     }

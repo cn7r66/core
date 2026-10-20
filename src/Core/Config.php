@@ -15,6 +15,15 @@ use SimpleXMLElement;
 use Vivarium\Assertion\Boolean\IsTrue;
 
 use function file_exists;
+use function filter_var;
+use function libxml_clear_errors;
+use function libxml_get_errors;
+use function libxml_use_internal_errors;
+use function simplexml_load_file;
+use function sprintf;
+use function trim;
+
+use const FILTER_VALIDATE_BOOLEAN;
 
 final class Config
 {
@@ -24,7 +33,7 @@ final class Config
         private string $metadataPath,
         private bool $cacheEnabled,
         private string $cachePath,
-        private array $modules
+        private array $modules,
     ) {
     }
 
@@ -43,7 +52,7 @@ final class Config
             throw new RuntimeException(sprintf(
                 'Failed to parse config file "%s": %s',
                 $path,
-                $error !== null ? trim($error->message) : 'Unknown error'
+                $error !== null ? trim($error->message) : 'Unknown error',
             ));
         }
 
@@ -52,7 +61,7 @@ final class Config
             (string) $xml->metadata['path'],
             filter_var($xml->cache['enabled'], FILTER_VALIDATE_BOOLEAN),
             (string) $xml->cache['path'],
-            self::parseModules($xml)
+            self::parseModules($xml),
         );
     }
 
@@ -88,9 +97,11 @@ final class Config
         $modules = [];
         foreach ($xml->modules->module ?? [] as $module) {
             $class = (string) $module['class'];
-            if ($class !== '') {
-                $modules[] = $class;
+            if ($class === '') {
+                continue;
             }
+
+            $modules[] = $class;
         }
 
         return $modules;

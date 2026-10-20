@@ -18,7 +18,6 @@ use Vivarium\Container\Provider;
 use Vivarium\Type\Type;
 
 use function constant;
-use function gettype;
 
 final class Constant implements Provider
 {
@@ -35,9 +34,7 @@ final class Constant implements Provider
 
     public function getTarget(): string
     {
-        return Type::normalize(
-            gettype(constant($this->name)),
-        );
+        return Type::ofConstant($this->name);
     }
 
     public function getCapabilities(): Set

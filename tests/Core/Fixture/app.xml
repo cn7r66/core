@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <metadata enabled="true" path="/tmp/meta"/>
+    <cache enabled="false" path="/tmp/cache"/>
+    <modules>
+        <module class="Vivarium\Test\Core\Stub\StubModule"/>
+        <module class=""/>
+    </modules>
+</config>

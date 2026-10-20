@@ -20,7 +20,7 @@ final class NotAType extends DomainException
     public function __construct(string $type)
     {
         parent::__construct(
-            sprintf('Expected a valid type. Got %s.', Type::toLiteral($type))
+            sprintf('Expected a valid type. Got %s.', Type::toLiteral($type)),
         );
     }
 }

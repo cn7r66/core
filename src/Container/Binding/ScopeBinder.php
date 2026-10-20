@@ -10,21 +10,17 @@ declare(strict_types=1);
 
 namespace Vivarium\Container\Binding;
 
+use ReflectionFunction;
 use Vivarium\Assertion\Conditional\IsNotNull;
 use Vivarium\Container\Scope;
-use \ReflectionFunction;
 
-/**
- * @template T
- */
+/** @template T */
 final class ScopeBinder
 {
     /** @var callable (Scope):T */
     private $create;
 
-    /** 
-     * @param callable(Scope):T $name
-     */
+    /** @param callable(Scope):T $name */
     public function __construct(callable $create)
     {
         (new IsNotNull())
@@ -43,7 +39,7 @@ final class ScopeBinder
     }
 
     /** @return T */
-    public function clonable()
+    public function cloneable()
     {
         return ($this->create)(Scope::CLONEABLE);
     }

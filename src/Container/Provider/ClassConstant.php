@@ -19,8 +19,6 @@ use Vivarium\Container\Container;
 use Vivarium\Container\Provider;
 use Vivarium\Type\Type;
 
-use function gettype;
-
 final class ClassConstant implements Provider
 {
     public function __construct(
@@ -43,13 +41,7 @@ final class ClassConstant implements Provider
 
     public function getTarget(): string
     {
-        return Type::normalize(
-            gettype(
-                (new ReflectionClass($this->class))
-                    ->getReflectionConstant($this->name)
-                    ->getValue(),
-            ),
-        );
+        return Type::ofClassConstant($this->class, $this->name);
     }
 
     public function getCapabilities(): Set

@@ -11,67 +11,90 @@ use Vivarium\Container\Container;
 use Vivarium\Container\Provider\Instance;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
+use function in_array;
+
 /** @coversDefaultClass \Vivarium\Container\Provider\Instance */
 final class InstanceTest extends TestCase
 {
     /**
+     * @dataProvider provideWrappedValues
      * @covers ::__construct
      * @covers ::provide
      */
-    public function testProvideReturnsObjectInstance(): void
+    public function testProvideReturnsWrappedValue(mixed $value): void
     {
-        $object    = new StubClass();
-        $provider  = new Instance($object);
+        $provider  = new Instance($value);
         $container = $this->createMock(Container::class);
 
-        static::assertSame($object, $provider->provide($container));
+        static::assertSame($value, $provider->provide($container));
+    }
+
+    /** @return array<string, array{mixed}> */
+    public static function provideWrappedValues(): array
+    {
+        return [
+            'object' => [new StubClass()],
+            'primitive' => [42],
+        ];
+    }
+
+    /**
+     * @dataProvider provideValuesAndTheirTargets
+     * @covers ::getTarget
+     */
+    public function testGetTargetReturnsTypeOfValue(mixed $value, string $expected): void
+    {
+        static::assertSame($expected, (new Instance($value))->getTarget());
+    }
+
+    /** @return array<string, array{mixed, string}> */
+    public static function provideValuesAndTheirTargets(): array
+    {
+        return [
+            'class name for object' => [new StubClass(), StubClass::class],
+            'normalized type for primitive' => [42, 'int'],
+        ];
     }
 
     /**
      * @covers ::__construct
-     * @covers ::provide
+     * @covers ::getCapabilities
+     * @dataProvider provideCapabilityCases
      */
-    public function testProvideReturnsPrimitiveValue(): void
+    public function testReportsCapabilitiesByValueKind(mixed $value, Capability $capability, bool $expected): void
     {
-        $provider  = new Instance(42);
-        $container = $this->createMock(Container::class);
+        $capabilities = (new Instance($value))->getCapabilities();
 
-        static::assertSame(42, $provider->provide($container));
+        static::assertSame($expected, $capabilities->contains($capability));
     }
 
-    /** @covers ::getTarget */
-    public function testGetTargetReturnsClassNameForObject(): void
+    /** @return array<string, array{mixed, Capability, bool}> */
+    public static function provideCapabilityCases(): array
     {
-        $provider = new Instance(new StubClass());
+        $values = [
+            'object' => [new stdClass(), [Capability::INTERCEPTABLE, Capability::DECORABLE]],
+            'closure' => [
+                static function (): void {
+                },
+                [Capability::INTERCEPTABLE, Capability::DECORABLE],
+            ],
+            'callable function name' => ['strlen', [Capability::DECORABLE]],
+            'int' => [42, []],
+            'non-callable string' => ['hello', []],
+            'array' => [[1, 2], []],
+        ];
 
-        static::assertSame(StubClass::class, $provider->getTarget());
-    }
+        $cases = [];
+        foreach ($values as $name => [$value, $granted]) {
+            foreach (Capability::cases() as $capability) {
+                $cases[$name . ' ' . $capability->name] = [
+                    $value,
+                    $capability,
+                    in_array($capability, $granted, true),
+                ];
+            }
+        }
 
-    /** @covers ::getTarget */
-    public function testGetTargetReturnsNormalizedTypeForPrimitive(): void
-    {
-        $provider = new Instance(42);
-
-        static::assertSame('int', $provider->getTarget());
-    }
-
-    /** @covers ::getCapabilities */
-    public function testGetCapabilitiesForObjectReturnsInterceptableAndDecorable(): void
-    {
-        $provider     = new Instance(new stdClass());
-        $capabilities = $provider->getCapabilities();
-
-        static::assertTrue($capabilities->contains(Capability::INTERCEPTABLE));
-        static::assertTrue($capabilities->contains(Capability::DECORABLE));
-        static::assertCount(2, $capabilities);
-    }
-
-    /** @covers ::getCapabilities */
-    public function testGetCapabilitiesForPrimitiveReturnsEmptySet(): void
-    {
-        $provider     = new Instance('hello');
-        $capabilities = $provider->getCapabilities();
-
-        static::assertCount(0, $capabilities);
+        return $cases;
     }
 }

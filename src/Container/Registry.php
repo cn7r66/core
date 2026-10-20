@@ -10,12 +10,30 @@ declare(strict_types=1);
 
 namespace Vivarium\Container;
 
+use Vivarium\Comparator\ValueAndPriority;
+use Vivarium\Container\Exception\BindingNotFound;
+
 interface Registry
 {
-    public function findProvider(Binding $binding): ?Provider;
+    public function hasProvider(Binding $binding): bool;
+
+    /**
+     * Returns the registered binding $binding resolves to, widening its context.
+     *
+     * @throws BindingNotFound If nothing is registered for $binding.
+     */
+    public function locate(Binding $binding): Binding;
+
+    public function findProvider(Binding $binding): Provider;
 
     public function findScope(Binding $binding): Scope;
 
-    /** @return iterable<Enhancement> */
-    public function findEnhancements(Binding $binding): iterable;
+    /** @return iterable<ValueAndPriority<Injection>> */
+    public function findInjections(Binding $binding): iterable;
+
+    /** @return iterable<ValueAndPriority<Injection>> */
+    public function findCalls(Binding $binding): iterable;
+
+    /** @return iterable<ValueAndPriority<Decorator>> */
+    public function findDecorations(Binding $binding): iterable;
 }

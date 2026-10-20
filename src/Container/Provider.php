@@ -14,12 +14,10 @@ use Vivarium\Collection\Set\Set;
 
 interface Provider
 {
-    public function provide(Container $container) : mixed;
+    public function provide(Container $container): mixed;
 
-    public function getTarget() : string;
+    public function getTarget(): string;
 
-    /** 
-     * @return Set<Capability> 
-     */
-    public function getCapabilities() : Set;
+    /** @return Set<Capability> */
+    public function getCapabilities(): Set;
 }

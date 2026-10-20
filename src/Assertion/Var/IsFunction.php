@@ -17,6 +17,8 @@ use Vivarium\Assertion\String\IsEmpty;
 use Vivarium\Type\Type;
 
 use function function_exists;
+use function is_string;
+use function sprintf;
 
 /** @template-implements Assertion<Closure|string> */
 final class IsFunction implements Assertion

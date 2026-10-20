@@ -14,7 +14,7 @@
     <rule ref="rulesets/cleancode.xml/StaticAccess">
         <properties>
             <property name="ignorepattern">
-                <value>(^(create|from))i</value>
+                <value>(^(create|from|of|empty))i</value>
             </property>
             <property name="exceptions">
                 <value>
@@ -30,6 +30,7 @@
 
     <rule ref="rulesets/codesize.xml">
         <exclude name="TooManyPublicMethods"/>
+        <exclude name="ExcessiveClassComplexity"/>
     </rule>
 
     <rule ref="rulesets/codesize.xml/TooManyPublicMethods">
@@ -39,6 +40,14 @@
             </property>
             <property name="ignorepattern">
                 <value>(^(set|get|is|has|with|equals|hash))i</value>
+            </property>
+        </properties>
+    </rule>
+
+    <rule ref="rulesets/codesize.xml/ExcessiveClassComplexity">
+        <properties>
+            <property name="maximum">
+                <value>60</value>
             </property>
         </properties>
     </rule>
@@ -57,7 +66,16 @@
 
     <rule ref="rulesets/naming.xml">
         <exclude name="LongVariable"/>
+        <exclude name="ShortMethodName"/>
         <exclude name="ShortVariable"/>
+    </rule>
+
+    <rule ref="rulesets/naming.xml/ShortMethodName">
+        <properties>
+            <property name="exceptions">
+                <value>of,to</value>
+            </property>
+        </properties>
     </rule>
 
     <rule ref="rulesets/naming.xml/LongVariable">

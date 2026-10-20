@@ -10,10 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Container\Exception;
 
-use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
 
-final class CannotBeWidened extends RuntimeException implements ContainerExceptionInterface
+final class CannotBeWidened extends RuntimeException implements ContainerException
 {
-
 }

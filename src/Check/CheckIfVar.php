@@ -11,14 +11,14 @@ declare(strict_types=1);
 namespace Vivarium\Check;
 
 /**
- * @method static bool IsArray(mixed $var)
- * @method static bool IsBoolean(mixed $var)
- * @method static bool IsCallable(mixed $var)
- * @method static bool IsFloat(mixed $var)
- * @method static bool IsInteger(mixed $var)
- * @method static bool IsNumeric(mixed $var)
- * @method static bool IsObject(mixed $var)
- * @method static bool IsString(mixed $var)
+ * @method static bool isArray(mixed $var)
+ * @method static bool isBoolean(mixed $var)
+ * @method static bool isCallable(mixed $var)
+ * @method static bool isFloat(mixed $var)
+ * @method static bool isInteger(mixed $var)
+ * @method static bool isNumeric(mixed $var)
+ * @method static bool isObject(mixed $var)
+ * @method static bool isString(mixed $var)
  */
 final class CheckIfVar
 {

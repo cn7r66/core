@@ -11,22 +11,22 @@ declare(strict_types=1);
 namespace Vivarium\Check;
 
 /**
- * @method static bool ImplementsInterface(string $type, string $interface)
- * @method static bool IsAssignableTo(string $type, string $target)
- * @method static bool IsAssignableToClass(string $type, string $class)
- * @method static bool IsAssignableToIntersection(string $type, string $intersection)
- * @method static bool IsAssignableToPrimitive(string $type, string $primitive)
- * @method static bool IsAssignableToUnion(string $type, string $union)
- * @method static bool IsSubclassOf(string $type, string $class)
- * @method static bool IsBasicType(string $type)
- * @method static bool IsClass(string $type)
- * @method static bool IsClassOrInterface(string $type)
- * @method static bool IsInterface(string $type)
- * @method static bool IsIntersection(string $type)
- * @method static bool IsNamespace(string $type)
- * @method static bool IsPrimitive(string $type)
- * @method static bool IsType(string $type)
- * @method static bool IsUnion(string $type)
+ * @method static bool implementsInterface(string $type, string $interface)
+ * @method static bool isAssignableTo(string $type, string $target)
+ * @method static bool isAssignableToClass(string $type, string $class)
+ * @method static bool isAssignableToIntersection(string $type, string $intersection)
+ * @method static bool isAssignableToPrimitive(string $type, string $primitive)
+ * @method static bool isAssignableToUnion(string $type, string $union)
+ * @method static bool isSubclassOf(string $type, string $class)
+ * @method static bool isBasicType(string $type)
+ * @method static bool isClass(string $type)
+ * @method static bool isClassOrInterface(string $type)
+ * @method static bool isInterface(string $type)
+ * @method static bool isIntersection(string $type)
+ * @method static bool isNamespace(string $type)
+ * @method static bool isPrimitive(string $type)
+ * @method static bool isType(string $type)
+ * @method static bool isUnion(string $type)
  */
 final class CheckIfType
 {

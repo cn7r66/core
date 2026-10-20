@@ -14,10 +14,10 @@ interface Enhancement
 {
     /**
      * @param T $instance
-     * 
+     *
      * @return T
      */
     public function enhance(mixed $instance, Container $container): mixed;
 
-    public function accept(Provider $provider) : bool;
+    public function accept(Provider $provider): bool;
 }

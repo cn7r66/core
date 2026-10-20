@@ -12,7 +12,14 @@ namespace Vivarium\Test\Assertion\Stub;
 
 class StubClass implements Stub
 {
+    public const INT_CONSTANT    = 42;
+    public const STRING_CONSTANT = 'hello';
+
     public int $prop = 42;
+
+    public Stub $stubProp;
+
+    public StubClass $classProp;
 
     protected int $protectedProp = 42;
 

@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Container\Container;
 use Vivarium\Container\Provider\ClassConstant;
-use Vivarium\Test\Container\Stub\StubClassWithConstants;
+use Vivarium\Test\Container\Stub\StubClass;
 
 /** @coversDefaultClass \Vivarium\Container\Provider\ClassConstant */
 final class ClassConstantTest extends TestCase
@@ -18,7 +18,7 @@ final class ClassConstantTest extends TestCase
     {
         static::expectNotToPerformAssertions();
 
-        new ClassConstant(StubClassWithConstants::class, 'INT_CONSTANT');
+        new ClassConstant(StubClass::class, 'INT_CONSTANT');
     }
 
     /** @covers ::__construct */
@@ -34,13 +34,13 @@ final class ClassConstantTest extends TestCase
     {
         static::expectException(AssertionFailed::class);
 
-        new ClassConstant(StubClassWithConstants::class, 'NONEXISTENT');
+        new ClassConstant(StubClass::class, 'NONEXISTENT');
     }
 
     /** @covers ::provide */
     public function testProvideReturnsConstantValue(): void
     {
-        $provider  = new ClassConstant(StubClassWithConstants::class, 'STRING_CONSTANT');
+        $provider  = new ClassConstant(StubClass::class, 'STRING_CONSTANT');
         $container = $this->createMock(Container::class);
 
         static::assertSame('hello', $provider->provide($container));
@@ -52,7 +52,7 @@ final class ClassConstantTest extends TestCase
      */
     public function testGetTargetReturnsNormalizedType(string $constantName, string $expectedType): void
     {
-        $provider = new ClassConstant(StubClassWithConstants::class, $constantName);
+        $provider = new ClassConstant(StubClass::class, $constantName);
 
         static::assertSame($expectedType, $provider->getTarget());
     }
@@ -73,7 +73,7 @@ final class ClassConstantTest extends TestCase
     /** @covers ::getCapabilities */
     public function testGetCapabilitiesReturnsEmptySet(): void
     {
-        $provider     = new ClassConstant(StubClassWithConstants::class, 'INT_CONSTANT');
+        $provider     = new ClassConstant(StubClass::class, 'INT_CONSTANT');
         $capabilities = $provider->getCapabilities();
 
         static::assertCount(0, $capabilities);

@@ -25,9 +25,7 @@ final class ContainerCall implements Provider
 
     public function provide(Container $container): mixed
     {
-        return $container->get(
-            $this->target,
-        );
+        return $container->get($this->target);
     }
 
     public function getTarget(): string
@@ -38,7 +36,7 @@ final class ContainerCall implements Provider
     public function getCapabilities(): Set
     {
         return HashSet::fromArray([
-            Capability::INJECTABLE,
+            Capability::INTERCEPTABLE,
             Capability::DECORABLE,
         ]);
     }

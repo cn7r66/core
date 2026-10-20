@@ -7,7 +7,7 @@ namespace Vivarium\Test\Assertion\Object;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Object\HasConstant;
-use Vivarium\Test\Container\Stub\StubClassWithConstants;
+use Vivarium\Test\Assertion\Stub\StubClass;
 
 /** @coversDefaultClass \Vivarium\Assertion\Object\HasConstant */
 final class HasConstantTest extends TestCase
@@ -68,10 +68,10 @@ final class HasConstantTest extends TestCase
     public static function provideSuccess(): array
     {
         return [
-            [StubClassWithConstants::class, 'INT_CONSTANT'],
-            [new StubClassWithConstants(), 'INT_CONSTANT'],
-            [StubClassWithConstants::class, 'STRING_CONSTANT'],
-            [new StubClassWithConstants(), 'STRING_CONSTANT'],
+            [StubClass::class, 'INT_CONSTANT'],
+            [new StubClass(), 'INT_CONSTANT'],
+            [StubClass::class, 'STRING_CONSTANT'],
+            [new StubClass(), 'STRING_CONSTANT'],
         ];
     }
 
@@ -80,9 +80,9 @@ final class HasConstantTest extends TestCase
     {
         return [
             [
-                StubClassWithConstants::class,
+                StubClass::class,
                 'NON_EXISTENT',
-                'Expected "Vivarium\Test\Container\Stub\StubClassWithConstants" to have a constant named "NON_EXISTENT".',
+                'Expected "' . StubClass::class . '" to have a constant named "NON_EXISTENT".',
             ],
         ];
     }
@@ -92,9 +92,9 @@ final class HasConstantTest extends TestCase
     {
         return [
             [
-                'RandomString', 
-                'INT_CONSTANT', 
-                'Value must be either class, interface or object. Got "RandomString"'
+                'RandomString',
+                'INT_CONSTANT',
+                'Value must be either class, interface or object. Got "RandomString"',
             ],
         ];
     }

@@ -16,31 +16,34 @@ use Vivarium\Container\Binding;
 use Vivarium\Container\Capability;
 use Vivarium\Container\Container;
 use Vivarium\Container\Provider;
+use Vivarium\Type\Type;
 
 final class Fallback implements Provider
 {
     public function __construct(
         private Binding $primary,
-        private Binding $secondary,
+        private Provider $secondary,
     ) {
     }
 
     public function provide(Container $container): mixed
     {
-        return $container->has($this->primary)
-            ? $container->get($this->primary)
-            : $container->get($this->secondary);
+        return $container->has($this->primary) ?
+            $container->get($this->primary) : $this->secondary->provide($container);
     }
 
     public function getTarget(): string
     {
-        return $this->primary->getType() . '|' . $this->secondary->getType();
+        return Type::union(
+            $this->primary->getType(),
+            $this->secondary->getTarget(),
+        );
     }
 
     public function getCapabilities(): Set
     {
         return HashSet::fromArray([
-            Capability::INJECTABLE,
+            Capability::INTERCEPTABLE,
             Capability::DECORABLE,
         ]);
     }

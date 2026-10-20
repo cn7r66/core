@@ -12,7 +12,7 @@ namespace Vivarium\Container;
 
 interface Container
 {
-    public function get(string $id, string $context = Binding::GLOBAL, string $tag = Binding::DEFAULT): mixed;
+    public function get(Binding|string $request): mixed;
 
-    public function has(string $id, string $context = Binding::GLOBAL, string $tag = Binding::DEFAULT): bool;
+    public function has(Binding|string $request): bool;
 }

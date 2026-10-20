@@ -17,7 +17,7 @@ use Vivarium\Container\Container;
 use Vivarium\Container\Provider;
 use Vivarium\Type\Type;
 
-use function gettype;
+use function is_callable;
 use function is_object;
 
 final class Instance implements Provider
@@ -33,8 +33,7 @@ final class Instance implements Provider
 
     public function getTarget(): string
     {
-        return is_object($this->instance) ?
-            $this->instance::class : Type::normalize(gettype($this->instance));
+        return Type::of($this->instance);
     }
 
     public function getCapabilities(): Set
@@ -44,6 +43,10 @@ final class Instance implements Provider
                 Capability::INTERCEPTABLE,
                 Capability::DECORABLE,
             ]);
+        }
+
+        if (is_callable($this->instance)) {
+            return HashSet::fromArray([Capability::DECORABLE]);
         }
 
         return new HashSet();
