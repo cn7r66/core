@@ -23,5 +23,5 @@ interface Assertion
     public function assert(mixed $value, string $message = ''): void;
 
     /** @psalm-assert-if-true T $value */
-    public function __invoke(mixed $value): bool;
+    public function check(mixed $value): bool;
 }

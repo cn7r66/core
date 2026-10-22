@@ -11,7 +11,13 @@ declare(strict_types=1);
 namespace Vivarium\Assertion\Exception;
 
 use InvalidArgumentException;
+use Vivarium\Assertion\Failure;
 
 final class AssertionFailed extends InvalidArgumentException
 {
+    public function __construct(
+        private Failure $failure,
+        private mixed $value,
+    ) {
+    }
 }
