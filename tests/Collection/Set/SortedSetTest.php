@@ -104,7 +104,7 @@ class SortedSetTest extends TestCase
             ->willReturnMap([
                 [$stub1, false],
                 [$stub2, true],
-                [$stub3, false]
+                [$stub3, false],
             ]);
 
         $comparator = static::createStub(Comparator::class);
@@ -122,7 +122,7 @@ class SortedSetTest extends TestCase
                 [$stub3, $stub2, 1],
                 [$stub3, $stub3, 0],
             ]);
-            
+
         $set = new SortedSet($comparator, $stub1, $stub2, $stub2, $stub3);
 
         static::assertTrue($set->contains($stub1));

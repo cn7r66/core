@@ -168,7 +168,7 @@ class ArraySequenceTest extends TestCase
         $stub2->method('equals')->willReturnMap([
             [$stub1, false],
             [$stub2, true],
-            [$stub3, false]
+            [$stub3, false],
         ]);
 
         /** @var Comparator<Equality>&Stub $comparator */
