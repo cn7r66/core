@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Dispatcher;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Dispatcher\AggregateDispatcher;
@@ -20,13 +21,9 @@ use Vivarium\Dispatcher\EventListenerProvider;
 use Vivarium\Dispatcher\Priority;
 use Vivarium\Dispatcher\StoppableEvent;
 
-/** @coversDefaultClass \Vivarium\Dispatcher\AggregateDispatcher */
+#[CoversClass(AggregateDispatcher::class)]
 final class AggregateDispatcherTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::dispatch()
-     */
     public function testEventDispatching(): void
     {
         $event = $this->createMock(Event::class);
@@ -49,10 +46,6 @@ final class AggregateDispatcherTest extends TestCase
         $dispatcher->dispatch($event);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::dispatch()
-     */
     public function testStoppableEventDispatching(): void
     {
         $event = $this->createMock(Event::class);
@@ -83,26 +76,18 @@ final class AggregateDispatcherTest extends TestCase
         $dispatcher->dispatch($event);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::dispatch()
-     */
     public function testDispatchWithNoListener(): void
     {
         $dispatcher = new AggregateDispatcher(
-            $this->createMock(EventListenerProvider::class),
+            $this->createStub(EventListenerProvider::class),
         );
 
-        $event       = $this->createMock(Event::class);
+        $event       = $this->createStub(Event::class);
         $eventReturn = $dispatcher->dispatch($event);
 
         static::assertSame($event, $eventReturn);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::dispatch()
-     */
     public function testEventDispatchingWithDifferentPriorities(): void
     {
         $event = $this->createMock(StoppableEvent::class);
@@ -145,10 +130,6 @@ final class AggregateDispatcherTest extends TestCase
         $dispatcher->dispatch($event);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::dispatch()
-     */
     public function testEventDispatchingWithDifferentPrioritiesFromDifferentProviders(): void
     {
         $event = $this->createMock(StoppableEvent::class);

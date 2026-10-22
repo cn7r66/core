@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Type;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Type\IsNamespace;
 
-/** @coversDefaultClass \Vivarium\Assertion\Type\IsNamespace */
+#[CoversClass(IsNamespace::class)]
 final class IsNamespaceTest extends TestCase
 {
-    /**
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $namespace): void
     {
         static::expectNotToPerformAssertions();
@@ -23,10 +22,7 @@ final class IsNamespaceTest extends TestCase
             ->assert($namespace);
     }
 
-    /**
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testAssertException(string $namespace, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -36,10 +32,7 @@ final class IsNamespaceTest extends TestCase
             ->assert($namespace);
     }
 
-    /**
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $namespace): void
     {
         static::assertTrue(
@@ -47,10 +40,7 @@ final class IsNamespaceTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $namespace): void
     {
         static::assertFalse(

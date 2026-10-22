@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Type;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Traversable;
@@ -18,17 +20,11 @@ use Vivarium\Assertion\Type\ImplementsInterface;
 use Vivarium\Test\Assertion\Stub\Stub;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Assertion\Type\ImplementsInterface */
+#[CoversClass(ImplementsInterface::class)]
 final class ImplementsInterfaceTest extends TestCase
 {
-    /**
-     * @param class-string $interface
-     *
-     * @covers ::__construct()
-     * @covers ::assert()
-     *
-     * @dataProvider provideSuccess()
-     */
+    /** @param class-string $interface */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $class, string $interface): void
     {
         static::expectNotToPerformAssertions();
@@ -37,15 +33,9 @@ final class ImplementsInterfaceTest extends TestCase
             ->assert($class);
     }
 
-    /**
-     * @param class-string $interface
-     *
-     * @covers ::__construct()
-     * @covers ::assert()
-     *
-     * @dataProvider provideFailure()
-     * @dataProvider provideInvalid()
-     */
+    /** @param class-string $interface */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideInvalid')]
     public function testAssertException(string $class, string $interface, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -55,13 +45,8 @@ final class ImplementsInterfaceTest extends TestCase
             ->assert($class);
     }
 
-    /**
-     * @param class-string $interface
-     *
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    /** @param class-string $interface */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $class, string $interface): void
     {
         static::assertTrue(
@@ -69,13 +54,8 @@ final class ImplementsInterfaceTest extends TestCase
         );
     }
 
-    /**
-     * @param class-string $interface
-     *
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    /** @param class-string $interface */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $class, string $interface): void
     {
         static::assertFalse(

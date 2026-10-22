@@ -11,22 +11,16 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Queue;
 
 use DomainException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Queue\ArrayQueue;
 use Vivarium\Collection\Queue\Queue;
 use Vivarium\Equality\Equal;
 
-/** @coversDefaultClass \Vivarium\Collection\Queue\ArrayQueue */
+#[CoversClass(ArrayQueue::class)]
 class ArrayQueueTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::enqueue()
-     * @covers ::count()
-     * @covers ::peek()
-     * @covers ::toArray()
-     */
     public function testEnqueue(): void
     {
         /** @var Queue<int> $queue */
@@ -39,7 +33,6 @@ class ArrayQueueTest extends TestCase
         static::assertNotSame($queue, $queue->enqueue(5));
     }
 
-    /** @covers ::add() */
     public function testAdd(): void
     {
         /** @var Queue<int> $queue */
@@ -52,11 +45,6 @@ class ArrayQueueTest extends TestCase
         static::assertNotSame($queue, $queue->enqueue(5));
     }
 
-    /**
-     * @covers ::dequeue()
-     * @covers ::isEmpty()
-     * @covers ::peek()
-     */
     public function testDequeue(): void
     {
         /** @var array<int, string> $elements */
@@ -79,10 +67,6 @@ class ArrayQueueTest extends TestCase
         static::assertNotSame($queue, $queue->dequeue());
     }
 
-    /**
-     * @covers ::remove()
-     * @covers ::toArray()
-     */
     public function testRemove(): void
     {
         /** @var array<int, int> $elements */
@@ -96,10 +80,6 @@ class ArrayQueueTest extends TestCase
         static::assertNotSame($queue, $queue->remove(0));
     }
 
-    /**
-     * @covers ::remove()
-     * @covers ::toArray()
-     */
     public function testRemoveMultiple(): void
     {
         $elements = [1, 2, 3, 4, 5, 6];
@@ -112,7 +92,6 @@ class ArrayQueueTest extends TestCase
         static::assertEquals($expected, $queue->toArray());
     }
 
-    /** @covers ::dequeue() */
     public function testDequeueOnEmpty(): void
     {
         static::expectException(DomainException::class);
@@ -123,7 +102,6 @@ class ArrayQueueTest extends TestCase
         $queue->dequeue();
     }
 
-    /** @covers ::peek() */
     public function testPeekOnEmpty(): void
     {
         static::expectException(DomainException::class);
@@ -134,7 +112,6 @@ class ArrayQueueTest extends TestCase
         $queue->peek();
     }
 
-    /** @covers ::contains() */
     public function testContains(): void
     {
         /** @var Queue<int> $queue */
@@ -144,7 +121,6 @@ class ArrayQueueTest extends TestCase
         static::assertFalse($queue->contains(42));
     }
 
-    /** @covers ::clear() */
     public function testClear(): void
     {
         $queue = new ArrayQueue(1, 2, 3);
@@ -153,7 +129,6 @@ class ArrayQueueTest extends TestCase
         static::assertCount(0, $queue);
     }
 
-    /** @covers ::getIterator() */
     public function testGetIterator(): void
     {
         $queue = new ArrayQueue(1, 2, 3);
@@ -169,7 +144,6 @@ class ArrayQueueTest extends TestCase
         }
     }
 
-    /** @covers ::fromArray() */
     public function testFromArray(): void
     {
         $values = [1, 2, 3];
@@ -180,7 +154,6 @@ class ArrayQueueTest extends TestCase
         static::assertTrue(Equal::areEquals($queue1, $queue2));
     }
 
-    /** @covers ::equals() */
     public function testEquals(): void
     {
         $queue1 = new ArrayQueue(1, 2, 3);
@@ -193,7 +166,6 @@ class ArrayQueueTest extends TestCase
         static::assertFalse($queue1->equals(new stdClass()));
     }
 
-    /** @covers ::hash() */
     public function testHash(): void
     {
         $queue1 = new ArrayQueue(1, 2, 3);

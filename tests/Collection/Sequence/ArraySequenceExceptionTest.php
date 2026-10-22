@@ -11,22 +11,19 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Sequence;
 
 use OutOfBoundsException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Collection\Sequence\ArraySequence;
 
 use function count;
 use function sprintf;
 
-/** @coversDefaultClass \Vivarium\Collection\Sequence\ArraySequence */
+#[CoversClass(ArraySequence::class)]
 class ArraySequenceExceptionTest extends TestCase
 {
-    /**
-     * @param array<int, int> $elements
-     *
-     * @covers ::getAtIndex()
-     * @covers ::checkBounds()
-     * @dataProvider getTestIndexOutOfBoundData
-     */
+    /** @param array<int, int> $elements */
+    #[DataProvider('getTestIndexOutOfBoundData')]
     public function testGetAtIndexOutOfBound(array $elements, int $index): void
     {
         $message = sprintf('Index out of bound. Count: %s, Index: %s', count($elements), $index);
@@ -38,13 +35,8 @@ class ArraySequenceExceptionTest extends TestCase
         $list->getAtIndex($index);
     }
 
-    /**
-     * @param array<int, int> $elements
-     *
-     * @covers ::setAtIndex()
-     * @covers ::checkBounds()
-     * @dataProvider getTestIndexOutOfBoundData
-     */
+    /** @param array<int, int> $elements */
+    #[DataProvider('getTestIndexOutOfBoundData')]
     public function testSetAtIndexOutOfBound(array $elements, int $index): void
     {
         $message = sprintf('Index out of bound. Count: %s, Index: %s', count($elements), $index);
@@ -56,13 +48,8 @@ class ArraySequenceExceptionTest extends TestCase
         $list->setAtIndex($index, 42);
     }
 
-    /**
-     * @param array<int, int> $elements
-     *
-     * @covers ::removeAtIndex()
-     * @covers ::checkBounds()
-     * @dataProvider getTestIndexOutOfBoundData
-     */
+    /** @param array<int, int> $elements */
+    #[DataProvider('getTestIndexOutOfBoundData')]
     public function testRemoveAtIndexOutOfBound(array $elements, int $index): void
     {
         $message = sprintf('Index out of bound. Count: %s, Index: %s', count($elements), $index);

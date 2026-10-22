@@ -11,6 +11,8 @@ declare(strict_types=1);
 namespace Vivarium\Test\Type;
 
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionType;
@@ -23,28 +25,21 @@ use Vivarium\Type\Exception\NotAType;
 use Vivarium\Type\Exception\UnsupportedReflectionType;
 use Vivarium\Type\Type;
 
-/** @coversDefaultClass \Vivarium\Type\Type */
+#[CoversClass(Type::class)]
 final class TypeTest extends TestCase
 {
-    /**
-     * @covers ::toLiteral()
-     * @dataProvider provideLiterals()
-     */
+    #[DataProvider('provideLiterals')]
     public function testToLiteral(mixed $value, string $literal): void
     {
         static::assertSame($literal, Type::toLiteral($value));
     }
 
-    /**
-     * @covers ::toString()
-     * @dataProvider provideStrings()
-     */
+    #[DataProvider('provideStrings')]
     public function testToString(mixed $value, string $string): void
     {
         static::assertSame($string, Type::toString($value));
     }
 
-    /** @covers ::canonical() */
     public function testCanonical(): void
     {
         $canonical = Type::canonical();
@@ -63,7 +58,6 @@ final class TypeTest extends TestCase
         static::assertNotContains('boolean', $canonical);
     }
 
-    /** @covers ::expanded() */
     public function testExpanded(): void
     {
         $expanded = Type::expanded();
@@ -79,19 +73,13 @@ final class TypeTest extends TestCase
         static::assertContains('boolean', $expanded);
     }
 
-    /**
-     * @covers ::normalize()
-     * @dataProvider provideNormalize()
-     */
+    #[DataProvider('provideNormalize')]
     public function testNormalize(string $type, string $expected): void
     {
         static::assertSame($expected, Type::normalize($type));
     }
 
-    /**
-     * @covers ::normalize()
-     * @dataProvider provideNormalizeException()
-     */
+    #[DataProvider('provideNormalizeException')]
     public function testNormalizeException(string $type, string $message): void
     {
         static::expectException(NotAType::class);
@@ -100,12 +88,8 @@ final class TypeTest extends TestCase
         Type::normalize($type);
     }
 
-    /**
-     * @param class-string $class
-     *
-     * @covers ::ofProperty()
-     * @dataProvider provideOfProperty()
-     */
+    /** @param class-string $class */
+    #[DataProvider('provideOfProperty')]
     public function testOfProperty(string $class, string $property, string $expected): void
     {
         static::assertSame(
@@ -114,12 +98,8 @@ final class TypeTest extends TestCase
         );
     }
 
-    /**
-     * @param class-string $class
-     *
-     * @covers ::ofMethod()
-     * @dataProvider provideOfMethod()
-     */
+    /** @param class-string $class */
+    #[DataProvider('provideOfMethod')]
     public function testOfMethod(string $class, string $method, string $expected): void
     {
         static::assertSame(
@@ -128,21 +108,14 @@ final class TypeTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::ofFunction()
-     * @dataProvider provideOfFunction()
-     */
+    #[DataProvider('provideOfFunction')]
     public function testOfFunction(string|callable $function, string $expected): void
     {
         static::assertSame($expected, Type::ofFunction($function));
     }
 
-    /**
-     * @param class-string $class
-     *
-     * @covers ::ofMethodParameter()
-     * @dataProvider provideOfMethodParameter()
-     */
+    /** @param class-string $class */
+    #[DataProvider('provideOfMethodParameter')]
     public function testOfMethodParameter(
         string $class,
         string $method,
@@ -155,7 +128,6 @@ final class TypeTest extends TestCase
         );
     }
 
-    /** @covers ::ofMethodParameter() */
     public function testOfMethodParameterException(): void
     {
         static::expectException(NoSuchParameter::class);
@@ -164,10 +136,7 @@ final class TypeTest extends TestCase
         Type::ofMethodParameter(TypeStub::class, 'takesInt', 'nonexistent');
     }
 
-    /**
-     * @covers ::ofFunctionParameter()
-     * @dataProvider provideOfFunctionParameter()
-     */
+    #[DataProvider('provideOfFunctionParameter')]
     public function testOfFunctionParameter(
         string|callable $function,
         string $parameter,
@@ -179,7 +148,6 @@ final class TypeTest extends TestCase
         );
     }
 
-    /** @covers ::ofFunctionParameter() */
     public function testOfFunctionParameterException(): void
     {
         static::expectException(NoSuchParameter::class);
@@ -188,15 +156,8 @@ final class TypeTest extends TestCase
         Type::ofFunctionParameter(static fn ($a) => $a, 'nonexistent');
     }
 
-    /**
-     * @param class-string $type
-     *
-     * @covers ::fromReflectionType()
-     * @covers ::fromReflectionNamedType()
-     * @covers ::fromReflectionUnionType()
-     * @covers ::fromReflectionIntersectionType()
-     * @dataProvider provideFromReflectionType()
-     */
+    /** @param class-string $type */
+    #[DataProvider('provideFromReflectionType')]
     public function testFromReflectionType(string $type, string $method, string $expected): void
     {
         static::assertSame(
@@ -209,10 +170,9 @@ final class TypeTest extends TestCase
         );
     }
 
-    /** @covers ::fromReflectionType() */
     public function testFromReflectionTypeException(): void
     {
-        $mock = $this->createMock(ReflectionType::class);
+        $mock = $this->createStub(ReflectionType::class);
 
         static::expectException(UnsupportedReflectionType::class);
         static::expectExceptionMessage('Reflection type "' . $mock::class . '" not supported yet.');
@@ -220,19 +180,13 @@ final class TypeTest extends TestCase
         Type::fromReflectionType($mock);
     }
 
-    /**
-     * @covers ::union()
-     * @dataProvider provideUnion()
-     */
+    #[DataProvider('provideUnion')]
     public function testUnion(string $expected, string $first, string ...$rest): void
     {
         static::assertSame($expected, Type::union($first, ...$rest));
     }
 
-    /**
-     * @covers ::union()
-     * @dataProvider provideUnionVoidThrows()
-     */
+    #[DataProvider('provideUnionVoidThrows')]
     public function testUnionException(string $first, string ...$rest): void
     {
         static::expectException(InvalidArgumentException::class);
@@ -240,19 +194,13 @@ final class TypeTest extends TestCase
         Type::union($first, ...$rest);
     }
 
-    /**
-     * @covers ::intersection()
-     * @dataProvider provideIntersection()
-     */
+    #[DataProvider('provideIntersection')]
     public function testIntersection(string $expected, string $first, string ...$rest): void
     {
         static::assertSame($expected, Type::intersection($first, ...$rest));
     }
 
-    /**
-     * @covers ::intersection()
-     * @dataProvider provideIntersectionForbiddenScalars()
-     */
+    #[DataProvider('provideIntersectionForbiddenScalars')]
     public function testIntersectionException(string $first, string ...$rest): void
     {
         static::expectException(InvalidArgumentException::class);

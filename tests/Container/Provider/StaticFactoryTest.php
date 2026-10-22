@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Provider;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -24,18 +26,13 @@ use Vivarium\Test\Container\Stub\StubStaticFactory;
 use Vivarium\Test\Container\Stub\StubStaticFactoryWithBindableArgs;
 use Vivarium\Test\Container\Stub\StubStaticFactoryWithPrivateMethod;
 
-/** @coversDefaultClass \Vivarium\Container\Provider\StaticFactory */
+#[CoversClass(StaticFactory::class)]
 final class StaticFactoryTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
     public function testProvideCallsStaticMethodAndReturnsResult(): void
     {
         $service   = new StubService();
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('get')->willReturn($service);
 
         $result = (new StaticFactory(StubStaticFactory::class, 'create'))->provide($container);
@@ -44,10 +41,6 @@ final class StaticFactoryTest extends TestCase
         static::assertSame($service, $result->service);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::getTarget
-     */
     public function testGetTargetReturnsMethodReturnType(): void
     {
         static::assertSame(
@@ -56,12 +49,8 @@ final class StaticFactoryTest extends TestCase
         );
     }
 
-    /**
-     * @param class-string $class
-     *
-     * @dataProvider provideUncallableStaticMethods
-     * @covers ::__construct
-     */
+    /** @param class-string $class */
+    #[DataProvider('provideUncallableStaticMethods')]
     public function testThrowsForUncallableStaticMethod(string $class, string $method): void
     {
         static::expectException(AssertionFailed::class);
@@ -79,10 +68,6 @@ final class StaticFactoryTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::getCapabilities
-     */
     public function testGetCapabilitiesContainsInjectableInterceptableAndDecorable(): void
     {
         $capabilities = (new StaticFactory(StubStaticFactory::class, 'create'))->getCapabilities();
@@ -93,13 +78,9 @@ final class StaticFactoryTest extends TestCase
         static::assertCount(3, $capabilities);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::bindArgument
-     */
     public function testBindArgument(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
         $provider->method('provide')->willReturn('bound');
 
@@ -108,19 +89,15 @@ final class StaticFactoryTest extends TestCase
 
         static::assertNotSame($original, $bound);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         static::assertSame('bound', $bound->provide($container));
         static::assertSame('default', $original->provide($container));
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::bindArgumentAtPosition
-     */
     public function testBindArgumentAtPosition(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('array');
         $provider->method('provide')->willReturn(['a', 'b', 'c']);
 
@@ -128,36 +105,24 @@ final class StaticFactoryTest extends TestCase
             ->bindArgumentAtPosition(0)
             ->toProvider($provider);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         static::assertSame(['a', 'b', 'c'], $bound->provide($container));
     }
 
-    /**
-     * @dataProvider provideEqualStaticFactoryPairs
-     * @covers ::__construct
-     * @covers ::equals
-     */
+    #[DataProvider('provideEqualStaticFactoryPairs')]
     public function testEqualsReturnsTrueForEqualStaticFactories(StaticFactory $first, StaticFactory $second): void
     {
         static::assertTrue($first->equals($second));
     }
 
-    /**
-     * @dataProvider provideUnequalPairs
-     * @covers ::__construct
-     * @covers ::equals
-     */
+    #[DataProvider('provideUnequalPairs')]
     public function testEqualsReturnsFalseForUnequalObjects(StaticFactory $first, object $second): void
     {
         static::assertFalse($first->equals($second));
     }
 
-    /**
-     * @dataProvider provideEqualStaticFactoryPairs
-     * @covers ::__construct
-     * @covers ::hash
-     */
+    #[DataProvider('provideEqualStaticFactoryPairs')]
     public function testHashIsSameForEqualStaticFactories(StaticFactory $first, StaticFactory $second): void
     {
         static::assertSame($first->hash(), $second->hash());

@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Type;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Type\IsAssignableToClass;
@@ -19,16 +21,11 @@ use Vivarium\Test\Assertion\Stub\StubClassExtension;
 
 use function sprintf;
 
-/** @coversDefaultClass \Vivarium\Assertion\Type\IsAssignableToClass */
+#[CoversClass(IsAssignableToClass::class)]
 final class IsAssignableToClassTest extends TestCase
 {
-    /**
-     * @param class-string $type
-     *
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    /** @param class-string $type */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $class, string $type): void
     {
         static::expectNotToPerformAssertions();
@@ -37,12 +34,8 @@ final class IsAssignableToClassTest extends TestCase
             ->assert($class);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideInvalid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideInvalid')]
     public function testAssertException(string $class, string $type, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -56,13 +49,8 @@ final class IsAssignableToClassTest extends TestCase
             ->assert($class);
     }
 
-    /**
-     * @param class-string $type
-     *
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    /** @param class-string $type */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $class, string $type): void
     {
         static::assertTrue(
@@ -70,13 +58,8 @@ final class IsAssignableToClassTest extends TestCase
         );
     }
 
-    /**
-     * @param class-string $type
-     *
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    /** @param class-string $type */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $class, string $type): void
     {
         static::assertFalse(

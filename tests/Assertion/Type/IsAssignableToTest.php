@@ -10,21 +10,18 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Type;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Type\IsAssignableTo;
 
 use function array_merge;
 
-/** @coversDefaultClass \Vivarium\Assertion\Type\IsAssignableTo */
+#[CoversClass(IsAssignableTo::class)]
 final class IsAssignableToTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::getAssertion()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $type, string $target): void
     {
         static::expectNotToPerformAssertions();
@@ -33,12 +30,7 @@ final class IsAssignableToTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::getAssertion()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testAssertException(string $type, string $target, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -48,12 +40,7 @@ final class IsAssignableToTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::getAssertion()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $type, string $target): void
     {
         static::assertTrue(
@@ -61,12 +48,7 @@ final class IsAssignableToTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::getAssertion()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $type, string $target): void
     {
         static::assertFalse(

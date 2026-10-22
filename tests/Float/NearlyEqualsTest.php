@@ -10,21 +10,17 @@ declare(strict_types=1);
 
 namespace Vivarium\Float\Test;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Float\FloatingPoint;
 use Vivarium\Float\NearlyEquals;
 
 /**
  * Class NearlyEqualsTest, a new class description.
- *
- * @coversDefaultClass \Vivarium\Float\NearlyEquals
  */
+#[CoversClass(NearlyEquals::class)]
 final class NearlyEqualsTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     */
     public function testBigNumbers(): void
     {
         $nearlyEquals = new NearlyEquals(0.00001);
@@ -40,10 +36,6 @@ final class NearlyEqualsTest extends TestCase
         static::assertFalse($nearlyEquals(10001, 10000));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     */
     public function testMidNumbers(): void
     {
         $nearlyEquals = new NearlyEquals(0.00001);
@@ -59,10 +51,6 @@ final class NearlyEqualsTest extends TestCase
         static::assertFalse($nearlyEquals(-1.0002, -1.0001));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     */
     public function testSmallNumbers(): void
     {
         $nearlyEquals = new NearlyEquals(0.00001);
@@ -78,10 +66,6 @@ final class NearlyEqualsTest extends TestCase
         static::assertFalse($nearlyEquals(0.000000000001001, 0.000000000001002));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     */
     public function testSmallDiffs(): void
     {
         $nearlyEquals = new NearlyEquals(0.00001);
@@ -91,10 +75,6 @@ final class NearlyEqualsTest extends TestCase
         static::assertTrue($nearlyEquals(-0.3, -0.30000003));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     */
     public function testInvolvingZero(): void
     {
         $nearlyEquals = new NearlyEquals(0.00001);
@@ -119,10 +99,6 @@ final class NearlyEqualsTest extends TestCase
         static::assertFalse($nearlyEquals(0.0, -1e-40, 0.00000001));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     */
     public function testMutants(): void
     {
         $nearlyEquals = new NearlyEquals(0.5);

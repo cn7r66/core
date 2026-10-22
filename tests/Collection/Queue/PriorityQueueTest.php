@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Queue;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Queue\PriorityQueue;
@@ -19,15 +20,9 @@ use Vivarium\Equality\Equal;
 
 use function usort;
 
-/** @coversDefaultClass \Vivarium\Collection\Queue\PriorityQueue */
+#[CoversClass(PriorityQueue::class)]
 class PriorityQueueTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::enqueue()
-     * @covers ::peek()
-     * @covers ::count()
-     */
     public function testEnqueue(): void
     {
         $queue = new PriorityQueue(new IntegerComparator());
@@ -42,7 +37,6 @@ class PriorityQueueTest extends TestCase
         static::assertNotSame($queue, $queue->enqueue(7));
     }
 
-    /** @covers ::add() */
     public function testAdd(): void
     {
         /** @var int[] $values */
@@ -57,11 +51,6 @@ class PriorityQueueTest extends TestCase
         static::assertNotSame($queue, $queue->enqueue(5));
     }
 
-    /**
-     * @covers ::dequeue()
-     * @covers ::isEmpty()
-     * @covers ::peek()
-     */
     public function testDequeue(): void
     {
         /** @var string[] $elements */
@@ -85,7 +74,6 @@ class PriorityQueueTest extends TestCase
         static::assertNotSame($queue, $queue->dequeue());
     }
 
-    /** @covers ::contains() */
     public function testContains(): void
     {
         /** @var int[] $values */
@@ -97,10 +85,6 @@ class PriorityQueueTest extends TestCase
         static::assertFalse($queue->contains(42));
     }
 
-    /**
-     * @covers ::remove()
-     * @covers ::toArray()
-     */
     public function testRemove(): void
     {
         /** @var int[] $elements */
@@ -114,10 +98,6 @@ class PriorityQueueTest extends TestCase
         static::assertNotSame($queue, $queue->remove(0));
     }
 
-    /**
-     * @covers ::clear()
-     * @covers ::count()
-     */
     public function testClear(): void
     {
         /** @var int[] $values */
@@ -129,7 +109,6 @@ class PriorityQueueTest extends TestCase
         static::assertCount(0, $queue);
     }
 
-    /** @covers ::getIterator() */
     public function testGetIterator(): void
     {
         /** @var int[] $values */
@@ -148,7 +127,6 @@ class PriorityQueueTest extends TestCase
         }
     }
 
-    /** @covers ::toArray() */
     public function testToArray(): void
     {
         /** @var int[] $values */
@@ -161,7 +139,6 @@ class PriorityQueueTest extends TestCase
         static::assertEquals($expected, $queue->toArray());
     }
 
-    /** @covers ::fromArray() */
     public function testFromArray(): void
     {
         /** @var int[] $values */
@@ -173,7 +150,6 @@ class PriorityQueueTest extends TestCase
         static::assertTrue(Equal::areEquals($queue1, $queue2));
     }
 
-    /** @covers ::equals() */
     public function testEquals(): void
     {
         /** @var int[] $values1 */
@@ -193,7 +169,6 @@ class PriorityQueueTest extends TestCase
         static::assertFalse($queue1->equals(new stdClass()));
     }
 
-    /** @covers ::hash() */
     public function testHash(): void
     {
         /** @var int[] $values1 */

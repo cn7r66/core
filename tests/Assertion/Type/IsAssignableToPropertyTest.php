@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Type;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Type\IsAssignableToProperty;
@@ -19,14 +21,10 @@ use Vivarium\Test\Assertion\Stub\StubClassExtension;
 
 use function sprintf;
 
-/** @coversDefaultClass \Vivarium\Assertion\Type\IsAssignableToProperty */
+#[CoversClass(IsAssignableToProperty::class)]
 final class IsAssignableToPropertyTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $type, string $class, string $property): void
     {
         static::expectNotToPerformAssertions();
@@ -35,12 +33,8 @@ final class IsAssignableToPropertyTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideInvalid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideInvalid')]
     public function testAssertException(string $type, string $class, string $property, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -50,11 +44,7 @@ final class IsAssignableToPropertyTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $type, string $class, string $property): void
     {
         static::assertTrue(
@@ -62,11 +52,7 @@ final class IsAssignableToPropertyTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $type, string $class, string $property): void
     {
         static::assertFalse(

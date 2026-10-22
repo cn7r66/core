@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Type;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -12,14 +14,10 @@ use Vivarium\Test\Assertion\Stub\StubClass;
 
 use function sprintf;
 
-/** @coversDefaultClass \Vivarium\Assertion\Type\IsAssignableToUnion */
+#[CoversClass(IsAssignableToUnion::class)]
 final class IsAssignableToUnionTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $type, string $union): void
     {
         static::expectNotToPerformAssertions();
@@ -28,12 +26,8 @@ final class IsAssignableToUnionTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideInvalid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideInvalid')]
     public function testAssertException(string $type, string $union, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -43,11 +37,7 @@ final class IsAssignableToUnionTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $type, string $union): void
     {
         static::assertTrue(
@@ -55,11 +45,7 @@ final class IsAssignableToUnionTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $type, string $union): void
     {
         static::assertFalse(

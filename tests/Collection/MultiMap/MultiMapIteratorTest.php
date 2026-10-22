@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\MultiMap;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Vivarium\Collection\Map\MapIterator;
 use Vivarium\Collection\MultiMap\MultiMapIterator;
 use Vivarium\Collection\Pair\Pair;
@@ -18,17 +19,9 @@ use Vivarium\Equality\HashBuilder;
 use Vivarium\Test\Collection\Iterator\IteratorTestCase;
 use Vivarium\Test\Collection\Stub\Key;
 
-/** @coversDefaultClass \Vivarium\Collection\MultiMap\MultiMapIterator */
+#[CoversClass(MultiMapIterator::class)]
 final class MultiMapIteratorTest extends IteratorTestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::rewind()
-     * @covers ::valid()
-     * @covers ::key()
-     * @covers ::current()
-     * @covers ::next()
-     */
     public function testMultiMapIterator(): void
     {
         $map = static function (int $key): Key {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Provider;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Container\Binding;
 use Vivarium\Container\Capability;
@@ -11,13 +12,9 @@ use Vivarium\Container\Container;
 use Vivarium\Container\Provider\ContainerCall;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Container\Provider\ContainerCall */
+#[CoversClass(ContainerCall::class)]
 final class ContainerCallTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::provide
-     */
     public function testProvideDelegatesToContainer(): void
     {
         $binding  = new Binding(StubClass::class);
@@ -34,7 +31,6 @@ final class ContainerCallTest extends TestCase
         static::assertSame($expectedInstance, $provider->provide($container));
     }
 
-    /** @covers ::getTarget */
     public function testGetTargetReturnsDelegatedBindingType(): void
     {
         $binding  = new Binding(StubClass::class);
@@ -43,7 +39,6 @@ final class ContainerCallTest extends TestCase
         static::assertSame(StubClass::class, $provider->getTarget());
     }
 
-    /** @covers ::getCapabilities */
     public function testGetCapabilitiesReturnsInterceptableAndDecorableButNotInjectable(): void
     {
         $binding      = new Binding(StubClass::class);

@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Decorator;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -25,7 +27,7 @@ use Vivarium\Test\Container\Stub\StubWrapperDependency;
 use Vivarium\Test\Container\Stub\StubWrapperInner;
 use Vivarium\Test\Container\Stub\StubWrapperSubject;
 
-/** @coversDefaultClass \Vivarium\Container\Decorator\Wrapper */
+#[CoversClass(Wrapper::class)]
 final class WrapperTest extends TestCase
 {
     /** @return array<string, array{string|int}> */
@@ -56,12 +58,7 @@ final class WrapperTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideValidSlots
-     * @covers ::enhance
-     * @covers ::bindSlot
-     * @covers ::__construct
-     */
+    #[DataProvider('provideValidSlots')]
     public function testEnhanceBindsInstanceToSlot(string|int $slot): void
     {
         $instance = new StubWrapperInner();
@@ -74,12 +71,7 @@ final class WrapperTest extends TestCase
         self::assertInstanceOf(StubWrapperDependency::class, $result->dep);
     }
 
-    /**
-     * @dataProvider provideValidSlots
-     * @covers ::enhance
-     * @covers ::bindSlot
-     * @covers ::__construct
-     */
+    #[DataProvider('provideValidSlots')]
     public function testEnhanceReturnsFunctionResult(string|int $slot): void
     {
         $instance = new StubWrapperInner();
@@ -107,11 +99,6 @@ final class WrapperTest extends TestCase
         self::assertInstanceOf(StubWrapperDependency::class, $received[1]);
     }
 
-    /**
-     * @covers ::enhance
-     * @covers ::bindSlot
-     * @covers ::__construct
-     */
     public function testEnhanceDifferentInstancesIndependently(): void
     {
         $first     = new StubWrapperInner();
@@ -128,11 +115,7 @@ final class WrapperTest extends TestCase
         self::assertSame($second, $secondResult->inner);
     }
 
-    /**
-     * @dataProvider provideInvalidSlots
-     * @covers ::bindSlot
-     * @covers ::__construct
-     */
+    #[DataProvider('provideInvalidSlots')]
     public function testConstructionWithInvalidSlotThrows(string|int $slot): void
     {
         $this->expectException(AssertionFailed::class);
@@ -140,11 +123,6 @@ final class WrapperTest extends TestCase
         new Wrapper(new Constructor(StubWrapperDecorator::class), $slot);
     }
 
-    /**
-     * @covers ::enhance
-     * @covers ::bindSlot
-     * @covers ::__construct
-     */
     public function testEnhanceRejectsInstanceNotAssignableToSlot(): void
     {
         $wrapper = new Wrapper(new Constructor(StubWrapperDecorator::class), 'inner');
@@ -154,7 +132,6 @@ final class WrapperTest extends TestCase
         $wrapper->enhance(new stdClass(), new Injector(new EagerRegistry()));
     }
 
-    /** @covers ::__construct */
     public function testIsDecorator(): void
     {
         $wrapper = new Wrapper(new Constructor(StubWrapperDecorator::class), 'inner');
@@ -162,11 +139,7 @@ final class WrapperTest extends TestCase
         self::assertInstanceOf(Decorator::class, $wrapper);
     }
 
-    /**
-     * @dataProvider provideProviders
-     * @covers ::accept
-     * @covers ::__construct
-     */
+    #[DataProvider('provideProviders')]
     public function testAcceptsAnyProvider(Provider $provider): void
     {
         $wrapper = new Wrapper(new Constructor(StubWrapperDecorator::class), 'inner');

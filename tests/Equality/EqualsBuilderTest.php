@@ -10,21 +10,18 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Equality;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Equality\Equality;
 use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Test\Equality\Stub\EqualityStub;
 
-/** @coversDefaultClass \Vivarium\Equality\EqualsBuilder */
+#[CoversClass(EqualsBuilder::class)]
 final class EqualsBuilderTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::append
-     * @covers ::isEquals
-     * @dataProvider getTestAppendScalarData
-     */
+    #[DataProvider('getTestAppendScalarData')]
     public function testAppendScalar(mixed $first, mixed $second, bool $expected): void
     {
         $builder = new EqualsBuilder();
@@ -33,10 +30,6 @@ final class EqualsBuilderTest extends TestCase
         static::assertEquals($expected, $builder->isEquals());
     }
 
-    /**
-     * @covers ::append
-     * @covers ::isEquals
-     */
     public function testAppendMultipleTimes(): void
     {
         $builder = new EqualsBuilder();
@@ -49,13 +42,8 @@ final class EqualsBuilderTest extends TestCase
     /**
      * @param mixed[] $array1
      * @param mixed[] $array2
-     *
-     * @covers ::append
-     * @covers ::appendEach
-     * @covers ::isEquals
-     * @covers ::reject
-     * @dataProvider getTestAppendEachData
      */
+    #[DataProvider('getTestAppendEachData')]
     public function testAppendEach(array $array1, array $array2, bool $expected): void
     {
         $builder = new EqualsBuilder();
@@ -64,12 +52,7 @@ final class EqualsBuilderTest extends TestCase
         static::assertEquals($expected, $builder->isEquals());
     }
 
-    /**
-     * @covers ::append
-     * @covers ::appendObject
-     * @covers ::isEquals
-     * @dataProvider getTestAppendObjectData
-     */
+    #[DataProvider('getTestAppendObjectData')]
     public function testAppendObject(mixed $object1, mixed $object2, bool $expected): void
     {
         $builder = new EqualsBuilder();
@@ -78,12 +61,7 @@ final class EqualsBuilderTest extends TestCase
         static::assertEquals($expected, $builder->isEquals());
     }
 
-    /**
-     * @covers ::append
-     * @covers ::appendFloat
-     * @covers ::isEquals
-     * @dataProvider getTestAppendFloatData
-     */
+    #[DataProvider('getTestAppendFloatData')]
     public function testAppendFloat(float $first, float $second, bool $expected): void
     {
         $builder = new EqualsBuilder();
@@ -92,11 +70,7 @@ final class EqualsBuilderTest extends TestCase
         static::assertEquals($expected, $builder->isEquals());
     }
 
-    /**
-     * @covers ::append()
-     * @covers ::isEquals()
-     * @dataProvider getTestAppendMixedData
-     */
+    #[DataProvider('getTestAppendMixedData')]
     public function testAppendDifferentTypes(mixed $first, mixed $second): void
     {
         $builder = new EqualsBuilder();
@@ -105,10 +79,7 @@ final class EqualsBuilderTest extends TestCase
         static::assertFalse($builder->isEquals());
     }
 
-    /**
-     * @covers ::append()
-     * @dataProvider getClonePointData
-     */
+    #[DataProvider('getClonePointData')]
     public function testImmutability(mixed $first, mixed $second): void
     {
         $builder  = new EqualsBuilder();

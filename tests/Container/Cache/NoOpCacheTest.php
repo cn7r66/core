@@ -11,14 +11,14 @@ declare(strict_types=1);
 namespace Vivarium\Test\Container\Cache;
 
 use LogicException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Container\Binding;
 use Vivarium\Container\Cache\NoOpCache;
 
-/** @coversDefaultClass \Vivarium\Container\Cache\NoOpCache */
+#[CoversClass(NoOpCache::class)]
 final class NoOpCacheTest extends TestCase
 {
-    /** @covers ::lookup */
     public function testLookupAlwaysReturnsFalse(): void
     {
         $cache   = new NoOpCache();
@@ -27,7 +27,6 @@ final class NoOpCacheTest extends TestCase
         static::assertFalse($cache->lookup($binding));
     }
 
-    /** @covers ::restore */
     public function testRestoreThrowsLogicException(): void
     {
         $this->expectException(LogicException::class);

@@ -10,7 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Sequence;
 
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Sequence\ArraySequence;
@@ -19,14 +20,9 @@ use Vivarium\Comparator\IntegerComparator;
 use Vivarium\Equality\Equal;
 use Vivarium\Equality\Equality;
 
-/** @coversDefaultClass \Vivarium\Collection\Sequence\ArraySequence */
+#[CoversClass(ArraySequence::class)]
 class ArraySequenceTest extends TestCase
 {
-    /**
-     * @covers ::add()
-     * @covers ::count()
-     * @covers ::toArray()
-     */
     public function testAdd(): void
     {
         /** @var ArraySequence<int> $list */
@@ -41,13 +37,6 @@ class ArraySequenceTest extends TestCase
         static::assertNotSame($list, $list->add(1));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::count()
-     * @covers ::add()
-     * @covers ::remove()
-     * @covers ::toArray()
-     */
     public function testRemove(): void
     {
         /** @var ArraySequence<int> $list */
@@ -65,7 +54,6 @@ class ArraySequenceTest extends TestCase
         static::assertNotSame($list, $list->remove(0));
     }
 
-    /** @covers ::contains() */
     public function testContains(): void
     {
         /** @var ArraySequence<int> $list */
@@ -77,11 +65,6 @@ class ArraySequenceTest extends TestCase
         static::assertFalse($list->contains(117));
     }
 
-    /**
-     * @covers ::clear()
-     * @covers ::count()
-     * @covers ::isEmpty()
-     */
     public function testClear(): void
     {
         $list = new ArraySequence(1, 2, 3, 4, 5);
@@ -91,7 +74,6 @@ class ArraySequenceTest extends TestCase
         static::assertTrue($list->isEmpty());
     }
 
-    /** @covers ::getIterator() */
     public function testGetIterator(): void
     {
         /** @var array<int, int> $expected */
@@ -106,10 +88,6 @@ class ArraySequenceTest extends TestCase
         }
     }
 
-    /**
-     * @covers ::getAtIndex()
-     * @covers ::checkBounds()
-     */
     public function testGetAtIndex(): void
     {
         $list    = new ArraySequence(1, 2, 3, 4, 5);
@@ -118,10 +96,6 @@ class ArraySequenceTest extends TestCase
         static::assertEquals(3, $element);
     }
 
-    /**
-     * @covers ::setAtIndex()
-     * @covers ::checkBounds()
-     */
     public function testSetAtIndex(): void
     {
         /** @var ArraySequence<int> $list */
@@ -132,10 +106,6 @@ class ArraySequenceTest extends TestCase
         static::assertNotSame($list, $list->setAtIndex(0, 42));
     }
 
-    /**
-     * @covers ::removeAtIndex()
-     * @covers ::checkBounds()
-     */
     public function testRemoveAtIndex(): void
     {
         $list = new ArraySequence(1, 2, 3, 4, 5);
@@ -145,7 +115,6 @@ class ArraySequenceTest extends TestCase
         static::assertNotSame($list, $list->removeAtIndex(0));
     }
 
-    /** @covers ::search() */
     public function testSearch(): void
     {
         /** @var ArraySequence<int> $list */
@@ -159,29 +128,25 @@ class ArraySequenceTest extends TestCase
         static::assertEquals(-1, $empty->search(2));
     }
 
-    /** @covers ::search() */
     public function testSearchWithEquality(): void
     {
-        $stub1 = $this->createMock(Equality::class);
-        $stub2 = $this->createMock(Equality::class);
-        $stub3 = $this->createMock(Equality::class);
+        $stub1 = $this->createStub(Equality::class);
+        $stub2 = $this->createStub(Equality::class);
+        $stub3 = $this->createStub(Equality::class);
 
-        $stub2->method('equals')
-              ->willReturnMap([
-                  [$stub1, false],
-                  [$stub2, true],
-                  [$stub3, false],
-              ]);
+        $stub2
+            ->method('equals')
+            ->willReturnMap([
+                [$stub1, false],
+                [$stub2, true],
+                [$stub3, false],
+            ]);
 
         $list = new ArraySequence($stub1, $stub2, $stub3);
 
         static::assertEquals(1, $list->search($stub2));
     }
 
-    /**
-     * @covers ::sort()
-     * @covers ::toArray()
-     */
     public function testSort(): void
     {
         /** @var ArraySequence<int> $list */
@@ -194,32 +159,32 @@ class ArraySequenceTest extends TestCase
         static::assertNotSame($list, $sorted);
     }
 
-    /**
-     * @covers ::sort()
-     * @covers ::toArray()
-     */
     public function testSortWithObject(): void
     {
-        $stub1 = $this->createMock(Equality::class);
-        $stub2 = $this->createMock(Equality::class);
-        $stub3 = $this->createMock(Equality::class);
+        $stub1 = static::createStub(Equality::class);
+        $stub2 = static::createStub(Equality::class);
+        $stub3 = static::createStub(Equality::class);
 
-        $stub2->method('equals')->with($stub1)->willReturn(false);
-        $stub2->method('equals')->with($stub2)->willReturn(true);
-        $stub2->method('equals')->with($stub3)->willReturn(false);
+        $stub2->method('equals')->willReturnMap([
+            [$stub1, false],
+            [$stub2, true],
+            [$stub3, false]
+        ]);
 
-        /** @var Comparator<Equality>&MockObject $comparator */
-        $comparator = $this->createMock(Comparator::class);
+        /** @var Comparator<Equality>&Stub $comparator */
+        $comparator = static::createStub(Comparator::class);
 
-        $comparator->method('__invoke')->with($stub1, $stub1)->willReturn(0);
-        $comparator->method('__invoke')->with($stub1, $stub2)->willReturn(-1);
-        $comparator->method('__invoke')->with($stub1, $stub3)->willReturn(-1);
-        $comparator->method('__invoke')->with($stub2, $stub1)->willReturn(1);
-        $comparator->method('__invoke')->with($stub2, $stub2)->willReturn(0);
-        $comparator->method('__invoke')->with($stub2, $stub3)->willReturn(-1);
-        $comparator->method('__invoke')->with($stub3, $stub1)->willReturn(1);
-        $comparator->method('__invoke')->with($stub3, $stub2)->willReturn(1);
-        $comparator->method('__invoke')->with($stub3, $stub3)->willReturn(0);
+        $comparator->method('__invoke')->willReturnMap([
+            [$stub1, $stub1, 0],
+            [$stub1, $stub2, -1],
+            [$stub1, $stub3, -1],
+            [$stub2, $stub1, 1],
+            [$stub2, $stub2, 0],
+            [$stub2, $stub3, -1],
+            [$stub3, $stub1, 1],
+            [$stub3, $stub2, 1],
+            [$stub3, $stub3, 0],
+        ]);
 
         /** @var ArraySequence<Equality> $list */
         $list = new ArraySequence($stub2, $stub1, $stub3);
@@ -230,7 +195,6 @@ class ArraySequenceTest extends TestCase
         static::assertEquals($expected->toArray(), $list->toArray());
     }
 
-    /** @covers ::fromArray() */
     public function testFromArray(): void
     {
         /** @var array<int, int> $values */
@@ -242,7 +206,6 @@ class ArraySequenceTest extends TestCase
         static::assertTrue(Equal::areEquals($list1, $list2));
     }
 
-    /** @covers ::equals() */
     public function testEquals(): void
     {
         $list1 = new ArraySequence(1, 2, 3);
@@ -255,7 +218,6 @@ class ArraySequenceTest extends TestCase
         static::assertFalse($list1->equals(new stdClass()));
     }
 
-    /** @covers ::hash() */
     public function testHash(): void
     {
         $list1 = new ArraySequence(1, 2, 3);

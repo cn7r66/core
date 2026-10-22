@@ -10,16 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Util;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Collection\Util\BinarySearch;
 use Vivarium\Collection\Util\Vector;
 use Vivarium\Comparator\IntegerComparator;
 
-/** @coversDefaultClass \Vivarium\Collection\Util\Vector */
+#[CoversClass(Vector::class)]
 final class VectorTest extends TestCase
 {
-    /** @covers ::putInPlace() */
     public function testPutInPlace(): void
     {
         $binary = new BinarySearch(new IntegerComparator());
@@ -32,7 +32,6 @@ final class VectorTest extends TestCase
         static::assertSame([1, 2, 3, 4, 5], Vector::putInPlace($arr, 3, $binary));
     }
 
-    /** @covers ::putAtPlace() */
     public function testPutAtPlace(): void
     {
         $binary = new BinarySearch(new IntegerComparator());
@@ -45,7 +44,6 @@ final class VectorTest extends TestCase
         static::assertSame([1, 2, 3, 4, 5, 5], Vector::putAtPlace($arr, 5, $binary));
     }
 
-    /** @covers ::putAtIndex */
     public function testPutAtIndex(): void
     {
         static::expectException(AssertionFailed::class);
@@ -60,7 +58,6 @@ final class VectorTest extends TestCase
         Vector::putAtIndex($arr, 8, 6);
     }
 
-    /** @covers ::linearSearch() */
     public function testLinearSearch(): void
     {
         $arr = [1, 2, 4, 5, 7, 8];
@@ -71,7 +68,6 @@ final class VectorTest extends TestCase
         static::assertSame(-7, Vector::linearSearch($arr, 10));
     }
 
-    /** @covers ::linearContains() */
     public function testLinearContains(): void
     {
         $arr = [1, 2, 4, 5, 7, 8];
@@ -82,7 +78,6 @@ final class VectorTest extends TestCase
         static::assertFalse(Vector::linearContains($arr, 10));
     }
 
-    /** @covers ::binarySearch() */
     public function testBinarySearch(): void
     {
         $comparator = new IntegerComparator();
@@ -94,7 +89,6 @@ final class VectorTest extends TestCase
         static::assertSame(-3, Vector::binarySearch($arr, 3, $comparator));
     }
 
-    /** @covers ::binaryContains() */
     public function testBinaryContains(): void
     {
         $comparator = new IntegerComparator();

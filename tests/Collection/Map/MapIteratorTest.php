@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Map;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Vivarium\Collection\Map\MapIterator;
 use Vivarium\Collection\Pair\Pair;
 use Vivarium\Equality\HashBuilder;
@@ -20,17 +21,9 @@ use Vivarium\Test\Collection\Stub\KeyWithHashCollision;
 use function array_keys;
 use function array_values;
 
-/** @coversDefaultClass \Vivarium\Collection\Map\MapIterator */
+#[CoversClass(MapIterator::class)]
 class MapIteratorTest extends IteratorTestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::rewind()
-     * @covers ::valid()
-     * @covers ::key()
-     * @covers ::current()
-     * @covers ::next()
-     */
     public function testMapIterator(): void
     {
         $map = static function (int $key): Key {
@@ -58,14 +51,6 @@ class MapIteratorTest extends IteratorTestCase
         $this->doTest($iterator, array_keys($expected), array_values($expected), $map);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::rewind()
-     * @covers ::valid()
-     * @covers ::key()
-     * @covers ::current()
-     * @covers ::next()
-     */
     public function testMapIteratorWithBuckets(): void
     {
         $map = static function (int $key): KeyWithHashCollision {

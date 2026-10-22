@@ -10,16 +10,13 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Util;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Collection\Util\LinearSearch;
 
-/** @coversDefaultClass \Vivarium\Collection\Util\LinearSearch */
+#[CoversClass(LinearSearch::class)]
 final class LinearSearchTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::search()
-     */
     public function testSearch(): void
     {
         $linear = new LinearSearch();
@@ -31,10 +28,6 @@ final class LinearSearchTest extends TestCase
         static::assertSame(-7, $linear->search($arr, 10));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::contains()
-     */
     public function testContains(): void
     {
         $linear = new LinearSearch();

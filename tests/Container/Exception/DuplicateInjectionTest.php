@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Exception;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
@@ -18,15 +20,10 @@ use Vivarium\Container\Exception\ContainerException;
 use Vivarium\Container\Exception\DuplicateInjection;
 use Vivarium\Test\Container\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Container\Exception\DuplicateInjection */
+#[CoversClass(DuplicateInjection::class)]
 final class DuplicateInjectionTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::getBinding
-     * @covers ::getSlot
-     * @dataProvider provideSlots
-     */
+    #[DataProvider('provideSlots')]
     public function testExposesBindingAndSlot(string $slot): void
     {
         $binding   = new Binding(StubClass::class);
@@ -36,10 +33,7 @@ final class DuplicateInjectionTest extends TestCase
         static::assertSame($slot, $exception->getSlot());
     }
 
-    /**
-     * @covers ::__construct
-     * @dataProvider provideBindingsWithSlots
-     */
+    #[DataProvider('provideBindingsWithSlots')]
     public function testMessageSuggestsAMoreSpecificType(Binding $binding, string $description, string $slot): void
     {
         $exception = new DuplicateInjection($binding, $slot);
@@ -51,10 +45,7 @@ final class DuplicateInjectionTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct
-     * @dataProvider provideExceptionTypes
-     */
+    #[DataProvider('provideExceptionTypes')]
     public function testIsAContainerException(string $type): void
     {
         static::assertInstanceOf($type, new DuplicateInjection(new Binding(StubClass::class), 'configure'));

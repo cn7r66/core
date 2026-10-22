@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Type;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Type\IsPrimitive;
 use Vivarium\Test\Assertion\Stub\Stub;
 
-/** @coversDefaultClass \Vivarium\Assertion\Type\IsPrimitive */
+#[CoversClass(IsPrimitive::class)]
 final class IsPrimitiveTest extends TestCase
 {
-    /**
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $type): void
     {
         static::expectNotToPerformAssertions();
@@ -24,10 +23,7 @@ final class IsPrimitiveTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testAssertException(string $type, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -37,10 +33,7 @@ final class IsPrimitiveTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $type): void
     {
         static::assertTrue(
@@ -48,10 +41,7 @@ final class IsPrimitiveTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $type): void
     {
         static::assertFalse(

@@ -11,6 +11,8 @@ declare(strict_types=1);
 namespace Vivarium\Test\Container\Binding;
 
 use Closure;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -35,7 +37,7 @@ use Vivarium\Test\Container\Stub\StubFactory;
 use Vivarium\Test\Container\Stub\StubStaticFactory;
 use Vivarium\Test\Container\Stub\StubWithNoArgs;
 
-/** @coversDefaultClass \Vivarium\Container\Binding\ProviderBinder */
+#[CoversClass(ProviderBinder::class)]
 final class ProviderBinderTest extends TestCase
 {
     private function makeBinder(string $type): ProviderBinder
@@ -48,13 +50,9 @@ final class ProviderBinderTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::toProvider
-     */
     public function testToProviderForwardsProviderToCreateAndReturnsResult(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $captured = null;
 
         $binder = new ProviderBinder(
@@ -72,7 +70,6 @@ final class ProviderBinderTest extends TestCase
         static::assertSame($provider, $result);
     }
 
-    /** @covers ::toConstructor */
     public function testToConstructorCreatesConstructorProvider(): void
     {
         $provider = $this->makeBinder(StubWithNoArgs::class)->toConstructor();
@@ -80,7 +77,6 @@ final class ProviderBinderTest extends TestCase
         static::assertInstanceOf(Constructor::class, $provider);
     }
 
-    /** @covers ::toFactory */
     public function testToFactoryCreatesFactoryProvider(): void
     {
         $provider = $this->makeBinder(StubClass::class)
@@ -90,7 +86,6 @@ final class ProviderBinderTest extends TestCase
         static::assertInstanceOf(Factory::class, $provider);
     }
 
-    /** @covers ::toStaticFactory */
     public function testToStaticFactoryCreatesStaticFactoryProvider(): void
     {
         $provider = $this->makeBinder(StubClass::class)
@@ -100,7 +95,6 @@ final class ProviderBinderTest extends TestCase
         static::assertInstanceOf(StaticFactory::class, $provider);
     }
 
-    /** @covers ::toInstance */
     public function testToInstanceCreatesInstanceProvider(): void
     {
         $instance = new StubWithNoArgs();
@@ -109,7 +103,6 @@ final class ProviderBinderTest extends TestCase
         static::assertInstanceOf(Instance::class, $provider);
     }
 
-    /** @covers ::toConstant */
     public function testToConstantCreatesConstantProvider(): void
     {
         $provider = $this->makeBinder('int')->toConstant('PHP_INT_MAX');
@@ -117,7 +110,6 @@ final class ProviderBinderTest extends TestCase
         static::assertInstanceOf(Constant::class, $provider);
     }
 
-    /** @covers ::toEnum */
     public function testToEnumCreatesEnumProvider(): void
     {
         $provider = $this->makeBinder(Scope::class)->toEnum(Scope::class, 'SERVICE');
@@ -125,7 +117,6 @@ final class ProviderBinderTest extends TestCase
         static::assertInstanceOf(Enum::class, $provider);
     }
 
-    /** @covers ::toClassConstant */
     public function testToClassConstantCreatesClassConstantProvider(): void
     {
         $provider = $this->makeBinder('int')
@@ -134,7 +125,6 @@ final class ProviderBinderTest extends TestCase
         static::assertInstanceOf(ClassConstant::class, $provider);
     }
 
-    /** @covers ::to */
     public function testToCreatesContainerCallProvider(): void
     {
         $provider = $this->makeBinder(StubWithNoArgs::class)
@@ -143,16 +133,13 @@ final class ProviderBinderTest extends TestCase
         static::assertInstanceOf(ContainerCall::class, $provider);
     }
 
-    /**
-     * @covers ::toInstance
-     * @dataProvider provideAssignableInstances
-     */
+    #[DataProvider('provideAssignableInstances')]
     public function testToInstanceProvidesTheGivenValue(string $type, mixed $value): void
     {
         $provider = $this->makeBinder($type)->toInstance($value);
 
         static::assertInstanceOf(Instance::class, $provider);
-        static::assertSame($value, $provider->provide($this->createMock(Container::class)));
+        static::assertSame($value, $provider->provide($this->createStub(Container::class)));
     }
 
     /** @return array<string, array{string, mixed}> */
@@ -175,10 +162,7 @@ final class ProviderBinderTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::toInstance
-     * @dataProvider provideRejectedInstances
-     */
+    #[DataProvider('provideRejectedInstances')]
     public function testToInstanceRejectsNonAssignableValue(string $type, mixed $value): void
     {
         $binder = $this->makeBinder($type);
@@ -199,7 +183,6 @@ final class ProviderBinderTest extends TestCase
         ];
     }
 
-    /** @covers ::toFunction */
     public function testToFunctionCreatesFunProviderThatCallsTheFunction(): void
     {
         $provider = $this->makeBinder(StubWithNoArgs::class)->toFunction(
@@ -215,7 +198,6 @@ final class ProviderBinderTest extends TestCase
         );
     }
 
-    /** @covers ::toFunction */
     public function testToFunctionUsesFunReturnedByConfigure(): void
     {
         $replacement = new Fun(static function (): string {

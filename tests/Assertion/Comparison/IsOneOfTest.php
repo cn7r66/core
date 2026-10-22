@@ -10,24 +10,19 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Comparison;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Comparison\IsOneOf;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Test\Equality\Stub\EqualityStub;
 
-/** @coversDefaultClass \Vivarium\Assertion\Comparison\IsOneOf */
+#[CoversClass(IsOneOf::class)]
 final class IsOneOfTest extends TestCase
 {
-    /**
-     * @param array<scalar|object> $values
-     *
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @covers ::__invoke()
-     *
-     * @dataProvider provideSuccess()
-     */
+    /** @param array<scalar|object> $values */
+    #[DataProvider('provideSuccess')]
     public function testAssert(mixed $value, array $values): void
     {
         static::expectNotToPerformAssertions();
@@ -37,15 +32,8 @@ final class IsOneOfTest extends TestCase
         $oneOf->assert($value);
     }
 
-    /**
-     * @param array<scalar|object> $values
-     *
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @covers ::__invoke()
-     *
-     * @dataProvider provideFailure()
-     */
+    /** @param array<scalar|object> $values */
+    #[DataProvider('provideFailure')]
     public function testAssertException(mixed $value, array $values, string $message): void
     {
         static::expectException(AssertionFailed::class);

@@ -10,15 +10,15 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Util;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Collection\Util\KeyHash;
 use Vivarium\Equality\HashBuilder;
 use Vivarium\Test\Collection\Stub\Key;
 
-/** @coversDefaultClass \Vivarium\Collection\Util\KeyHash */
+#[CoversClass(KeyHash::class)]
 final class KeyHashTest extends TestCase
 {
-    /** @covers ::hash() */
     public function testHash(): void
     {
         $hash = (new HashBuilder())

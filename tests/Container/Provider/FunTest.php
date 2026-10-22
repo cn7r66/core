@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Provider;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -13,10 +15,9 @@ use Vivarium\Container\Provider;
 use Vivarium\Container\Provider\Fun;
 use Vivarium\Test\Container\Stub\StubService;
 
-/** @coversDefaultClass \Vivarium\Container\Provider\Fun */
+#[CoversClass(Fun::class)]
 final class FunTest extends TestCase
 {
-    /** @covers ::__construct */
     public function testConstructWithValidFunction(): void
     {
         static::expectNotToPerformAssertions();
@@ -24,7 +25,6 @@ final class FunTest extends TestCase
         new Fun(static fn (Container $container): string => 'test');
     }
 
-    /** @covers ::__construct */
     public function testConstructWithNonCallableThrows(): void
     {
         static::expectException(AssertionFailed::class);
@@ -32,10 +32,7 @@ final class FunTest extends TestCase
         new Fun('nonexistent_function');
     }
 
-    /**
-     * @dataProvider provideFunctionsAndTheirTargets
-     * @covers ::getTarget
-     */
+    #[DataProvider('provideFunctionsAndTheirTargets')]
     public function testGetTargetReturnsReturnType(callable $function, string $expected): void
     {
         static::assertSame($expected, (new Fun($function))->getTarget());
@@ -50,7 +47,6 @@ final class FunTest extends TestCase
         ];
     }
 
-    /** @covers ::getCapabilities */
     public function testGetCapabilitiesReturnsInjectableInterceptableAndDecorable(): void
     {
         $provider     = new Fun(static fn (Container $container): string => 'test');
@@ -62,10 +58,6 @@ final class FunTest extends TestCase
         static::assertCount(3, $capabilities);
     }
 
-    /**
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
     public function testProvideInvokesZeroArgumentClosureWithoutConsultingContainer(): void
     {
         $container = $this->createMock(Container::class);
@@ -77,14 +69,10 @@ final class FunTest extends TestCase
         static::assertSame('value', $result);
     }
 
-    /**
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
     public function testProvideAutowiresRequiredTypedParameter(): void
     {
         $service   = new StubService();
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('get')->willReturn($service);
 
         $result = (new Fun(static fn (StubService $service): StubService => $service))->provide($container);
@@ -92,13 +80,9 @@ final class FunTest extends TestCase
         static::assertSame($service, $result);
     }
 
-    /**
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
     public function testProvideUsesContainerValueForOptionalParameter(): void
     {
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('has')->willReturn(true);
         $container->method('get')->willReturn('custom');
 
@@ -107,10 +91,6 @@ final class FunTest extends TestCase
         static::assertSame('custom', $result);
     }
 
-    /**
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
     public function testProvideUsesDefaultWhenOptionalParameterNotInContainer(): void
     {
         $container = $this->createMock(Container::class);
@@ -122,14 +102,9 @@ final class FunTest extends TestCase
         static::assertSame('default', $result);
     }
 
-    /**
-     * @covers ::provide
-     * @covers ::bindArgument
-     * @covers ::resolveArguments
-     */
     public function testProvidePrefersExplicitlyBoundArgumentOverAutoResolution(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
         $provider->method('provide')->willReturn('bound');
 
@@ -143,10 +118,9 @@ final class FunTest extends TestCase
         static::assertSame('bound', $fun->provide($container));
     }
 
-    /** @covers ::bindArgument */
     public function testBindArgument(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
         $provider->method('provide')->willReturn('bound');
 
@@ -155,17 +129,16 @@ final class FunTest extends TestCase
 
         static::assertNotSame($original, $bound);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('has')->willReturn(false);
 
         static::assertSame('bound', $bound->provide($container));
         static::assertSame('default', $original->provide($container));
     }
 
-    /** @covers ::bindArgumentAtPosition */
     public function testBindArgumentAtPosition(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('array');
         $provider->method('provide')->willReturn(['a', 'b', 'c']);
 
@@ -173,33 +146,24 @@ final class FunTest extends TestCase
             ->bindArgumentAtPosition(0)
             ->toProvider($provider);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         static::assertSame(['a', 'b', 'c'], $fun->provide($container));
     }
 
-    /**
-     * @dataProvider provideEqualFunPairs
-     * @covers ::equals
-     */
+    #[DataProvider('provideEqualFunPairs')]
     public function testEqualsReturnsTrueForEqualFuns(Fun $first, Fun $second): void
     {
         static::assertTrue($first->equals($second));
     }
 
-    /**
-     * @dataProvider provideUnequalPairs
-     * @covers ::equals
-     */
+    #[DataProvider('provideUnequalPairs')]
     public function testEqualsReturnsFalseForUnequalObjects(Fun $first, object $second): void
     {
         static::assertFalse($first->equals($second));
     }
 
-    /**
-     * @dataProvider provideEqualFunPairs
-     * @covers ::hash
-     */
+    #[DataProvider('provideEqualFunPairs')]
     public function testHashIsSameForEqualFuns(Fun $first, Fun $second): void
     {
         static::assertSame($first->hash(), $second->hash());

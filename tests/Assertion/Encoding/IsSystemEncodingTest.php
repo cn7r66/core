@@ -10,17 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Encoding;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Encoding\IsSystemEncoding;
 use Vivarium\Assertion\Exception\AssertionFailed;
 
-/** @coversDefaultClass \Vivarium\Assertion\Encoding\IsSystemEncoding */
+#[CoversClass(IsSystemEncoding::class)]
 final class IsSystemEncodingTest extends TestCase
 {
-        /**
-         * @covers ::assert()
-         * @dataProvider provideSuccess()
-         */
+        #[DataProvider('provideSuccess')]
     public function testAssert(string $encoding): void
     {
         static::expectNotToPerformAssertions();
@@ -28,11 +27,8 @@ final class IsSystemEncodingTest extends TestCase
         (new IsSystemEncoding())->assert($encoding);
     }
 
-    /**
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideInvalid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideInvalid')]
     public function testAssertException(string|int $encoding, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -41,10 +37,7 @@ final class IsSystemEncodingTest extends TestCase
         (new IsSystemEncoding())->assert($encoding);
     }
 
-    /**
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $encoding): void
     {
         static::assertTrue(
@@ -52,10 +45,7 @@ final class IsSystemEncodingTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string|int $encoding): void
     {
         static::assertFalse(

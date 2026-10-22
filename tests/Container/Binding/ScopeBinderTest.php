@@ -10,11 +10,12 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Binding;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Container\Binding\ScopeBinder;
 use Vivarium\Container\Scope;
 
-/** @coversDefaultClass \Vivarium\Container\Binding\ScopeBinder */
+#[CoversClass(ScopeBinder::class)]
 final class ScopeBinderTest extends TestCase
 {
     private function makeBinder(): ScopeBinder
@@ -24,22 +25,16 @@ final class ScopeBinderTest extends TestCase
         });
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::transient
-     */
     public function testTransientReturnsTransientScope(): void
     {
         static::assertSame(Scope::TRANSIENT, $this->makeBinder()->transient());
     }
 
-    /** @covers ::cloneable */
     public function testCloneableReturnsCloneableScope(): void
     {
         static::assertSame(Scope::CLONEABLE, $this->makeBinder()->cloneable());
     }
 
-    /** @covers ::service */
     public function testServiceReturnsServiceScope(): void
     {
         static::assertSame(Scope::SERVICE, $this->makeBinder()->service());

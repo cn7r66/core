@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Injection;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -23,13 +25,10 @@ use Vivarium\Test\Container\Stub\StubMethodCallSubclass;
 use Vivarium\Test\Container\Stub\StubService;
 use Vivarium\Test\Container\Stub\StubWithPrivateMethodInjection;
 
-/** @coversDefaultClass \Vivarium\Container\Injection\MethodCall */
+#[CoversClass(MethodCall::class)]
 final class MethodCallTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @dataProvider provideUncallableMethods
-     */
+    #[DataProvider('provideUncallableMethods')]
     public function testConstructorThrowsForUncallableMethod(string $class, string $method): void
     {
         static::expectException(AssertionFailed::class);
@@ -47,14 +46,10 @@ final class MethodCallTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     */
     public function testEnhanceCallsMethodAndReturnsSameInstance(): void
     {
         $service   = new StubService();
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('get')->willReturn($service);
 
         $instance  = new StubClass(new StubService());
@@ -65,27 +60,19 @@ final class MethodCallTest extends TestCase
         static::assertSame($service, $instance->getService());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     */
     public function testEnhanceFailsWhenInstanceTypeIsWrong(): void
     {
         static::expectException(AssertionFailed::class);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $injection = new MethodCall(StubClass::class, 'setService');
         $injection->enhance(new StubService(), $container);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::accept
-     * @dataProvider provideAcceptTargets
-     */
+    #[DataProvider('provideAcceptTargets')]
     public function testAcceptAnswersWhetherTargetHasMethod(string $target, bool $expected): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn($target);
 
         static::assertSame(
@@ -104,10 +91,6 @@ final class MethodCallTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::getSlot
-     */
     public function testGetSlotReturnsMethodName(): void
     {
         $injection = new MethodCall(StubClass::class, 'setService');
@@ -115,11 +98,10 @@ final class MethodCallTest extends TestCase
         static::assertSame('setService', $injection->getSlot());
     }
 
-    /** @covers ::bindArgument */
     public function testBindArgument(): void
     {
         $boundService = new StubService();
-        $provider     = $this->createMock(Provider::class);
+        $provider     = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn(StubService::class);
         $provider->method('provide')->willReturn($boundService);
 
@@ -129,7 +111,7 @@ final class MethodCallTest extends TestCase
         static::assertNotSame($original, $bound);
 
         $resolvedService = new StubService();
-        $container       = $this->createMock(Container::class);
+        $container       = $this->createStub(Container::class);
         $container->method('get')->willReturn($resolvedService);
 
         $boundInstance = new StubClass(new StubService());
@@ -141,11 +123,10 @@ final class MethodCallTest extends TestCase
         static::assertSame($resolvedService, $originalInstance->getService());
     }
 
-    /** @covers ::bindArgumentAtPosition */
     public function testBindArgumentAtPosition(): void
     {
         $boundService = new StubService();
-        $provider     = $this->createMock(Provider::class);
+        $provider     = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn(StubService::class);
         $provider->method('provide')->willReturn($boundService);
 
@@ -154,7 +135,7 @@ final class MethodCallTest extends TestCase
 
         static::assertNotSame($original, $bound);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $instance  = new StubClass(new StubService());
 
         $bound->enhance($instance, $container);
@@ -162,14 +143,10 @@ final class MethodCallTest extends TestCase
         static::assertSame($boundService, $instance->getService());
     }
 
-    /**
-     * @covers ::enhance
-     * @covers ::resolveArguments
-     */
     public function testEnhanceProjection(): void
     {
         $boundService = new StubService();
-        $provider     = $this->createMock(Provider::class);
+        $provider     = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn(StubService::class);
         $provider->method('provide')->willReturn($boundService);
 
@@ -177,7 +154,7 @@ final class MethodCallTest extends TestCase
             ->bindArgument('service')
             ->toProvider($provider);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $instance  = new StubMethodCallSubclass();
 
         $result = $injection->enhance($instance, $container);
@@ -187,28 +164,19 @@ final class MethodCallTest extends TestCase
         static::assertSame('default', $instance->suffix);
     }
 
-    /**
-     * @dataProvider provideEqualMethodCalls
-     * @covers ::equals
-     */
+    #[DataProvider('provideEqualMethodCalls')]
     public function testEqualsReturnsTrueForEqualMethodCalls(MethodCall $first, MethodCall $second): void
     {
         static::assertTrue($first->equals($second));
     }
 
-    /**
-     * @dataProvider provideEqualMethodCalls
-     * @covers ::hash
-     */
+    #[DataProvider('provideEqualMethodCalls')]
     public function testHashIsSameForEqualMethodCalls(MethodCall $first, MethodCall $second): void
     {
         static::assertSame($first->hash(), $second->hash());
     }
 
-    /**
-     * @dataProvider provideDifferentObjects
-     * @covers ::equals
-     */
+    #[DataProvider('provideDifferentObjects')]
     public function testEqualsReturnsFalseForDifferentObjects(MethodCall $first, object $second): void
     {
         static::assertFalse($first->equals($second));

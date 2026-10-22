@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Type;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Type\IsIntersection;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Assertion\Type\IsIntersection */
+#[CoversClass(IsIntersection::class)]
 final class IsIntersectionTest extends TestCase
 {
-    /**
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $type): void
     {
         static::expectNotToPerformAssertions();
@@ -24,11 +23,8 @@ final class IsIntersectionTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideInvalid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideInvalid')]
     public function testAssertException(string|int $type, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -38,10 +34,7 @@ final class IsIntersectionTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $type): void
     {
         static::assertTrue(
@@ -49,10 +42,7 @@ final class IsIntersectionTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $type): void
     {
         static::assertFalse(

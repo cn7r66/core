@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Object;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Object\HasPublicProperty;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Assertion\Object\HasPublicProperty */
+#[CoversClass(HasPublicProperty::class)]
 final class HasPublicPropertyTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string|object $class, string $property): void
     {
         static::expectNotToPerformAssertions();
@@ -25,12 +23,8 @@ final class HasPublicPropertyTest extends TestCase
             ->assert($class);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideInvalid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideInvalid')]
     public function testAssertException(string|object $class, string $property, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -40,11 +34,7 @@ final class HasPublicPropertyTest extends TestCase
             ->assert($class);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string|object $class, string $property): void
     {
         static::assertTrue(
@@ -52,11 +42,7 @@ final class HasPublicPropertyTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string|object $class, string $property): void
     {
         static::assertFalse(

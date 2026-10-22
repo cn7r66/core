@@ -10,17 +10,14 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Boolean;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Boolean\IsTrue;
 use Vivarium\Assertion\Exception\AssertionFailed;
 
-/** @coversDefaultClass \Vivarium\Assertion\Boolean\IsTrue */
+#[CoversClass(IsTrue::class)]
 final class IsTrueTest extends TestCase
 {
-    /**
-     * @covers ::assert()
-     * @covers ::__invoke()
-     */
     public function testAssert(): void
     {
         static::expectNotToPerformAssertions();
@@ -29,10 +26,6 @@ final class IsTrueTest extends TestCase
             ->assert(true);
     }
 
-    /**
-     * @covers ::assert()
-     * @covers ::__invoke()
-     */
     public function testAssertException(): void
     {
         static::expectException(AssertionFailed::class);
@@ -42,10 +35,6 @@ final class IsTrueTest extends TestCase
             ->assert(false);
     }
 
-    /**
-     * @covers ::assert()
-     * @covers ::__invoke()
-     */
     public function testAssertWithoutBoolean(): void
     {
         static::expectException(AssertionFailed::class);

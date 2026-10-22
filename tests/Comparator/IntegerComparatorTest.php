@@ -10,16 +10,13 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Comparator;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Comparator\IntegerComparator;
 
-/** @coversDefaultClass \Vivarium\Comparator\IntegerComparator */
+#[CoversClass(IntegerComparator::class)]
 class IntegerComparatorTest extends TestCase
 {
-    /**
-     * @covers ::compare()
-     * @covers ::__invoke()
-     */
     public function testCompare(): void
     {
         $comparator = new IntegerComparator();

@@ -10,18 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Conditional;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Conditional\IsNotNull;
 use Vivarium\Assertion\Exception\AssertionFailed;
 
-/** @coversDefaultClass \Vivarium\Assertion\Conditional\IsNotNull */
+#[CoversClass(IsNotNull::class)]
 final class IsNotNullTest extends TestCase
 {
-    /**
-     * @covers ::assert()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(mixed $value): void
     {
         static::expectNotToPerformAssertions();
@@ -30,10 +28,6 @@ final class IsNotNullTest extends TestCase
             ->assert($value);
     }
 
-    /**
-     * @covers ::assert()
-     * @covers ::__invoke()
-     */
     public function testAssertException(): void
     {
         static::expectException(AssertionFailed::class);
@@ -43,10 +37,7 @@ final class IsNotNullTest extends TestCase
             ->assert(null);
     }
 
-    /**
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(mixed $value): void
     {
         static::assertTrue(
@@ -54,7 +45,6 @@ final class IsNotNullTest extends TestCase
         );
     }
 
-    /** @covers ::__invoke() */
     public function testInvokeFailure(): void
     {
         static::assertFalse(

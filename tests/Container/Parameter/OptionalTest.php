@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Parameter;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionFunction;
 use ReflectionMethod;
@@ -26,10 +28,9 @@ use Vivarium\Test\Container\Stub\StubClass;
 use Vivarium\Test\Container\Stub\StubWithOptionalArg;
 use Vivarium\Test\Container\Stub\StubWithRequiredStringArg;
 
-/** @coversDefaultClass \Vivarium\Container\Parameter\Optional */
+#[CoversClass(Optional::class)]
 final class OptionalTest extends TestCase
 {
-    /** @covers ::__construct */
     public function testConstructor(): void
     {
         static::assertInstanceOf(
@@ -38,10 +39,7 @@ final class OptionalTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct
-     * @dataProvider provideInvalidConstructorArguments
-     */
+    #[DataProvider('provideInvalidConstructorArguments')]
     public function testConstructorException(
         string $name,
         string $type,
@@ -63,10 +61,6 @@ final class OptionalTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::getName
-     * @covers ::__construct
-     */
     public function testGetName(): void
     {
         $parameter = new Optional('name', 'string', 'App\\Context', self::parameterWithDefault());
@@ -74,10 +68,6 @@ final class OptionalTest extends TestCase
         static::assertSame('name', $parameter->getName());
     }
 
-    /**
-     * @covers ::getType
-     * @covers ::__construct
-     */
     public function testGetType(): void
     {
         $parameter = new Optional('name', 'int', 'App\\Context', self::parameterWithDefault());
@@ -85,11 +75,7 @@ final class OptionalTest extends TestCase
         static::assertSame('int', $parameter->getType());
     }
 
-    /**
-     * @covers ::getArgument
-     * @covers ::__construct
-     * @dataProvider provideParametersWithDefaults
-     */
+    #[DataProvider('provideParametersWithDefaults')]
     public function testGetArgument(ReflectionParameter $reflectionParameter, mixed $expectedDefault): void
     {
         $parameter = new Optional('name', 'string', 'App\\Context', $reflectionParameter);
@@ -103,7 +89,7 @@ final class OptionalTest extends TestCase
 
         static::assertSame($expectedDefault, $argument->provide($containerWithoutBinding));
 
-        $containerWithBinding = $this->createMock(Container::class);
+        $containerWithBinding = $this->createStub(Container::class);
         $containerWithBinding->method('has')->willReturn(true);
         $containerWithBinding->method('get')->willReturn('container-value');
 
@@ -121,14 +107,9 @@ final class OptionalTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::withArgument
-     * @covers ::__construct
-     * @covers ::getArgument
-     */
     public function testWithArgument(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
 
         $original = new Optional('name', 'string', 'App\\Context', self::parameterWithDefault());
@@ -140,14 +121,9 @@ final class OptionalTest extends TestCase
         static::assertSame($provider, $modified->getArgument());
     }
 
-    /**
-     * @covers ::withArgument
-     * @covers ::__construct
-     * @covers ::getArgument
-     */
     public function testWithArgumentException(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
 
         static::expectException(AssertionFailed::class);
@@ -155,13 +131,7 @@ final class OptionalTest extends TestCase
         (new Optional('name', 'int', 'App\\Context', self::parameterWithDefault()))->withArgument($provider);
     }
 
-    /**
-     * @covers ::isExplicit
-     * @covers ::__construct
-     * @covers ::withArgument
-     * @covers ::getArgument
-     * @dataProvider provideFreshAndBoundParameters
-     */
+    #[DataProvider('provideFreshAndBoundParameters')]
     public function testIsExplicit(Optional $parameter, bool $expected): void
     {
         static::assertSame($expected, $parameter->isExplicit());
@@ -185,11 +155,7 @@ final class OptionalTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::canReplace
-     * @covers ::__construct
-     * @dataProvider provideReplacementPairs
-     */
+    #[DataProvider('provideReplacementPairs')]
     public function testCanReplace(Optional $parameter, ParameterContract $base, bool $expected): void
     {
         static::assertSame($expected, $parameter->canReplace($base));
@@ -244,10 +210,6 @@ final class OptionalTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::canBeOmitted
-     * @covers ::__construct
-     */
     public function testCanBeOmitted(): void
     {
         $parameter = new Optional('name', 'string', 'App\\Context', self::parameterWithDefault());

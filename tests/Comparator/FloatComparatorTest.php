@@ -10,17 +10,13 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Comparator;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Comparator\FloatComparator;
 
-/** @coversDefaultClass \Vivarium\Comparator\FloatComparator */
+#[CoversClass(FloatComparator::class)]
 class FloatComparatorTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::compare()
-     * @covers ::__invoke()
-     */
     public function testCompare(): void
     {
         $comparator = new FloatComparator(0.00001);

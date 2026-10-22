@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Exception;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
@@ -19,14 +20,9 @@ use Vivarium\Container\Exception\ContainerException;
 use Vivarium\Test\Container\Stub\StubBase;
 use Vivarium\Test\Container\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Container\Exception\AmbiguousInjection */
+#[CoversClass(AmbiguousInjection::class)]
 final class AmbiguousInjectionTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::getSlot
-     * @covers ::getCandidates
-     */
     public function testExposesSlotAndCandidates(): void
     {
         $candidates = [new Binding(StubClass::class), new Binding(StubBase::class)];
@@ -37,7 +33,6 @@ final class AmbiguousInjectionTest extends TestCase
         static::assertSame($candidates, $exception->getCandidates());
     }
 
-    /** @covers ::__construct */
     public function testMessageListsCompetingRegistrations(): void
     {
         $exception = new AmbiguousInjection(
@@ -53,7 +48,6 @@ final class AmbiguousInjectionTest extends TestCase
         );
     }
 
-    /** @covers ::__construct */
     public function testIsAContainerException(): void
     {
         $exception = new AmbiguousInjection(

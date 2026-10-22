@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\MultiMap;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Collection;
@@ -19,10 +20,9 @@ use Vivarium\Collection\Pair\Pair;
 use Vivarium\Collection\Sequence\ArraySequence;
 use Vivarium\Equality\Equal;
 
-/** @coversDefaultClass \Vivarium\Collection\MultiMap\MultiValueMap */
+#[CoversClass(MultiValueMap::class)]
 final class MultiValueMapTest extends TestCase
 {
-    /** @covers ::__construct() */
     public function testConstructor(): void
     {
         $multimap = $this->createMultiMap(
@@ -41,7 +41,6 @@ final class MultiValueMapTest extends TestCase
         $this->checkContent($multimap, $content);
     }
 
-    /** @covers ::put() */
     public function testPut(): void
     {
         $multimap = $this->createMultiMap();
@@ -62,7 +61,6 @@ final class MultiValueMapTest extends TestCase
         static::assertNotSame($multimap, $multimap->put('a', 7));
     }
 
-    /** @covers ::get() */
     public function testGet(): void
     {
         $multimap = $this->createMultiMap(
@@ -79,7 +77,6 @@ final class MultiValueMapTest extends TestCase
         static::assertEmpty($multimap->get('b'));
     }
 
-    /** @covers ::remove() */
     public function testRemove(): void
     {
         $multimap = $this->createMultiMap(
@@ -105,7 +102,6 @@ final class MultiValueMapTest extends TestCase
         static::assertSame($multimap, $multimap->remove('z', 4));
     }
 
-    /** @covers ::removeAll */
     public function testRemoveAll(): void
     {
         $multimap = $this->createMultiMap(
@@ -126,7 +122,6 @@ final class MultiValueMapTest extends TestCase
         static::assertSame($multimap, $multimap->removeAll('z'));
     }
 
-    /** @covers ::containsKey */
     public function testContainsKey(): void
     {
         $multimap = $this->createMultiMap(
@@ -139,7 +134,6 @@ final class MultiValueMapTest extends TestCase
         static::assertFalse($multimap->containsKey('c'));
     }
 
-    /** @covers ::containsKeyValue() */
     public function testContainsKeyValue(): void
     {
         $multimap = $this->createMultiMap(
@@ -153,7 +147,6 @@ final class MultiValueMapTest extends TestCase
         static::assertFalse($multimap->containsKeyValue('c', 1));
     }
 
-    /** @covers ::containsValue() */
     public function testContainsValue(): void
     {
         $multimap = $this->createMultiMap(
@@ -166,7 +159,6 @@ final class MultiValueMapTest extends TestCase
         static::assertFalse($multimap->containsValue(42));
     }
 
-    /** @covers ::values() */
     public function testValues(): void
     {
         $multimap = $this->createMultiMap(
@@ -180,7 +172,6 @@ final class MultiValueMapTest extends TestCase
         );
     }
 
-    /** @covers ::keys() */
     public function testKeys(): void
     {
         $multimap = $this->createMultiMap(
@@ -194,7 +185,6 @@ final class MultiValueMapTest extends TestCase
         );
     }
 
-    /** @covers ::pairs() */
     public function testPairs(): void
     {
         $multimap = $this->createMultiMap(
@@ -217,7 +207,6 @@ final class MultiValueMapTest extends TestCase
         );
     }
 
-    /** @covers ::isEmpty() */
     public function testIsEmpty(): void
     {
         $multimap = $this->createMultiMap(
@@ -237,7 +226,6 @@ final class MultiValueMapTest extends TestCase
         );
     }
 
-    /** @covers ::clear() */
     public function testClear(): void
     {
         $multimap = $this->createMultiMap(
@@ -251,7 +239,6 @@ final class MultiValueMapTest extends TestCase
         );
     }
 
-    /** @covers ::count() */
     public function testCount(): void
     {
         $multimap = $this->createMultiMap(
@@ -262,7 +249,6 @@ final class MultiValueMapTest extends TestCase
         static::assertCount(6, $multimap);
     }
 
-    /** @covers ::getIterator() */
     public function testGetIterator(): void
     {
         $multimap = new MultiValueMap(static fn () => new ArraySequence());
@@ -295,7 +281,6 @@ final class MultiValueMapTest extends TestCase
         }
     }
 
-    /** @covers ::equals() */
     public function testEquality(): void
     {
         $multimap1 = $this->createMultiMap(
@@ -319,7 +304,6 @@ final class MultiValueMapTest extends TestCase
         static::assertFalse($multimap1->equals($multimap3));
     }
 
-    /** @covers ::hash() */
     public function testHash(): void
     {
         $multimap1 = $this->createMultiMap(

@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Dispatcher;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Dispatcher\ListenerAndPriority;
@@ -17,14 +18,9 @@ use Vivarium\Dispatcher\Priority;
 use Vivarium\Test\Dispatcher\Stub\GenericEventListener;
 use Vivarium\Test\Dispatcher\Stub\SpecificEventListener;
 
-/** @coversDefaultClass \Vivarium\Dispatcher\ListenerAndPriority */
+#[CoversClass(ListenerAndPriority::class)]
 final class ListenerAndPriorityTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::getEventListener()
-     * @covers ::getPriority()
-     */
     public function testObjectConstruction(): void
     {
         $listener = new GenericEventListener();
@@ -35,10 +31,6 @@ final class ListenerAndPriorityTest extends TestCase
         static::assertSame(Priority::VERY_HIGH, $listenerAndPriority->getPriority());
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::equals()
-     */
     public function testEquality(): void
     {
         $listenerAndPriority1 = new ListenerAndPriority(new GenericEventListener(), Priority::VERY_HIGH);
@@ -53,10 +45,6 @@ final class ListenerAndPriorityTest extends TestCase
         static::assertFalse($listenerAndPriority1->equals(new stdClass()));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::hash()
-     */
     public function testHash(): void
     {
         $listenerAndPriority1 = new ListenerAndPriority(new GenericEventListener(), Priority::VERY_HIGH);

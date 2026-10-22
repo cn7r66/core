@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Object;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Object\HasPrivateMethod;
@@ -11,14 +13,10 @@ use Vivarium\Test\Assertion\Stub\PrivateConstructorStub;
 use Vivarium\Test\Assertion\Stub\ProtectedConstructorStub;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Assertion\Object\HasPrivateMethod */
+#[CoversClass(HasPrivateMethod::class)]
 final class HasPrivateMethodTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string|object $class, string $method): void
     {
         static::expectNotToPerformAssertions();
@@ -27,12 +25,8 @@ final class HasPrivateMethodTest extends TestCase
             ->assert($class);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideInvalid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideInvalid')]
     public function testAssertException(string|object $class, string $method, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -42,11 +36,7 @@ final class HasPrivateMethodTest extends TestCase
             ->assert($class);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string|object $class, string $method): void
     {
         static::assertTrue(
@@ -54,11 +44,7 @@ final class HasPrivateMethodTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string|object $class, string $method): void
     {
         static::assertFalse(

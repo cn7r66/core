@@ -14,6 +14,8 @@ use ArrayObject;
 use DateTime;
 use Exception;
 use LogicException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use stdClass;
@@ -24,7 +26,7 @@ use Vivarium\Container\Exception\CircularDependency;
 use Vivarium\Container\Exception\ResolutionFailed;
 use Vivarium\Container\ResolutionContext;
 
-/** @coversDefaultClass \Vivarium\Container\ResolutionContext */
+#[CoversClass(ResolutionContext::class)]
 final class ResolutionContextTest extends TestCase
 {
     /**
@@ -44,7 +46,7 @@ final class ResolutionContextTest extends TestCase
         return new ResolutionContext(
             static fn (Binding $binding): Binding => $binding,
             $resolve,
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
             $path,
         );
     }
@@ -81,22 +83,17 @@ final class ResolutionContextTest extends TestCase
         return $rendered;
     }
 
-    /** @covers ::__construct */
     public function testConstructedContextIsAContainer(): void
     {
         $context = new ResolutionContext(
             static fn (Binding $binding): Binding => $binding,
             static fn (Binding $binding, Container $context): mixed => null,
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
         );
 
         self::assertInstanceOf(Container::class, $context);
     }
 
-    /**
-     * @covers ::get
-     * @covers ::__construct
-     */
     public function testStringRequestIsLocatedAsDefaultTagGlobalContextBinding(): void
     {
         $located = [];
@@ -107,7 +104,7 @@ final class ResolutionContextTest extends TestCase
                 return $binding;
             },
             static fn (Binding $binding, Container $context): mixed => null,
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
         );
 
         $context->get(stdClass::class);
@@ -116,10 +113,6 @@ final class ResolutionContextTest extends TestCase
         self::assertTrue($located[0]->equals(new Binding(stdClass::class, Binding::DEFAULT, Binding::GLOBAL)));
     }
 
-    /**
-     * @covers ::get
-     * @covers ::__construct
-     */
     public function testBindingRequestIsLocatedAsIs(): void
     {
         $request = new Binding(stdClass::class, 'audit', 'App\Orders');
@@ -131,7 +124,7 @@ final class ResolutionContextTest extends TestCase
                 return $binding;
             },
             static fn (Binding $binding, Container $context): mixed => null,
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
         );
 
         $context->get($request);
@@ -152,26 +145,18 @@ final class ResolutionContextTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::get
-     * @covers ::__construct
-     * @dataProvider provideResolvedValues
-     */
+    #[DataProvider('provideResolvedValues')]
     public function testGetReturnsWhatResolveReturns(mixed $value): void
     {
         $context = new ResolutionContext(
             static fn (Binding $binding): Binding => $binding,
             static fn (Binding $binding, Container $context): mixed => $value,
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
         );
 
         self::assertSame($value, $context->get(stdClass::class));
     }
 
-    /**
-     * @covers ::get
-     * @covers ::__construct
-     */
     public function testResolveReceivesLocatedBindingAndChildContext(): void
     {
         $located  = new Binding(ArrayObject::class, 'impl');
@@ -183,7 +168,7 @@ final class ResolutionContextTest extends TestCase
 
                 return null;
             },
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
         );
 
         $context->get(stdClass::class);
@@ -223,12 +208,8 @@ final class ResolutionContextTest extends TestCase
      * @param array<string, list<string>> $graph
      * @param list<string>                $initial
      * @param list<string>                $expected
-     *
-     * @covers ::get
-     * @covers ::__construct
-     *
-     * @dataProvider provideCircularRequests
      */
+    #[DataProvider('provideCircularRequests')]
     public function testNestedRequestOfBindingOnPathThrowsCircularDependency(
         array $graph,
         string $root,
@@ -245,10 +226,6 @@ final class ResolutionContextTest extends TestCase
         }
     }
 
-    /**
-     * @covers ::get
-     * @covers ::__construct
-     */
     public function testCircularityIsDetectedOnLocatedBinding(): void
     {
         $impl    = new Binding(ArrayObject::class, 'impl');
@@ -257,7 +234,7 @@ final class ResolutionContextTest extends TestCase
             static function (Binding $binding, Container $child): mixed {
                 return $child->get(stdClass::class);
             },
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
         );
 
         try {
@@ -268,10 +245,6 @@ final class ResolutionContextTest extends TestCase
         }
     }
 
-    /**
-     * @covers ::get
-     * @covers ::__construct
-     */
     public function testSiblingRequestsOfSameBindingAreNotACycle(): void
     {
         $root    = stdClass::class;
@@ -283,10 +256,6 @@ final class ResolutionContextTest extends TestCase
         self::assertSame($root, $context->get($root));
     }
 
-    /**
-     * @covers ::get
-     * @covers ::__construct
-     */
     public function testSameBindingCanBeRequestedAgainAfterItsResolutionCompleted(): void
     {
         $type    = stdClass::class;
@@ -306,14 +275,8 @@ final class ResolutionContextTest extends TestCase
         ];
     }
 
-    /**
-     * @param list<string> $initial
-     *
-     * @covers ::get
-     * @covers ::__construct
-     *
-     * @dataProvider provideInitialPaths
-     */
+    /** @param list<string> $initial */
+    #[DataProvider('provideInitialPaths')]
     public function testThrowableFromLocateIsWrappedInResolutionFailedWithRequestedBinding(array $initial): void
     {
         $original = new RuntimeException('boom');
@@ -322,7 +285,7 @@ final class ResolutionContextTest extends TestCase
                 throw $original;
             },
             static fn (Binding $binding, Container $child): mixed => null,
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
             self::bindings($initial),
         );
 
@@ -335,14 +298,8 @@ final class ResolutionContextTest extends TestCase
         }
     }
 
-    /**
-     * @param list<string> $initial
-     *
-     * @covers ::get
-     * @covers ::__construct
-     *
-     * @dataProvider provideInitialPaths
-     */
+    /** @param list<string> $initial */
+    #[DataProvider('provideInitialPaths')]
     public function testThrowableFromResolveIsWrappedInResolutionFailedWithRequestedBinding(array $initial): void
     {
         $original = new RuntimeException('boom');
@@ -351,7 +308,7 @@ final class ResolutionContextTest extends TestCase
             static function () use ($original): never {
                 throw $original;
             },
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
             self::bindings($initial),
         );
 
@@ -364,10 +321,6 @@ final class ResolutionContextTest extends TestCase
         }
     }
 
-    /**
-     * @covers ::get
-     * @covers ::__construct
-     */
     public function testWrappedErrorPathUsesRequestedBindingNotLocatedOne(): void
     {
         $context = new ResolutionContext(
@@ -375,7 +328,7 @@ final class ResolutionContextTest extends TestCase
             static function (Binding $binding, Container $child): never {
                 throw new LogicException('boom');
             },
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
         );
 
         try {
@@ -397,11 +350,7 @@ final class ResolutionContextTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::get
-     * @covers ::__construct
-     * @dataProvider provideResolutionExceptions
-     */
+    #[DataProvider('provideResolutionExceptions')]
     public function testNestedResolutionExceptionsReachTheCallerAsTheSameInstance(Throwable $thrown): void
     {
         $context = new ResolutionContext(
@@ -413,7 +362,7 @@ final class ResolutionContextTest extends TestCase
 
                 throw $thrown;
             },
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
         );
 
         try {
@@ -424,11 +373,7 @@ final class ResolutionContextTest extends TestCase
         }
     }
 
-    /**
-     * @covers ::get
-     * @covers ::__construct
-     * @dataProvider provideResolutionExceptions
-     */
+    #[DataProvider('provideResolutionExceptions')]
     public function testResolutionExceptionsThrownByLocateAreNotRewrapped(Throwable $thrown): void
     {
         $context = new ResolutionContext(
@@ -436,7 +381,7 @@ final class ResolutionContextTest extends TestCase
                 throw $thrown;
             },
             static fn (Binding $binding, Container $child): mixed => null,
-            $this->createMock(Container::class),
+            $this->createStub(Container::class),
         );
 
         try {
@@ -458,11 +403,7 @@ final class ResolutionContextTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::has
-     * @covers ::__construct
-     * @dataProvider provideHasRequests
-     */
+    #[DataProvider('provideHasRequests')]
     public function testHasDelegatesToWrappedContainer(Binding|string $request, bool $answer): void
     {
         $container = $this->createMock(Container::class);

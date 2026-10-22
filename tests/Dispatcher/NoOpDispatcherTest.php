@@ -10,17 +10,17 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Dispatcher;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Dispatcher\Event;
 use Vivarium\Dispatcher\NoOpDispatcher;
 
-/** @coversDefaultClass \Vivarium\Dispatcher\NoOpDispatcher */
+#[CoversClass(NoOpDispatcher::class)]
 final class NoOpDispatcherTest extends TestCase
 {
-    /** @covers ::dispatch() */
     public function testDispatch(): void
     {
-        $event       = $this->createMock(Event::class);
+        $event       = $this->createStub(Event::class);
         $eventReturn = (new NoOpDispatcher())->dispatch($event);
 
         static::assertSame($event, $eventReturn);

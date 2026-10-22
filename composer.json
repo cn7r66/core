@@ -12,19 +12,19 @@
         }
     ],
     "require": {
-        "php": ">=8.1",
-        "ext-mbstring": "*",
-        "psr/container": "^2.0"
+        "php": "^8.4",
+        "ext-mbstring": "*"
     },
     "require-dev": {
         "doctrine/coding-standard": "^14.0",
-        "infection/infection": "^0.27",
-        "phpmd/phpmd": "^2.0",
-        "phpstan/phpstan": "^1.0",
-        "phpstan/phpstan-strict-rules": "^1.0",
-        "phpunit/phpunit": "^10.0",
-        "psalm/plugin-phpunit": "^0.18",
-        "vimeo/psalm": "^5.0"
+        "infection/infection": "^0.35",
+        "phpmd/phpmd": "^3.0",
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^12.0",
+        "psalm/plugin-phpunit": "^0.19",
+        "vimeo/psalm": "^6.0",
+        "rector/rector": "^2.0"
     },
     "autoload": {
         "psr-4": {
@@ -51,7 +51,7 @@
         "infection": "vendor/bin/infection --coverage=tests-results/phpunit --min-msi=85 --min-covered-msi=95 --threads=4",
         "phpcs":     "vendor/bin/phpcs --report=junit --report-file=tests-results/phpcs/phpcs.xml --cache=cache/phpcs/result.cache src tests",
         "psalm":     "vendor/bin/psalm --output-format=checkstyle > tests-results/psalm/psalm.xml",
-        "phpmd":     "vendor/bin/phpmd src xml phpmd.xml --report-file tests-results/phpmd/phpmd.xml",
+        "phpmd":     "vendor/bin/phpmd analyze src --ruleset phpmd.xml --no-progress --reportfile-xml tests-results/phpmd/phpmd.xml",
         "phpstan":   "vendor/bin/phpstan analyse --no-ansi --error-format=checkstyle > tests-results/phpstan/phpstan.xml",
         "phpunit":   "vendor/bin/phpunit",
 

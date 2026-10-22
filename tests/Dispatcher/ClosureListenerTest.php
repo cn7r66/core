@@ -10,20 +10,17 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Dispatcher;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Dispatcher\ClosureListener;
 use Vivarium\Dispatcher\Event;
 
-/** @coversDefaultClass \Vivarium\Dispatcher\ClosureListener */
+#[CoversClass(ClosureListener::class)]
 final class ClosureListenerTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::handle()
-     */
     public function testCallingClosure(): void
     {
-        $mock = $this->createMock(Event::class);
+        $mock = $this->createStub(Event::class);
 
         $listener = new ClosureListener(static function (Event $event) use ($mock): Event {
             static::assertSame($mock, $event);

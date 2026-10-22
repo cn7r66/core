@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Exception;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
@@ -20,17 +22,11 @@ use Vivarium\Container\Exception\ContainerException;
 use Vivarium\Test\Container\Stub\StubService;
 use Vivarium\Test\Container\Stub\StubWithNoArgs;
 
-/** @coversDefaultClass \Vivarium\Container\Exception\CircularDependency */
+#[CoversClass(CircularDependency::class)]
 final class CircularDependencyTest extends TestCase
 {
-    /**
-     * @param list<Binding> $path
-     *
-     * @covers ::getPath
-     * @covers ::__construct
-     *
-     * @dataProvider provideValidPaths
-     */
+    /** @param list<Binding> $path */
+    #[DataProvider('provideValidPaths')]
     public function testGetPath(array $path): void
     {
         $exception = new CircularDependency($path);
@@ -38,13 +34,8 @@ final class CircularDependencyTest extends TestCase
         self::assertSame($path, $exception->getPath());
     }
 
-    /**
-     * @param list<Binding> $path
-     *
-     * @covers ::__construct
-     *
-     * @dataProvider provideInvalidPaths
-     */
+    /** @param list<Binding> $path */
+    #[DataProvider('provideInvalidPaths')]
     public function testConstructorException(array $path): void
     {
         $this->expectException(AssertionFailed::class);
@@ -89,13 +80,8 @@ final class CircularDependencyTest extends TestCase
         ];
     }
 
-    /**
-     * @param list<Binding> $path
-     *
-     * @covers ::__construct
-     *
-     * @dataProvider provideMessages
-     */
+    /** @param list<Binding> $path */
+    #[DataProvider('provideMessages')]
     public function testMessageBracketsTheLoopSegment(array $path, string $expected): void
     {
         $exception = new CircularDependency($path);
@@ -140,13 +126,8 @@ final class CircularDependencyTest extends TestCase
         ];
     }
 
-    /**
-     * @param class-string $expected
-     *
-     * @covers ::__construct
-     *
-     * @dataProvider provideExceptionTypes
-     */
+    /** @param class-string $expected */
+    #[DataProvider('provideExceptionTypes')]
     public function testIsAContainerException(string $expected): void
     {
         $exception = new CircularDependency([new Binding(StubService::class), new Binding(StubService::class)]);

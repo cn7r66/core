@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Definition;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Container\Container;
 use Vivarium\Container\Definition\Cloneable;
@@ -11,18 +12,14 @@ use Vivarium\Container\Enhancement;
 use Vivarium\Container\Provider;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Container\Definition\Cloneable */
+#[CoversClass(Cloneable::class)]
 final class CloneableTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::solve
-     */
     public function testSolveReturnsCloneOnEachCall(): void
     {
         $instance  = new StubClass();
         $provider  = $this->createMock(Provider::class);
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         $provider->expects(static::once())
             ->method('provide')
@@ -39,14 +36,10 @@ final class CloneableTest extends TestCase
         static::assertInstanceOf(StubClass::class, $result2);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::solve
-     */
     public function testSolveCallsProviderOnlyOnce(): void
     {
         $provider  = $this->createMock(Provider::class);
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         $provider->expects(static::once())
             ->method('provide')
@@ -59,15 +52,10 @@ final class CloneableTest extends TestCase
         $definition->solve($container);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::withEnhancement
-     * @covers ::solve
-     */
     public function testWithEnhancementReturnsNewInstance(): void
     {
-        $provider    = $this->createMock(Provider::class);
-        $enhancement = $this->createMock(Enhancement::class);
+        $provider    = $this->createStub(Provider::class);
+        $enhancement = $this->createStub(Enhancement::class);
 
         $definition1 = new Cloneable($provider);
         $definition2 = $definition1->withEnhancement($enhancement, 100);
@@ -75,17 +63,12 @@ final class CloneableTest extends TestCase
         static::assertNotSame($definition1, $definition2);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::withEnhancement
-     * @covers ::solve
-     */
     public function testSolveAppliesEnhancementsAndReturnsClones(): void
     {
         $instance  = new StubClass();
         $enhanced  = new StubClass();
         $provider  = $this->createMock(Provider::class);
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         $provider->expects(static::once())
             ->method('provide')
@@ -108,21 +91,17 @@ final class CloneableTest extends TestCase
         static::assertNotSame($result1, $result2);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::withEnhancement
-     */
     public function testWithEnhancementDoesNotAffectOriginalInstance(): void
     {
         $instance  = new StubClass();
         $enhanced  = new StubClass();
-        $provider  = $this->createMock(Provider::class);
-        $container = $this->createMock(Container::class);
+        $provider  = $this->createStub(Provider::class);
+        $container = $this->createStub(Container::class);
 
         $provider->method('provide')
             ->willReturn($instance);
 
-        $enhancement = $this->createMock(Enhancement::class);
+        $enhancement = $this->createStub(Enhancement::class);
         $enhancement->method('enhance')
             ->willReturn($enhanced);
 
@@ -135,15 +114,11 @@ final class CloneableTest extends TestCase
         static::assertNotSame($result1, $result2);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::solve
-     */
     public function testSolveCachesInstanceBeforeCloning(): void
     {
         $callCount = 0;
         $provider  = $this->createMock(Provider::class);
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         $provider->expects(static::once())
             ->method('provide')

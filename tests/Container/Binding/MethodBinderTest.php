@@ -10,18 +10,15 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Binding;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Container\Binding\MethodBinder;
 use Vivarium\Container\Caller;
 
-/** @coversDefaultClass \Vivarium\Container\Binding\MethodBinder */
+#[CoversClass(MethodBinder::class)]
 final class MethodBinderTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::method
-     */
     public function testMethodForwardsMethodNameToCreate(): void
     {
         $capturedMethod = null;
@@ -39,7 +36,6 @@ final class MethodBinderTest extends TestCase
         static::assertSame('setFoo', $capturedMethod);
     }
 
-    /** @covers ::method */
     public function testMethodWithoutConfigureUsesIdentityFunction(): void
     {
         $capturedConfig = null;
@@ -54,12 +50,11 @@ final class MethodBinderTest extends TestCase
 
         $binder->method('setFoo');
 
-        $caller = $this->createMock(Caller::class);
+        $caller = $this->createStub(Caller::class);
 
         static::assertSame($caller, $capturedConfig($caller));
     }
 
-    /** @covers ::method */
     public function testMethodWithConfigureForwardsCallbackToCreate(): void
     {
         $configure      = static fn (Caller $caller): Caller => $caller;
@@ -78,7 +73,6 @@ final class MethodBinderTest extends TestCase
         static::assertSame($configure, $capturedConfig);
     }
 
-    /** @covers ::method */
     public function testMethodReturnsValueFromCreate(): void
     {
         $expected = new stdClass();

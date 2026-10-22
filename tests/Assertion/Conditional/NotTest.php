@@ -10,18 +10,15 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Conditional;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Conditional\Not;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Var\IsString;
 
-/** @coversDefaultClass \Vivarium\Assertion\Conditional\Not */
+#[CoversClass(Not::class)]
 final class NotTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     */
     public function testAssert(): void
     {
         static::expectNotToPerformAssertions();
@@ -30,10 +27,6 @@ final class NotTest extends TestCase
             ->assert(42);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     */
     public function testAssertException(): void
     {
         static::expectException(AssertionFailed::class);
@@ -45,7 +38,6 @@ final class NotTest extends TestCase
             ->assert('Hello World');
     }
 
-    /** @covers ::__invoke() */
     public function testInvoke(): void
     {
         static::assertTrue((new Not(new IsString()))(42));

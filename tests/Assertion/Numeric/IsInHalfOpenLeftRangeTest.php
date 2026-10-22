@@ -10,18 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Numeric;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Numeric\IsInHalfOpenLeftRange;
 
-/** @coversDefaultClass \Vivarium\Assertion\Numeric\IsInHalfOpenLeftRange */
+#[CoversClass(IsInHalfOpenLeftRange::class)]
 final class IsInHalfOpenLeftRangeTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(int|float $number, int|float $min, int|float $max): void
     {
         static::expectNotToPerformAssertions();
@@ -30,12 +28,8 @@ final class IsInHalfOpenLeftRangeTest extends TestCase
         ->assert($number);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideInvalid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideInvalid')]
     public function testAssertException(int|float|string $number, int|float $min, int|float $max, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -45,11 +39,7 @@ final class IsInHalfOpenLeftRangeTest extends TestCase
             ->assert($number);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(int|float $number, int|float $min, int|float $max): void
     {
         static::assertTrue(
@@ -57,11 +47,7 @@ final class IsInHalfOpenLeftRangeTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(int|float $number, int|float $min, int|float $max): void
     {
         static::assertFalse(

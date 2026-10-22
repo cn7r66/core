@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Dispatcher;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Dispatcher\Event;
 use Vivarium\Dispatcher\EventListenerMap;
@@ -19,15 +20,9 @@ use Vivarium\Test\Dispatcher\Stub\GenericEventListener;
 use Vivarium\Test\Dispatcher\Stub\SpecificEvent;
 use Vivarium\Test\Dispatcher\Stub\SpecificEventListener;
 
-/** @coversDefaultClass \Vivarium\Dispatcher\EventListenerMap */
+#[CoversClass(EventListenerMap::class)]
 final class EventListenerMapTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::ofListeners()
-     * @covers ::createMap
-     * @covers ::provide()
-     */
     public function testProvideOnEmpty(): void
     {
         $eventListenerMap = new EventListenerMap();
@@ -37,14 +32,6 @@ final class EventListenerMapTest extends TestCase
         static::assertTrue($listeners->isEmpty());
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::ofListeners()
-     * @covers ::createMap
-     * @covers ::collectClasses()
-     * @covers ::provide()
-     * @covers ::subscribe()
-     */
     public function testProvideWithSubscription(): void
     {
         $eventListenerMap = new EventListenerMap();
@@ -57,14 +44,6 @@ final class EventListenerMapTest extends TestCase
         static::assertCount(3, $listeners);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::ofListeners()
-     * @covers ::createMap
-     * @covers ::collectClasses()
-     * @covers ::provide()
-     * @covers ::subscribe()
-     */
     public function testProvideWithHierarchicalSubscription(): void
     {
         $eventListenerMap = new EventListenerMap();
@@ -79,15 +58,6 @@ final class EventListenerMapTest extends TestCase
         static::assertCount(2, $specificListeners);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::ofListeners()
-     * @covers ::createMap
-     * @covers ::collectClasses()
-     * @covers ::provide()
-     * @covers ::subscribe()
-     * @covers ::unsubscribe()
-     */
     public function testProvideWithUnsubscribeListener(): void
     {
         $eventListenerMap = new EventListenerMap();
@@ -105,15 +75,6 @@ final class EventListenerMapTest extends TestCase
         static::assertCount(2, $specificListeners);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::ofListeners()
-     * @covers ::createMap
-     * @covers ::collectClasses()
-     * @covers ::provide()
-     * @covers ::subscribe()
-     * @covers ::unsubscribe()
-     */
     public function testProvideWithUnsubscribedHandlersWithPriority(): void
     {
         $eventListenerMap = new EventListenerMap();
@@ -133,7 +94,6 @@ final class EventListenerMapTest extends TestCase
         static::assertCount(2, $specificListeners);
     }
 
-    /** @covers ::subscribe() */
     public function testSubscribeImmutability(): void
     {
         $eventListenerMap = new EventListenerMap();
@@ -144,7 +104,6 @@ final class EventListenerMapTest extends TestCase
         );
     }
 
-    /** @covers ::unsubscribe() */
     public function testUnsubscribeImmutability(): void
     {
         $eventListenerMap = new EventListenerMap();

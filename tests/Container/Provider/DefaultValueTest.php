@@ -11,6 +11,8 @@ declare(strict_types=1);
 namespace Vivarium\Test\Container\Provider;
 
 use Closure;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionFunction;
 use ReflectionParameter;
@@ -21,10 +23,9 @@ use Vivarium\Container\Provider\DefaultValue;
 use Vivarium\Test\Container\Stub\StubDefaultValueSource;
 use Vivarium\Test\Container\Stub\StubDefaultValueTarget;
 
-/** @coversDefaultClass \Vivarium\Container\Provider\DefaultValue */
+#[CoversClass(DefaultValue::class)]
 final class DefaultValueTest extends TestCase
 {
-    /** @covers ::__construct */
     public function testConstructor(): void
     {
         self::expectNotToPerformAssertions();
@@ -35,7 +36,6 @@ final class DefaultValueTest extends TestCase
         ));
     }
 
-    /** @covers ::__construct */
     public function testConstructorException(): void
     {
         self::expectException(AssertionFailed::class);
@@ -46,33 +46,25 @@ final class DefaultValueTest extends TestCase
         ));
     }
 
-    /**
-     * @covers ::provide
-     * @covers ::__construct
-     */
     public function testProvideReturnsScalarDefaultOnEveryCall(): void
     {
         $provider  = new DefaultValue(self::parameterOf(
             static function (string $value = 'expected'): void {
             },
         ));
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         self::assertSame('expected', $provider->provide($container));
         self::assertSame('expected', $provider->provide($container));
     }
 
-    /**
-     * @covers ::provide
-     * @covers ::__construct
-     */
     public function testProvideBuildsFreshObjectDefaultOnEveryCall(): void
     {
         $provider  = new DefaultValue(self::parameterOf(
             static function (StubDefaultValueTarget $value = new StubDefaultValueSource()): void {
             },
         ));
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         $first  = $provider->provide($container);
         $second = $provider->provide($container);
@@ -82,11 +74,7 @@ final class DefaultValueTest extends TestCase
         self::assertNotSame($first, $second);
     }
 
-    /**
-     * @covers ::getTarget
-     * @covers ::__construct
-     * @dataProvider provideDefaultedParameterTargets
-     */
+    #[DataProvider('provideDefaultedParameterTargets')]
     public function testGetTarget(string $expected, ReflectionParameter $parameter): void
     {
         $provider = new DefaultValue($parameter);
@@ -94,10 +82,6 @@ final class DefaultValueTest extends TestCase
         self::assertSame($expected, $provider->getTarget());
     }
 
-    /**
-     * @covers ::getCapabilities
-     * @covers ::__construct
-     */
     public function testGetCapabilities(): void
     {
         $provider = new DefaultValue(self::parameterOf(

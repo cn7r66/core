@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Definition;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Container\Container;
 use Vivarium\Container\Definition\Transient;
@@ -11,18 +12,14 @@ use Vivarium\Container\Enhancement;
 use Vivarium\Container\Provider;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Container\Definition\Transient */
+#[CoversClass(Transient::class)]
 final class TransientTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::solve
-     */
     public function testSolveReturnsProviderResult(): void
     {
         $instance  = new StubClass();
         $provider  = $this->createMock(Provider::class);
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         $provider->expects(static::once())
             ->method('provide')
@@ -34,14 +31,10 @@ final class TransientTest extends TestCase
         static::assertSame($instance, $definition->solve($container));
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::solve
-     */
     public function testSolveCreatesNewInstanceEachTime(): void
     {
         $provider  = $this->createMock(Provider::class);
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         $provider->expects(static::exactly(2))
             ->method('provide')
@@ -56,15 +49,10 @@ final class TransientTest extends TestCase
         static::assertNotSame($instance1, $instance2);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::withEnhancement
-     * @covers ::solve
-     */
     public function testWithEnhancementReturnsNewInstance(): void
     {
-        $provider    = $this->createMock(Provider::class);
-        $enhancement = $this->createMock(Enhancement::class);
+        $provider    = $this->createStub(Provider::class);
+        $enhancement = $this->createStub(Enhancement::class);
 
         $definition1 = new Transient($provider);
         $definition2 = $definition1->withEnhancement($enhancement, 100);
@@ -72,16 +60,11 @@ final class TransientTest extends TestCase
         static::assertNotSame($definition1, $definition2);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::withEnhancement
-     * @covers ::solve
-     */
     public function testSolveAppliesEnhancementsInPriorityOrder(): void
     {
         $instance  = new StubClass();
-        $provider  = $this->createMock(Provider::class);
-        $container = $this->createMock(Container::class);
+        $provider  = $this->createStub(Provider::class);
+        $container = $this->createStub(Container::class);
         $enhanced1 = new StubClass();
         $enhanced2 = new StubClass();
 
@@ -108,15 +91,11 @@ final class TransientTest extends TestCase
         static::assertSame($enhanced2, $definition->solve($container));
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::solve
-     */
     public function testSolveWithoutEnhancementsReturnsProviderResultDirectly(): void
     {
         $instance  = new StubClass();
-        $provider  = $this->createMock(Provider::class);
-        $container = $this->createMock(Container::class);
+        $provider  = $this->createStub(Provider::class);
+        $container = $this->createStub(Container::class);
 
         $provider->method('provide')
             ->willReturn($instance);

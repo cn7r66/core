@@ -10,21 +10,18 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Comparison;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Comparison\IsEqualsTo;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Test\Equality\Stub\EqualityStub;
 
-/** @coversDefaultClass \Vivarium\Assertion\Comparison\IsEqualsTo */
+#[CoversClass(IsEqualsTo::class)]
 final class IsEqualsToTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(mixed $first, mixed $second): void
     {
         static::expectNotToPerformAssertions();
@@ -33,12 +30,7 @@ final class IsEqualsToTest extends TestCase
             ->assert($second);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testAssertException(mixed $first, mixed $second, string $message): void
     {
         static::expectException(AssertionFailed::class);

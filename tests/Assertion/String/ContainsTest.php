@@ -10,18 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\String;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\String\Contains;
 
-/** @coversDefaultClass \Vivarium\Assertion\String\Contains */
+#[CoversClass(Contains::class)]
 class ContainsTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $string, string $substring): void
     {
         static::expectNotToPerformAssertions();
@@ -30,12 +28,8 @@ class ContainsTest extends TestCase
             ->assert($string);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideNonValid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideNonValid')]
     public function testAssertException(string|int $string, string $substring, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -45,21 +39,13 @@ class ContainsTest extends TestCase
             ->assert($string);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $string, string $substring): void
     {
         static::assertTrue((new Contains($substring))($string));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $string, string $substring): void
     {
         static::assertFalse((new Contains($substring))($string));

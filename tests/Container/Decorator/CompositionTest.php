@@ -11,6 +11,8 @@ declare(strict_types=1);
 namespace Vivarium\Test\Container\Decorator;
 
 use Closure;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Container\Decorator\Composition;
@@ -20,18 +22,11 @@ use Vivarium\Container\Provider\Fun;
 use Vivarium\Container\Registry\EagerRegistry;
 use Vivarium\Test\Container\Stub\StubCompositionDependency;
 
-/** @coversDefaultClass \Vivarium\Container\Decorator\Composition */
+#[CoversClass(Composition::class)]
 final class CompositionTest extends TestCase
 {
-    /**
-     * @param list<mixed> $args
-     *
-     * @covers ::enhance
-     * @covers ::bindSlot
-     * @covers ::__construct
-     *
-     * @dataProvider provideCompositions
-     */
+    /** @param list<mixed> $args */
+    #[DataProvider('provideCompositions')]
     public function testEnhance(
         Closure $outer,
         string|int $slot,
@@ -63,11 +58,6 @@ final class CompositionTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::enhance
-     * @covers ::bindSlot
-     * @covers ::__construct
-     */
     public function testEnhancedCallableIsReusable(): void
     {
         $composition = new Composition(new Fun(static fn (int $number): int => $number * 10), 'number');
@@ -80,11 +70,7 @@ final class CompositionTest extends TestCase
         self::assertSame(70, $composed(3, 4));
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::bindSlot
-     * @dataProvider provideInvalidSlots
-     */
+    #[DataProvider('provideInvalidSlots')]
     public function testConstructionWithInvalidSlotFails(string|int $slot): void
     {
         $this->expectException(AssertionFailed::class);
@@ -101,11 +87,6 @@ final class CompositionTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::enhance
-     * @covers ::bindSlot
-     * @covers ::__construct
-     */
     public function testEnhanceRejectsANonCallableValue(): void
     {
         $composition = new Composition(new Fun(static fn (int $number): int => $number), 'number');
@@ -114,11 +95,6 @@ final class CompositionTest extends TestCase
         $composition->enhance('not a callable', new Injector(new EagerRegistry()));
     }
 
-    /**
-     * @covers ::enhance
-     * @covers ::bindSlot
-     * @covers ::__construct
-     */
     public function testCallFailsWhenResultIsNotAssignableToSlot(): void
     {
         $composition = new Composition(new Fun(static fn (int $number): int => $number), 'number');
@@ -128,14 +104,10 @@ final class CompositionTest extends TestCase
         $composed();
     }
 
-    /**
-     * @covers ::accept
-     * @covers ::__construct
-     */
     public function testAccept(): void
     {
         $composition = new Composition(new Fun(static fn (int $number): int => $number), 'number');
 
-        self::assertTrue($composition->accept($this->createMock(Provider::class)));
+        self::assertTrue($composition->accept($this->createStub(Provider::class)));
     }
 }

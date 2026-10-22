@@ -10,17 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Check;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Vivarium\Check\CheckIfNumber;
 
-/** @coversDefaultClass \Vivarium\Check\CheckIfNumber */
+#[CoversClass(CheckIfNumber::class)]
 final class CheckIfNumberTest extends CheckTestCase
 {
     public const NAMESPACE = 'Vivarium\Test\Assertion\Numeric';
 
-    /**
-     * @covers ::__callStatic()
-     * @dataProvider provideMethods()
-     */
+    #[DataProvider('provideMethods')]
     public function testCallStatic(string $method): void
     {
         $this->doTest(

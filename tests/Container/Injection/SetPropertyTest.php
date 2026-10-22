@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Injection;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Collection\Set\HashSet;
@@ -21,21 +23,17 @@ use Vivarium\Container\Provider;
 use Vivarium\Test\Container\Stub\StubClass;
 use Vivarium\Test\Container\Stub\StubService;
 
-/** @coversDefaultClass \Vivarium\Container\Injection\SetProperty */
+#[CoversClass(SetProperty::class)]
 final class SetPropertyTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     * @dataProvider providePublicPropertiesByDeclaredType
-     */
+    #[DataProvider('providePublicPropertiesByDeclaredType')]
     public function testEnhanceAssignsDependencyToPublicProperty(
         object $instance,
         string $property,
         string $value,
     ): void {
         $binding   = new Binding('string');
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('get')->willReturn($value);
 
         $enhancement = new SetProperty($property, $binding);
@@ -82,10 +80,6 @@ final class SetPropertyTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     */
     public function testEnhanceWithPrivateProperty(): void
     {
         $instance = new class {
@@ -98,7 +92,7 @@ final class SetPropertyTest extends TestCase
         };
 
         $binding   = new Binding('string');
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('get')->willReturn('private-value');
 
         $enhancement = new SetProperty('dependency', $binding);
@@ -108,26 +102,18 @@ final class SetPropertyTest extends TestCase
         static::assertSame('private-value', $result->getDependency());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     */
     public function testEnhanceFailsWhenInstanceIsNotObject(): void
     {
         static::expectException(AssertionFailed::class);
         static::expectExceptionMessage('Expected value to be object');
 
         $binding     = new Binding('string');
-        $container   = $this->createMock(Container::class);
+        $container   = $this->createStub(Container::class);
         $enhancement = new SetProperty('dependency', $binding);
 
         $enhancement->enhance('not-an-object', $container);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     */
     public function testEnhanceFailsWhenPropertyDoesNotExist(): void
     {
         static::expectException(AssertionFailed::class);
@@ -136,16 +122,12 @@ final class SetPropertyTest extends TestCase
         $instance = new StubClass(new StubService());
 
         $binding     = new Binding('string');
-        $container   = $this->createMock(Container::class);
+        $container   = $this->createStub(Container::class);
         $enhancement = new SetProperty('nonExistent', $binding);
 
         $enhancement->enhance($instance, $container);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     */
     public function testEnhanceFailsWhenTypeIsNotAssignable(): void
     {
         static::expectException(AssertionFailed::class);
@@ -153,19 +135,15 @@ final class SetPropertyTest extends TestCase
         $instance = new StubClass(new StubService());
 
         $binding     = new Binding('int');
-        $container   = $this->createMock(Container::class);
+        $container   = $this->createStub(Container::class);
         $enhancement = new SetProperty('property', $binding);
 
         $enhancement->enhance($instance, $container);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::accept
-     */
     public function testAcceptReturnsFalseWhenProviderDoesNotHaveProperty(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn(StubClass::class);
         $provider->method('getCapabilities')->willReturn(
             HashSet::fromArray([Capability::INJECTABLE]),
@@ -177,10 +155,6 @@ final class SetPropertyTest extends TestCase
         static::assertFalse($enhancement->accept($provider));
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::getSlot
-     */
     public function testGetSlotIsPropertyNameWithDollarSign(): void
     {
         $enhancement = new SetProperty('property', new Binding('string'));
@@ -188,16 +162,11 @@ final class SetPropertyTest extends TestCase
         static::assertSame('$property', $enhancement->getSlot());
     }
 
-    /**
-     * @param array<Capability> $capabilities
-     *
-     * @covers ::__construct
-     * @covers ::accept
-     * @dataProvider provideCapabilitySets
-     */
+    /** @param array<Capability> $capabilities */
+    #[DataProvider('provideCapabilitySets')]
     public function testAcceptIgnoresProviderCapabilities(array $capabilities): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn(StubClass::class);
         $provider->method('getCapabilities')->willReturn(
             HashSet::fromArray($capabilities),

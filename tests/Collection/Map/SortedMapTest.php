@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Map;
 
 use OutOfBoundsException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Map\Map;
@@ -21,13 +22,9 @@ use Vivarium\Comparator\StringComparator;
 use function count;
 use function usort;
 
-/** @coversDefaultClass \Vivarium\Collection\Map\SortedMap */
+#[CoversClass(SortedMap::class)]
 class SortedMapTest extends TestCase
 {
-    /**
-     * @covers ::fromKeyValue()
-     * @covers ::keys()
-     */
     public function testKeyOrder(): void
     {
         /** @var string[] $keys */
@@ -42,13 +39,6 @@ class SortedMapTest extends TestCase
         static::assertEquals($expected, $keys);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::put()
-     * @covers ::keys()
-     * @covers ::count()
-     * @covers ::searchByPair()
-     */
     public function testPut(): void
     {
         /** @var string[] $keys */
@@ -65,10 +55,6 @@ class SortedMapTest extends TestCase
         static::assertEquals(5, $map->get('a'));
     }
 
-    /**
-     * @covers ::put()
-     * @covers ::searchByPair()
-     */
     public function testDoublePut(): void
     {
         $map = new SortedMap(new StringComparator());
@@ -87,7 +73,6 @@ class SortedMapTest extends TestCase
         static::assertNotSame($map, $map->put('z', 42));
     }
 
-    /** @covers ::keys */
     public function testKeySorting(): void
     {
         $map = new SortedMap(new StringComparator());
@@ -101,10 +86,6 @@ class SortedMapTest extends TestCase
         static::assertEquals($keys, $map->keys());
     }
 
-    /**
-     * @covers ::get()
-     * @covers ::searchByKey()
-     */
     public function testGet(): void
     {
         /** @var int[] $keys */
@@ -118,7 +99,6 @@ class SortedMapTest extends TestCase
         static::assertEquals('b', $map->get(1));
     }
 
-    /** @covers ::get() */
     public function testGetNotFound(): void
     {
         static::expectException(OutOfBoundsException::class);
@@ -130,11 +110,6 @@ class SortedMapTest extends TestCase
         $map->get(1);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::remove()
-     * @covers ::containsKey()
-     */
     public function testRemove(): void
     {
         /** @var int[] $keys */
@@ -152,10 +127,6 @@ class SortedMapTest extends TestCase
         static::assertNotSame($map, $map->remove(1));
     }
 
-    /**
-     * @covers ::put()
-     * @covers ::remove()
-     */
     public function testRemoveOnFirstElement(): void
     {
         $map = new SortedMap(new IntegerComparator());
@@ -174,7 +145,6 @@ class SortedMapTest extends TestCase
         static::assertTrue($map->containsKey(1));
     }
 
-    /** @covers ::pairs() */
     public function testPairs(): void
     {
         /** @var int[] $keys */
@@ -192,7 +162,6 @@ class SortedMapTest extends TestCase
         }
     }
 
-    /** @covers ::clear() */
     public function testClear(): void
     {
         /** @var int[] $keys */
@@ -206,7 +175,6 @@ class SortedMapTest extends TestCase
         static::assertCount(0, $map);
     }
 
-    /** @covers ::getIterator */
     public function testGetIterator(): void
     {
         /** @var string[] $keys */
@@ -230,7 +198,6 @@ class SortedMapTest extends TestCase
         }
     }
 
-    /** @covers ::containsValue() */
     public function testContainsValue(): void
     {
         /** @var int[] $keys */
@@ -243,7 +210,6 @@ class SortedMapTest extends TestCase
         static::assertFalse($map->containsValue('z'));
     }
 
-    /** @covers ::values() */
     public function testValues(): void
     {
         /** @var int[] $keys */
@@ -255,7 +221,6 @@ class SortedMapTest extends TestCase
         static::assertSame(['a', 'b'], $map->values());
     }
 
-    /** @covers ::isEmpty() */
     public function testIsEmpty(): void
     {
         $map = new SortedMap(new IntegerComparator());
@@ -263,7 +228,6 @@ class SortedMapTest extends TestCase
         static::assertTrue($map->isEmpty());
     }
 
-    /** @covers ::equals() */
     public function testEquality(): void
     {
         /** @var int[] $keys */
@@ -285,7 +249,6 @@ class SortedMapTest extends TestCase
         static::assertFalse($map1->equals($map3));
     }
 
-    /** @covers ::hash() */
     public function testHash(): void
     {
         /** @var int[] $keys */

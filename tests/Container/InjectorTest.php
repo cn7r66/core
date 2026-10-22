@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Container\Binding;
 use Vivarium\Container\Cache;
@@ -50,20 +52,9 @@ use Vivarium\Test\Container\Stub\StubWithNoArgs;
 
 use function array_map;
 
-/** @coversDefaultClass \Vivarium\Container\Injector */
+#[CoversClass(Injector::class)]
 final class InjectorTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::has
-     * @covers ::makeBinding
-     * @covers ::getProvider
-     * @covers ::applyScope
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     */
     public function testAutoWiresConcreteClassWithNoArgs(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -72,13 +63,6 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubWithNoArgs::class, $container->get(StubWithNoArgs::class));
     }
 
-    /**
-     * @covers ::get
-     * @covers ::has
-     * @covers ::locate
-     * @covers ::getProvider
-     * @covers ::makeBinding
-     */
     public function testAutoWiresConcreteClassWithDependency(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -89,11 +73,6 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubService::class, $result->service);
     }
 
-    /**
-     * @covers ::get
-     * @covers ::getProvider
-     * @covers ::locate
-     */
     public function testExplicitBindingOverridesAutoWiring(): void
     {
         $instance = new StubWithNoArgs();
@@ -108,12 +87,6 @@ final class InjectorTest extends TestCase
         static::assertSame($instance, $container->get(StubWithNoArgs::class));
     }
 
-    /**
-     * @covers ::get
-     * @covers ::applyScope
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testServiceScopeReturnsSameInstance(): void
     {
         $registry = (new EagerRegistry())
@@ -127,12 +100,6 @@ final class InjectorTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::get
-     * @covers ::applyScope
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testTransientScopeReturnsDifferentInstances(): void
     {
         $registry = (new EagerRegistry())
@@ -146,10 +113,6 @@ final class InjectorTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::has
-     * @covers ::makeBinding
-     */
     public function testHasReturnsFalseForUnknownInterface(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -157,13 +120,6 @@ final class InjectorTest extends TestCase
         static::assertFalse($container->has(Registry::class));
     }
 
-    /**
-     * @covers ::get
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testPropertyInjectionIsAppliedOnGet(): void
     {
         $registry = (new EagerRegistry())
@@ -179,12 +135,7 @@ final class InjectorTest extends TestCase
         static::assertSame(StubClass::STRING_CONSTANT, $result->property);
     }
 
-    /**
-     * @covers ::get
-     * @covers ::locate
-     * @covers ::getProvider
-     * @dataProvider provideMethodInjectionRegistries
-     */
+    #[DataProvider('provideMethodInjectionRegistries')]
     public function testMethodInjectionIsAppliedOnGet(Registry $registry): void
     {
         $container = new Injector($registry);
@@ -210,11 +161,6 @@ final class InjectorTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::get
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testEnhancementsAppliedBeforeScopeCaching(): void
     {
         $registry = (new EagerRegistry())
@@ -230,12 +176,6 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubService::class, $first->service);
     }
 
-    /**
-     * @covers ::get
-     * @covers ::makeBinding
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testGetAcceptsBindingObject(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -244,7 +184,6 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubWithNoArgs::class, $container->get($binding));
     }
 
-    /** @covers ::withCache */
     public function testWithCacheReturnsNewInjector(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -254,7 +193,6 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubWithNoArgs::class, $withCache->get(StubWithNoArgs::class));
     }
 
-    /** @covers ::withCollector */
     public function testWithCollectorReturnsNewInjector(): void
     {
         $container     = new Injector(new EagerRegistry());
@@ -264,19 +202,13 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubWithNoArgs::class, $withCollector->get(StubWithNoArgs::class));
     }
 
-    /**
-     * @covers ::get
-     * @covers ::locate
-     * @covers ::resolve
-     * @covers ::withCache
-     */
     public function testGetReturnsRestoredDefinitionOnCacheHit(): void
     {
         $expected   = new StubWithNoArgs();
-        $definition = $this->createMock(Definition::class);
+        $definition = $this->createStub(Definition::class);
         $definition->method('solve')->willReturn($expected);
 
-        $cache = $this->createMock(Cache::class);
+        $cache = $this->createStub(Cache::class);
         $cache->method('lookup')->willReturn(true);
         $cache->method('restore')->willReturn($definition);
 
@@ -285,10 +217,6 @@ final class InjectorTest extends TestCase
         static::assertSame($expected, $container->get(StubWithNoArgs::class));
     }
 
-    /**
-     * @covers ::has
-     * @covers ::makeBinding
-     */
     public function testHasReturnsTrueWhenAlreadySolved(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -297,13 +225,9 @@ final class InjectorTest extends TestCase
         static::assertTrue($container->has(StubWithNoArgs::class));
     }
 
-    /**
-     * @covers ::has
-     * @covers ::makeBinding
-     */
     public function testHasReturnsTrueOnCacheHit(): void
     {
-        $cache = $this->createMock(Cache::class);
+        $cache = $this->createStub(Cache::class);
         $cache->method('lookup')->willReturn(true);
 
         $container = (new Injector(new EagerRegistry()))->withCache($cache);
@@ -311,10 +235,6 @@ final class InjectorTest extends TestCase
         static::assertTrue($container->has(StubWithNoArgs::class));
     }
 
-    /**
-     * @covers ::has
-     * @covers ::makeBinding
-     */
     public function testHasReturnsTrueWhenRegistryHasProvider(): void
     {
         $registry = (new EagerRegistry())
@@ -325,11 +245,6 @@ final class InjectorTest extends TestCase
         static::assertTrue($container->has(StubWithNoArgs::class));
     }
 
-    /**
-     * @covers ::get
-     * @covers ::getProvider
-     * @covers ::locate
-     */
     public function testGetThrowsWhenProviderNotFoundAndTypeIsNotAClass(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -345,16 +260,9 @@ final class InjectorTest extends TestCase
         static::fail('Expected ResolutionFailed to be thrown.');
     }
 
-    /**
-     * @covers ::get
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testGetSkipsEnhancementThatRejectsProvider(): void
     {
-        $injection = $this->createMock(Injection::class);
+        $injection = $this->createStub(Injection::class);
         $injection->method('accept')->willReturn(false);
         $injection->method('getSlot')->willReturn('slot');
 
@@ -366,16 +274,6 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubWithNoArgs::class, $container->get(StubWithNoArgs::class));
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::locate
-     * @covers ::resolve
-     * @covers ::getProvider
-     * @covers ::applyScope
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     */
     public function testServiceIsSharedAcrossDependentsInDifferentClasses(): void
     {
         $registry = (new EagerRegistry())->define(StubInjectorShared::class)->service();
@@ -389,16 +287,6 @@ final class InjectorTest extends TestCase
         static::assertSame($userB->shared, $container->get(StubInjectorShared::class));
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::locate
-     * @covers ::resolve
-     * @covers ::getProvider
-     * @covers ::applyScope
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     */
     public function testCircularDependencyIsDetectedOnFirstRepeat(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -429,16 +317,6 @@ final class InjectorTest extends TestCase
         static::fail('Expected CircularDependency to be thrown.');
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::locate
-     * @covers ::resolve
-     * @covers ::getProvider
-     * @covers ::applyScope
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     */
     public function testDiamondDependencyIsNotACycle(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -446,16 +324,6 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubInjectorDiamondTop::class, $container->get(StubInjectorDiamondTop::class));
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::locate
-     * @covers ::resolve
-     * @covers ::getProvider
-     * @covers ::applyScope
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     */
     public function testMissingDependencyFailureCarriesResolutionPath(): void
     {
         $container = new Injector(new EagerRegistry());
@@ -474,14 +342,7 @@ final class InjectorTest extends TestCase
         static::fail('Expected ResolutionFailed to be thrown.');
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::locate
-     * @covers ::resolve
-     * @covers ::getProvider
-     * @dataProvider provideRegistriesWithoutOtherTagRegistration
-     */
+    #[DataProvider('provideRegistriesWithoutOtherTagRegistration')]
     public function testTaggedClassWithoutRegistrationIsNotAutowired(Registry $registry): void
     {
         $container = new Injector($registry);
@@ -497,12 +358,7 @@ final class InjectorTest extends TestCase
         static::fail('Expected ResolutionFailed to be thrown.');
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::has
-     * @covers ::makeBinding
-     * @dataProvider provideRegistriesWithoutOtherTagRegistration
-     */
+    #[DataProvider('provideRegistriesWithoutOtherTagRegistration')]
     public function testHasIsFalseForTaggedClassWithoutRegistration(Registry $registry): void
     {
         $container = new Injector($registry);
@@ -519,15 +375,6 @@ final class InjectorTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testInjectionThroughBindingChainIsAppliedOnce(): void
     {
         $registry  = (new EagerRegistry())
@@ -541,15 +388,6 @@ final class InjectorTest extends TestCase
         static::assertSame(1, $result->calls);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testCallOnAliasBindingIsAppliedOnce(): void
     {
         $registry  = (new EagerRegistry())
@@ -566,15 +404,6 @@ final class InjectorTest extends TestCase
         static::assertSame(0, $direct->calls);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testInjectionIsNotAppliedToSuppliedInstance(): void
     {
         $instance  = new StubAlterationBase();
@@ -587,15 +416,6 @@ final class InjectorTest extends TestCase
         static::assertSame(0, $instance->calls);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testDefaultOrderIsInjectionThenCallThenDecoration(): void
     {
         $registry = (new EagerRegistry())
@@ -610,15 +430,6 @@ final class InjectorTest extends TestCase
         static::assertSame(['injection', 'call', 'decoration'], $result->log);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testEqualPrioritiesAcrossChannelsApplyInChannelOrder(): void
     {
         $registry = (new EagerRegistry())
@@ -633,16 +444,7 @@ final class InjectorTest extends TestCase
         static::assertSame(['injection', 'call', 'decoration'], $result->log);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     * @dataProvider provideInterfaceInjectionRegistries
-     */
+    #[DataProvider('provideInterfaceInjectionRegistries')]
     public function testInjectionRegisteredOnAnInterfaceAppliesToItsImplementation(
         Registry $registry,
         string $requested,
@@ -673,16 +475,7 @@ final class InjectorTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     * @dataProvider provideWrappingDecoratorRegistries
-     */
+    #[DataProvider('provideWrappingDecoratorRegistries')]
     public function testDecoratorWrapsResolvedObjectAndAutowiresOtherParameters(Registry $registry): void
     {
         $result = (new Injector($registry))->get(StubDecoratedSubject::class);
@@ -717,15 +510,6 @@ final class InjectorTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testDecoratorConfigureCallbackBindsAnotherConstructorArgument(): void
     {
         $registry = (new EagerRegistry())
@@ -743,15 +527,6 @@ final class InjectorTest extends TestCase
         static::assertSame(3, $result->level);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testLaterRegisteredDecoratorIsOutermostWithDefaultPriority(): void
     {
         $registry = (new EagerRegistry())
@@ -766,15 +541,6 @@ final class InjectorTest extends TestCase
         static::assertInstanceOf(StubDecoratedBase::class, $result->inner->inner);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testComposedDecoratorFeedsCallableResultToNextFunction(): void
     {
         $registry = (new EagerRegistry())
@@ -787,15 +553,6 @@ final class InjectorTest extends TestCase
         static::assertSame(50, $result(2, 3));
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::get
-     * @covers ::resolve
-     * @covers ::applyAlterations
-     * @covers ::applyChannel
-     * @covers ::locate
-     * @covers ::getProvider
-     */
     public function testServiceScopedBindingIsDecoratedOnce(): void
     {
         $registry = (new EagerRegistry())

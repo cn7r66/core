@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Stringable;
@@ -20,15 +22,9 @@ use Vivarium\Test\Container\Stub\Stub;
 use Vivarium\Test\Container\Stub\StubBase;
 use Vivarium\Test\Container\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Container\Binding */
+#[CoversClass(Binding::class)]
 final class BindingTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::getType
-     * @covers ::getTag
-     * @covers ::getContext
-     */
     public function testDefaultsAreAppliedWhenOnlyTypeGiven(): void
     {
         $binding = new Binding(StubClass::class);
@@ -38,12 +34,6 @@ final class BindingTest extends TestCase
         static::assertSame(Binding::GLOBAL, $binding->getContext());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::getType
-     * @covers ::getTag
-     * @covers ::getContext
-     */
     public function testExplicitTagAndContextAreStored(): void
     {
         $binding = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
@@ -53,10 +43,7 @@ final class BindingTest extends TestCase
         static::assertSame('Vivarium\Test\Container', $binding->getContext());
     }
 
-    /**
-     * @covers ::__construct
-     * @dataProvider provideValidTypes
-     */
+    #[DataProvider('provideValidTypes')]
     public function testConstructAcceptsValidTypes(string $type): void
     {
         $binding = new Binding($type);
@@ -82,18 +69,13 @@ final class BindingTest extends TestCase
         ];
     }
 
-    /** @covers ::__construct */
     public function testConstructRejectsInvalidType(): void
     {
         static::expectException(AssertionFailed::class);
         new Binding('theId');
     }
 
-    /**
-     * @covers ::couldBeWidened
-     * @covers ::__construct
-     * @dataProvider provideCouldBeWidenedCases
-     */
+    #[DataProvider('provideCouldBeWidenedCases')]
     public function testCouldBeWidenedReturnsExpectedResult(
         string $type,
         string $tag,
@@ -117,14 +99,7 @@ final class BindingTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::widen
-     * @covers ::getType
-     * @covers ::getTag
-     * @covers ::getContext
-     * @covers ::__construct
-     * @dataProvider provideWidenCases
-     */
+    #[DataProvider('provideWidenCases')]
     public function testWidenKeepsTagAndMovesContextUpOneLevel(
         string $tag,
         string $context,
@@ -148,12 +123,6 @@ final class BindingTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::widen
-     * @covers ::getTag
-     * @covers ::getContext
-     * @covers ::__construct
-     */
     public function testWidenTwiceKeepsTagAndMovesContextUpTwoLevels(): void
     {
         $binding = new Binding(StubClass::class, 'theTag', 'App\Orders\Checkout');
@@ -163,10 +132,6 @@ final class BindingTest extends TestCase
         static::assertSame('App', $widened->getContext());
     }
 
-    /**
-     * @covers ::widen
-     * @covers ::__construct
-     */
     public function testWidenThrowsWhenAlreadyAtMinimum(): void
     {
         $binding = new Binding(StubClass::class);
@@ -176,11 +141,7 @@ final class BindingTest extends TestCase
         $binding->widen();
     }
 
-    /**
-     * @covers ::equals
-     * @covers ::__construct
-     * @dataProvider provideEqualityComparisons
-     */
+    #[DataProvider('provideEqualityComparisons')]
     public function testEqualsComparesTypeTagAndContext(Binding $binding, object $other, bool $expected): void
     {
         static::assertSame($expected, $binding->equals($other));
@@ -208,10 +169,6 @@ final class BindingTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::hash
-     * @covers ::__construct
-     */
     public function testSameArgumentsProduceSameHash(): void
     {
         $first  = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
@@ -220,10 +177,6 @@ final class BindingTest extends TestCase
         static::assertSame($first->hash(), $second->hash());
     }
 
-    /**
-     * @covers ::hash
-     * @covers ::__construct
-     */
     public function testDifferentArgumentsProduceDifferentHash(): void
     {
         $first  = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
@@ -232,10 +185,6 @@ final class BindingTest extends TestCase
         static::assertNotSame($first->hash(), $second->hash());
     }
 
-    /**
-     * @covers ::hash
-     * @covers ::__construct
-     */
     public function testHashIsConsistentAcrossCalls(): void
     {
         $binding = new Binding(StubClass::class, 'theTag', 'Vivarium\Test\Container');
@@ -243,14 +192,7 @@ final class BindingTest extends TestCase
         static::assertSame($binding->hash(), $binding->hash());
     }
 
-    /**
-     * @covers ::hierarchy
-     * @covers ::expand
-     * @covers ::extends
-     * @covers ::interfaces
-     * @covers ::__construct
-     * @dataProvider provideTypesWithHierarchySize
-     */
+    #[DataProvider('provideTypesWithHierarchySize')]
     public function testHierarchyContainsTheTypeAndAllItsAncestors(string $type, int $expectedSize): void
     {
         $hierarchy = (new Binding($type))->hierarchy();
@@ -267,13 +209,6 @@ final class BindingTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::hierarchy
-     * @covers ::expand
-     * @covers ::extends
-     * @covers ::interfaces
-     * @covers ::__construct
-     */
     public function testHierarchyOrderIsMostSpecificFirst(): void
     {
         $binding   = new Binding(StubClass::class);
@@ -283,13 +218,6 @@ final class BindingTest extends TestCase
         static::assertSame(Stub::class, $hierarchy->getAtIndex($hierarchy->count() - 1)->getType());
     }
 
-    /**
-     * @covers ::hierarchy
-     * @covers ::expand
-     * @covers ::extends
-     * @covers ::interfaces
-     * @covers ::__construct
-     */
     public function testHierarchyWithTagAndContextExpandsAllLevels(): void
     {
         $binding   = new Binding(StubClass::class, 'myTag', 'Vivarium\Test\Container');
@@ -302,11 +230,7 @@ final class BindingTest extends TestCase
         }
     }
 
-    /**
-     * @covers ::__toString
-     * @covers ::__construct
-     * @dataProvider provideToStringCases
-     */
+    #[DataProvider('provideToStringCases')]
     public function testToStringRendersTagAndContextOnlyWhenNonDefault(
         string $type,
         string $tag,
@@ -331,11 +255,7 @@ final class BindingTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::isMoreSpecificThan
-     * @covers ::__construct
-     * @dataProvider provideIsMoreSpecificThanCases
-     */
+    #[DataProvider('provideIsMoreSpecificThanCases')]
     public function testIsMoreSpecificThanOrdersBySubtypeThenContext(
         Binding $subject,
         Binding $other,

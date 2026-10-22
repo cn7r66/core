@@ -10,22 +10,18 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Type;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Type\IsAssignableToNullable;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Assertion\Type\IsAssignableToNullable */
+#[CoversClass(IsAssignableToNullable::class)]
 final class IsAssignableToNullableTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @covers ::__invoke()
-     * @covers ::getAssertion()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $type, string $nullable): void
     {
         static::expectNotToPerformAssertions();
@@ -34,13 +30,7 @@ final class IsAssignableToNullableTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @covers ::__invoke()
-     * @covers ::getAssertion()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testAssertException(string $type, string $nullable, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -50,7 +40,6 @@ final class IsAssignableToNullableTest extends TestCase
             ->assert($type);
     }
 
-    /** @covers ::__construct() */
     public function testConstructorException(): void
     {
         static::expectException(AssertionFailed::class);
@@ -59,12 +48,7 @@ final class IsAssignableToNullableTest extends TestCase
         new IsAssignableToNullable('string');
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @covers ::getAssertion()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $type, string $nullable): void
     {
         static::assertTrue(
@@ -72,12 +56,7 @@ final class IsAssignableToNullableTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @covers ::getAssertion()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $type, string $nullable): void
     {
         static::assertFalse(

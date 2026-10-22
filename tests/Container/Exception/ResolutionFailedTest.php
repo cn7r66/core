@@ -12,6 +12,8 @@ namespace Vivarium\Test\Container\Exception;
 
 use Error;
 use LogicException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
@@ -24,15 +26,11 @@ use Vivarium\Test\Container\Stub\StubService;
 
 use function implode;
 
-/** @coversDefaultClass \Vivarium\Container\Exception\ResolutionFailed */
+#[CoversClass(ResolutionFailed::class)]
 final class ResolutionFailedTest extends TestCase
 {
-    /**
-     * @param non-empty-list<Binding> $path
-     *
-     * @covers ::__construct
-     * @dataProvider providePaths
-     */
+    /** @param non-empty-list<Binding> $path */
+    #[DataProvider('providePaths')]
     public function testMessageRendersThePathAndThePreviousMessage(array $path, string $previousMessage): void
     {
         $rendered = [];
@@ -49,13 +47,8 @@ final class ResolutionFailedTest extends TestCase
         );
     }
 
-    /**
-     * @param non-empty-list<Binding> $path
-     *
-     * @covers ::getPath
-     * @covers ::__construct
-     * @dataProvider providePaths
-     */
+    /** @param non-empty-list<Binding> $path */
+    #[DataProvider('providePaths')]
     public function testGetPath(array $path, string $previousMessage): void
     {
         $exception = new ResolutionFailed($path, new RuntimeException($previousMessage));
@@ -82,10 +75,7 @@ final class ResolutionFailedTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @dataProvider provideThrowables
-     */
+    #[DataProvider('provideThrowables')]
     public function testKeepsPreviousThrowableWithZeroCode(Throwable $previous): void
     {
         $exception = new ResolutionFailed([new Binding(StubClass::class)], $previous);
@@ -105,12 +95,8 @@ final class ResolutionFailedTest extends TestCase
         ];
     }
 
-    /**
-     * @param class-string $expected
-     *
-     * @covers ::__construct
-     * @dataProvider provideExceptionTypes
-     */
+    /** @param class-string $expected */
+    #[DataProvider('provideExceptionTypes')]
     public function testIsAContainerException(string $expected): void
     {
         $exception = new ResolutionFailed([new Binding(StubClass::class)], new RuntimeException('boom'));

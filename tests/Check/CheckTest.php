@@ -10,12 +10,14 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Check;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProviderExternal;
 use Vivarium\Check\Check;
 use Vivarium\Check\Exception\NoSuchMethod;
 use Vivarium\Check\Exception\TooFewArguments;
 use Vivarium\Check\Exception\TooMuchArguments;
 
-/** @coversDefaultClass \Vivarium\Check\Check */
+#[CoversClass(Check::class)]
 final class CheckTest extends CheckTestCase
 {
     public const COMPARISON_NAMESPACE = 'Vivarium\Test\Assertion\Comparison';
@@ -26,11 +28,6 @@ final class CheckTest extends CheckTestCase
     public const TYPE_NAMESPACE       = 'Vivarium\Test\Assertion\Type';
     public const VAR_NAMESPACE        = 'Vivarium\Test\Assertion\Var';
 
-    /**
-     * @covers ::__construct()
-     * @covers ::boolean()
-     * @covers ::__call()
-     */
     public function testBoolean(): void
     {
         $check = Check::boolean();
@@ -48,12 +45,7 @@ final class CheckTest extends CheckTestCase
         static::assertFalse($check->isFalse(true));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::comparison()
-     * @covers ::__call()
-     * @dataProvider \Vivarium\Test\Check\CheckIfElementTest::provideMethods()
-     */
+    #[DataProviderExternal(CheckIfElementTest::class, 'provideMethods')]
     public function testComparison(string $method): void
     {
         $this->doTest(
@@ -63,12 +55,7 @@ final class CheckTest extends CheckTestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::encoding()
-     * @covers ::__call()
-     * @dataProvider \Vivarium\Test\Check\CheckIfEncodingTest::provideMethods()
-     */
+    #[DataProviderExternal(CheckIfEncodingTest::class, 'provideMethods')]
     public function testEncoding(string $method): void
     {
         $this->doTest(
@@ -78,12 +65,7 @@ final class CheckTest extends CheckTestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::numeric()
-     * @covers ::__call()
-     * @dataProvider \Vivarium\Test\Check\CheckIfNumberTest::provideMethods()
-     */
+    #[DataProviderExternal(CheckIfNumberTest::class, 'provideMethods')]
     public function testNumeric(string $method): void
     {
         $this->doTest(
@@ -93,12 +75,7 @@ final class CheckTest extends CheckTestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::object()
-     * @covers ::__call()
-     * @dataProvider \Vivarium\Test\Check\CheckIfObjectTest::provideMethods()
-     */
+    #[DataProviderExternal(CheckIfObjectTest::class, 'provideMethods')]
     public function testObject(string $method): void
     {
         $this->doTest(
@@ -108,12 +85,7 @@ final class CheckTest extends CheckTestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::string()
-     * @covers ::__call()
-     * @dataProvider \Vivarium\Test\Check\CheckIfStringTest::provideMethods()
-     */
+    #[DataProviderExternal(CheckIfStringTest::class, 'provideMethods')]
     public function testString(string $method): void
     {
         $this->doTest(
@@ -123,12 +95,7 @@ final class CheckTest extends CheckTestCase
         );
     }
 
-        /**
-         * @covers ::__construct()
-         * @covers ::type()
-         * @covers ::__call()
-         * @dataProvider \Vivarium\Test\Check\CheckIfTypeTest::provideMethods()
-         */
+        #[DataProviderExternal(CheckIfTypeTest::class, 'provideMethods')]
     public function testType(string $method): void
     {
         $this->doTest(
@@ -138,12 +105,7 @@ final class CheckTest extends CheckTestCase
         );
     }
 
-        /**
-         * @covers ::__construct()
-         * @covers ::var()
-         * @covers ::__call()
-         * @dataProvider \Vivarium\Test\Check\CheckIfVarTest::provideMethods()
-         */
+        #[DataProviderExternal(CheckIfVarTest::class, 'provideMethods')]
     public function testVar(string $method): void
     {
         $this->doTest(
@@ -153,10 +115,6 @@ final class CheckTest extends CheckTestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__call()
-     */
     public function testNoSuchMethod(): void
     {
         static::expectException(NoSuchMethod::class);
@@ -170,10 +128,6 @@ final class CheckTest extends CheckTestCase
         $check->nonExistentMethod();
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__call()
-     */
     public function testTooFewArguments(): void
     {
         static::expectException(TooFewArguments::class);
@@ -187,10 +141,6 @@ final class CheckTest extends CheckTestCase
         $check->isTrue();
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__call()
-     */
     public function testTooMuchArguments(): void
     {
         static::expectException(TooMuchArguments::class);

@@ -10,19 +10,18 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Var;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Var\IsObject;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Assertion\Var\IsObject */
+#[CoversClass(IsObject::class)]
 final class IsObjectTest extends TestCase
 {
-    /**
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(mixed $var): void
     {
         static::expectNotToPerformAssertions();
@@ -31,10 +30,7 @@ final class IsObjectTest extends TestCase
             ->assert($var);
     }
 
-    /**
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testAssertException(mixed $var, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -44,10 +40,7 @@ final class IsObjectTest extends TestCase
             ->assert($var);
     }
 
-    /**
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(mixed $var): void
     {
         static::assertTrue(
@@ -55,10 +48,7 @@ final class IsObjectTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(mixed $var): void
     {
         static::assertFalse(

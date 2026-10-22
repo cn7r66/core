@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Exception;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
@@ -18,13 +20,9 @@ use Vivarium\Container\Exception\ContainerException;
 use Vivarium\Container\Exception\DuplicateBinding;
 use Vivarium\Test\Container\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Container\Exception\DuplicateBinding */
+#[CoversClass(DuplicateBinding::class)]
 final class DuplicateBindingTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::getBinding
-     */
     public function testExposesTheBinding(): void
     {
         $binding   = new Binding(StubClass::class);
@@ -33,10 +31,7 @@ final class DuplicateBindingTest extends TestCase
         static::assertSame($binding, $exception->getBinding());
     }
 
-    /**
-     * @covers ::__construct
-     * @dataProvider provideBindings
-     */
+    #[DataProvider('provideBindings')]
     public function testMessageSuggestsExtend(Binding $binding, string $description): void
     {
         $exception = new DuplicateBinding($binding);
@@ -47,10 +42,7 @@ final class DuplicateBindingTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct
-     * @dataProvider provideExceptionTypes
-     */
+    #[DataProvider('provideExceptionTypes')]
     public function testIsAContainerException(string $type): void
     {
         static::assertInstanceOf($type, new DuplicateBinding(new Binding(StubClass::class)));

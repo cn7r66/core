@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Dispatcher;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Dispatcher\Event;
 use Vivarium\Dispatcher\ListenerAndPriority;
@@ -19,13 +20,9 @@ use Vivarium\Test\Dispatcher\Stub\GenericEventListener;
 
 use function usort;
 
-/** @coversDefaultClass \Vivarium\Dispatcher\ListenerAndPriorityComparator */
+#[CoversClass(ListenerAndPriorityComparator::class)]
 final class ListenerAndPriorityComparatorTest extends TestCase
 {
-    /**
-     * @covers ::compare()
-     * @covers ::__invoke()
-     */
     public function testSorting(): void
     {
         $veryLow  = new ListenerAndPriority(new GenericEventListener(), Priority::VERY_LOW);

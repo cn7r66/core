@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Conditional;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\Conditional\Either;
@@ -22,19 +24,14 @@ use Vivarium\Assertion\Var\IsObject;
 use Vivarium\Assertion\Var\IsString;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Assertion\Conditional\Either */
+#[CoversClass(Either::class)]
 final class EitherTest extends TestCase
 {
     /**
      * @param Assertion<mixed> $assertion1
      * @param Assertion<mixed> $assertion2
-     *
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @covers ::safeAssert()
-     *
-     * @dataProvider provideSuccess()
      */
+    #[DataProvider('provideSuccess')]
     public function testAssert(Assertion $assertion1, Assertion $assertion2, mixed $value): void
     {
         static::expectNotToPerformAssertions();
@@ -48,13 +45,8 @@ final class EitherTest extends TestCase
     /**
      * @param Assertion<mixed> $assertion1
      * @param Assertion<mixed> $assertion2
-     *
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @covers ::safeAssert()
-     *
-     * @dataProvider provideFailure()
      */
+    #[DataProvider('provideFailure')]
     public function testAssertException(Assertion $assertion1, Assertion $assertion2, mixed $value): void
     {
         static::expectException(AssertionFailed::class);
@@ -69,13 +61,8 @@ final class EitherTest extends TestCase
     /**
      * @param Assertion<mixed> $assertion1
      * @param Assertion<mixed> $assertion2
-     *
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @covers ::safeAssert()
-     *
-     * @dataProvider provideSuccess()
      */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(Assertion $assertion1, Assertion $assertion2, mixed $value): void
     {
         static::assertTrue(
@@ -89,13 +76,8 @@ final class EitherTest extends TestCase
     /**
      * @param Assertion<mixed> $assertion1
      * @param Assertion<mixed> $assertion2
-     *
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @covers ::safeAssert()
-     *
-     * @dataProvider provideFailure()
      */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(Assertion $assertion1, Assertion $assertion2, mixed $value): void
     {
         static::assertFalse(

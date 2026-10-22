@@ -10,19 +10,17 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Binding;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Comparator\Priority;
 use Vivarium\Container\Binding\PriorityBinder;
 
-/** @coversDefaultClass \Vivarium\Container\Binding\PriorityBinder */
+#[CoversClass(PriorityBinder::class)]
 final class PriorityBinderTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::withDefaultPriority
-     * @dataProvider defaultPriorityProvider
-     */
+    #[DataProvider('defaultPriorityProvider')]
     public function testWithDefaultPriorityPassesTheDefaultGivenAtConstruction(int $defaultPriority): void
     {
         $capturedPriority = null;
@@ -50,7 +48,6 @@ final class PriorityBinderTest extends TestCase
         ];
     }
 
-    /** @covers ::withDefaultPriority */
     public function testWithDefaultPriorityReturnsValueFromCreate(): void
     {
         $expected = new stdClass();
@@ -63,7 +60,6 @@ final class PriorityBinderTest extends TestCase
         static::assertSame($expected, $binder->withDefaultPriority());
     }
 
-    /** @covers ::withPriority */
     public function testWithPriorityPassesExplicitPriorityToCreate(): void
     {
         $capturedPriority = null;
@@ -82,7 +78,6 @@ final class PriorityBinderTest extends TestCase
         static::assertSame(42, $capturedPriority);
     }
 
-    /** @covers ::withPriority */
     public function testWithPriorityReturnsValueFromCreate(): void
     {
         $expected = new stdClass();

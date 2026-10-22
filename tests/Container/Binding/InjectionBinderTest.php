@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Binding;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Comparator\Priority;
@@ -23,13 +25,9 @@ use Vivarium\Container\Injection\SetProperty;
 use Vivarium\Test\Container\Stub\StubBinderContract;
 use Vivarium\Test\Container\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Container\Binding\InjectionBinder */
+#[CoversClass(InjectionBinder::class)]
 final class InjectionBinderTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::onProperty
-     */
     public function testOnPropertyReturnsPriorityBinder(): void
     {
         $binder = new InjectionBinder(
@@ -41,7 +39,6 @@ final class InjectionBinderTest extends TestCase
         static::assertInstanceOf(PriorityBinder::class, $binder->onProperty('property'));
     }
 
-    /** @covers ::onProperty */
     public function testOnPropertyBuildsSetPropertyInjection(): void
     {
         $binder = new InjectionBinder(
@@ -57,10 +54,7 @@ final class InjectionBinderTest extends TestCase
         $binder->onProperty('property')->withDefaultPriority();
     }
 
-    /**
-     * @covers ::onProperty
-     * @dataProvider providePropertyTypesAndTags
-     */
+    #[DataProvider('providePropertyTypesAndTags')]
     public function testOnPropertyBuildsSetPropertyForTypeAndTag(string $type, string $tag): void
     {
         $capturedInjection = null;
@@ -90,11 +84,7 @@ final class InjectionBinderTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::onProperty
-     * @dataProvider provideInvalidPropertyTargets
-     */
+    #[DataProvider('provideInvalidPropertyTargets')]
     public function testOnPropertyThrowsForInvalidTarget(string $type, string $property): void
     {
         $this->expectException(AssertionFailed::class);
@@ -119,12 +109,7 @@ final class InjectionBinderTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::onMethod
-     * @covers ::withInjection
-     * @dataProvider provideMethodDeclarers
-     */
+    #[DataProvider('provideMethodDeclarers')]
     public function testOnMethodReturnsPriorityBinderForClassOrInterface(string $type, string $method): void
     {
         $binder = new InjectionBinder(
@@ -145,7 +130,6 @@ final class InjectionBinderTest extends TestCase
         ];
     }
 
-    /** @covers ::onMethod */
     public function testOnMethodBuildsMethodCallInjection(): void
     {
         $binder = new InjectionBinder(
@@ -161,10 +145,7 @@ final class InjectionBinderTest extends TestCase
         $binder->onMethod('setService')->withDefaultPriority();
     }
 
-    /**
-     * @covers ::onMethod
-     * @dataProvider provideInvalidMethodTargets
-     */
+    #[DataProvider('provideInvalidMethodTargets')]
     public function testOnMethodThrowsForInvalidTarget(string $type, string $method): void
     {
         $this->expectException(AssertionFailed::class);
@@ -188,12 +169,7 @@ final class InjectionBinderTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::onImmutableMethod
-     * @covers ::withInjection
-     * @dataProvider provideImmutableMethodDeclarers
-     */
+    #[DataProvider('provideImmutableMethodDeclarers')]
     public function testOnImmutableMethodReturnsPriorityBinderForClassOrInterface(string $type, string $method): void
     {
         $binder = new InjectionBinder(
@@ -214,7 +190,6 @@ final class InjectionBinderTest extends TestCase
         ];
     }
 
-    /** @covers ::onImmutableMethod */
     public function testOnImmutableMethodBuildsImmutableMethodCallInjection(): void
     {
         $binder = new InjectionBinder(
@@ -230,10 +205,7 @@ final class InjectionBinderTest extends TestCase
         $binder->onImmutableMethod('withService')->withDefaultPriority();
     }
 
-    /**
-     * @covers ::onImmutableMethod
-     * @dataProvider provideInvalidImmutableMethodTargets
-     */
+    #[DataProvider('provideInvalidImmutableMethodTargets')]
     public function testOnImmutableMethodThrowsForInvalidTarget(string $type, string $method): void
     {
         $this->expectException(AssertionFailed::class);
@@ -257,7 +229,6 @@ final class InjectionBinderTest extends TestCase
         ];
     }
 
-    /** @covers ::withInjection */
     public function testWithInjectionReturnsPriorityBinder(): void
     {
         $binder = new InjectionBinder(
@@ -266,14 +237,13 @@ final class InjectionBinderTest extends TestCase
             Priority::NORMAL,
         );
 
-        $result = $binder->withInjection($this->createMock(Injection::class));
+        $result = $binder->withInjection($this->createStub(Injection::class));
         static::assertInstanceOf(PriorityBinder::class, $result);
     }
 
-    /** @covers ::withInjection */
     public function testWithInjectionForwardsInjectionToCreate(): void
     {
-        $injection = $this->createMock(Injection::class);
+        $injection = $this->createStub(Injection::class);
 
         $binder = new InjectionBinder(
             new Binding(StubClass::class),

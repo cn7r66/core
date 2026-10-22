@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Provider;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Container\Capability;
@@ -11,10 +12,9 @@ use Vivarium\Container\Container;
 use Vivarium\Container\Provider\Enum;
 use Vivarium\Container\Scope;
 
-/** @coversDefaultClass \Vivarium\Container\Provider\Enum */
+#[CoversClass(Enum::class)]
 final class EnumTest extends TestCase
 {
-    /** @covers ::__construct */
     public function testConstructWithValidEnum(): void
     {
         static::expectNotToPerformAssertions();
@@ -22,7 +22,6 @@ final class EnumTest extends TestCase
         new Enum(Scope::class, 'SERVICE');
     }
 
-    /** @covers ::__construct */
     public function testConstructWithInvalidEnumThrows(): void
     {
         static::expectException(AssertionFailed::class);
@@ -30,7 +29,6 @@ final class EnumTest extends TestCase
         new Enum('NotAnEnum', 'VALUE');
     }
 
-    /** @covers ::__construct */
     public function testConstructWithInvalidCaseThrows(): void
     {
         static::expectException(AssertionFailed::class);
@@ -38,16 +36,14 @@ final class EnumTest extends TestCase
         new Enum(Scope::class, 'INVALID_CASE');
     }
 
-    /** @covers ::provide */
     public function testProvideReturnsEnumCase(): void
     {
         $provider  = new Enum(Scope::class, 'SERVICE');
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         static::assertSame(Scope::SERVICE, $provider->provide($container));
     }
 
-    /** @covers ::getTarget */
     public function testGetTargetReturnsEnumClassName(): void
     {
         $provider = new Enum(Scope::class, 'TRANSIENT');
@@ -55,7 +51,6 @@ final class EnumTest extends TestCase
         static::assertSame(Scope::class, $provider->getTarget());
     }
 
-    /** @covers ::getCapabilities */
     public function testGetCapabilitiesReturnsEmptySet(): void
     {
         $provider     = new Enum(Capability::class, 'INJECTABLE');

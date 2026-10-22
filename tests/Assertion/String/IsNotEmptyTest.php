@@ -10,18 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\String;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\String\IsNotEmpty;
 
-/** @coversDefaultClass \Vivarium\Assertion\String\IsNotEmpty */
+#[CoversClass(IsNotEmpty::class)]
 final class IsNotEmptyTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $string): void
     {
         static::expectNotToPerformAssertions();
@@ -30,12 +28,8 @@ final class IsNotEmptyTest extends TestCase
             ->assert($string);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideNonValid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideNonValid')]
     public function testAssertException(string|int $string, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -45,21 +39,13 @@ final class IsNotEmptyTest extends TestCase
             ->assert($string);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $string): void
     {
         static::assertTrue((new IsNotEmpty())($string));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $string): void
     {
         static::assertFalse((new IsNotEmpty())($string));

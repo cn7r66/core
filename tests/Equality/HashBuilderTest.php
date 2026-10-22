@@ -10,21 +10,18 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Equality;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Equality\Equality;
 use Vivarium\Equality\HashBuilder;
 use Vivarium\Test\Equality\Stub\EqualityStub;
 
-/** @coversDefaultClass \Vivarium\Equality\HashBuilder */
+#[CoversClass(HashBuilder::class)]
 final class HashBuilderTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::append
-     * @covers ::getHashCode
-     * @dataProvider getTestAppendPrimitiveData
-     */
+    #[DataProvider('getTestAppendPrimitiveData')]
     public function testAppendPrimitive(mixed $value, string $expected): void
     {
         $builder = new HashBuilder();
@@ -33,11 +30,7 @@ final class HashBuilderTest extends TestCase
         static::assertEquals($expected, $builder->getHashCode());
     }
 
-    /**
-     * @covers ::append
-     * @covers ::appendObject
-     * @dataProvider getTestAppendObjectData
-     */
+    #[DataProvider('getTestAppendObjectData')]
     public function testAppendObject(object $object, string $expected): void
     {
         $builder = new HashBuilder();
@@ -46,13 +39,8 @@ final class HashBuilderTest extends TestCase
         static::assertEquals($expected, $builder->getHashCode());
     }
 
-    /**
-     * @param mixed[] $array
-     *
-     * @covers ::append
-     * @covers ::appendEach
-     * @dataProvider getTestAppendEachData
-     */
+    /** @param mixed[] $array */
+    #[DataProvider('getTestAppendEachData')]
     public function testAppendEach(array $array, string $expected): void
     {
         $builder = new HashBuilder();
@@ -61,11 +49,7 @@ final class HashBuilderTest extends TestCase
         static::assertEquals($expected, $builder->getHashCode());
     }
 
-    /**
-     * @covers ::append
-     * @covers ::appendCallable
-     * @dataProvider getClonePointData
-     */
+    #[DataProvider('getClonePointData')]
     public function testImmutability(mixed $element): void
     {
         $builder  = new HashBuilder();

@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Exception;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
@@ -19,14 +21,10 @@ use Vivarium\Container\Exception\ContainerException;
 use Vivarium\Test\Container\Stub\StubClass;
 use Vivarium\Test\Container\Stub\StubService;
 
-/** @coversDefaultClass \Vivarium\Container\Exception\BindingNotFound */
+#[CoversClass(BindingNotFound::class)]
 final class BindingNotFoundTest extends TestCase
 {
-    /**
-     * @covers ::getBinding
-     * @covers ::__construct
-     * @dataProvider provideBindings
-     */
+    #[DataProvider('provideBindings')]
     public function testGetBinding(Binding $binding): void
     {
         $exception = new BindingNotFound($binding);
@@ -71,10 +69,7 @@ final class BindingNotFoundTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @dataProvider provideBindingMessages
-     */
+    #[DataProvider('provideBindingMessages')]
     public function testMessageNamesTheMissingBinding(Binding $binding, string $message): void
     {
         $exception = new BindingNotFound($binding);
@@ -82,12 +77,8 @@ final class BindingNotFoundTest extends TestCase
         self::assertSame($message, $exception->getMessage());
     }
 
-    /**
-     * @param class-string $expected
-     *
-     * @covers ::__construct
-     * @dataProvider provideExceptionTypes
-     */
+    /** @param class-string $expected */
+    #[DataProvider('provideExceptionTypes')]
     public function testIsAContainerException(string $expected): void
     {
         $exception = new BindingNotFound(new Binding(StubClass::class));

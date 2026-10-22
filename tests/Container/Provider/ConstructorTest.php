@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Provider;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -29,18 +31,13 @@ use Vivarium\Test\Container\Stub\StubWithUntypedOptionalArg;
 use Vivarium\Test\Container\Stub\StubWithUntypedRequiredArg;
 use Vivarium\Test\Container\Stub\StubWithVariadicArgs;
 
-/** @coversDefaultClass \Vivarium\Container\Provider\Constructor */
+#[CoversClass(Constructor::class)]
 final class ConstructorTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
     public function testProvideCreatesInstanceWithDependency(): void
     {
         $service   = new StubService();
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('get')->willReturn($service);
 
         $result = (new Constructor(StubClass::class))->provide($container);
@@ -49,14 +46,8 @@ final class ConstructorTest extends TestCase
         static::assertSame($service, $result->service);
     }
 
-    /**
-     * @param class-string $class
-     *
-     * @dataProvider provideClassesWithoutParameters
-     * @covers ::__construct
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
+    /** @param class-string $class */
+    #[DataProvider('provideClassesWithoutParameters')]
     public function testProvideCreatesInstanceWithoutResolvingAnyArgument(string $class): void
     {
         $container = $this->createMock(Container::class);
@@ -76,14 +67,9 @@ final class ConstructorTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
     public function testProvideUsesDefaultWhenOptionalArgNotInContainer(): void
     {
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('has')->willReturn(false);
 
         $result = (new Constructor(StubWithOptionalArg::class))->provide($container);
@@ -92,14 +78,9 @@ final class ConstructorTest extends TestCase
         static::assertSame('default', $result->name);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
     public function testProvideUsesContainerValueForOptionalArg(): void
     {
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('has')->willReturn(true);
         $container->method('get')->willReturn('custom');
 
@@ -108,11 +89,6 @@ final class ConstructorTest extends TestCase
         static::assertSame('custom', $result->name);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
     public function testProvideWithUntypedOptionalArgUsesDefault(): void
     {
         $container = $this->createMock(Container::class);
@@ -123,14 +99,9 @@ final class ConstructorTest extends TestCase
         static::assertSame('default', $result->getValue());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
     public function testProvideResolvesUntypedRequiredArgFromContainer(): void
     {
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('get')->willReturn('resolved');
 
         $result = (new Constructor(StubWithUntypedRequiredArg::class))->provide($container);
@@ -138,16 +109,10 @@ final class ConstructorTest extends TestCase
         static::assertSame('resolved', $result->getValue());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::bindArgument
-     * @covers ::provide
-     * @covers ::resolveArguments
-     */
     public function testProvidePrefersExplicitlyBoundArgumentOverAutoResolution(): void
     {
         $service = new StubService();
-        $custom  = $this->createMock(Provider::class);
+        $custom  = $this->createStub(Provider::class);
         $custom->method('getTarget')->willReturn(StubService::class);
         $custom->method('provide')->willReturn($service);
 
@@ -163,13 +128,8 @@ final class ConstructorTest extends TestCase
         static::assertSame($service, $result->service);
     }
 
-    /**
-     * @param class-string $class
-     *
-     * @dataProvider provideConstructibleClasses
-     * @covers ::__construct
-     * @covers ::getTarget
-     */
+    /** @param class-string $class */
+    #[DataProvider('provideConstructibleClasses')]
     public function testGetTargetReturnsClassName(string $class): void
     {
         static::assertSame($class, (new Constructor($class))->getTarget());
@@ -185,12 +145,8 @@ final class ConstructorTest extends TestCase
         ];
     }
 
-    /**
-     * @param class-string $class
-     *
-     * @dataProvider provideClassesWithAndWithoutConstructor
-     * @covers ::getCapabilities
-     */
+    /** @param class-string $class */
+    #[DataProvider('provideClassesWithAndWithoutConstructor')]
     public function testGetCapabilitiesIncludesAll(string $class): void
     {
         $capabilities = (new Constructor($class))->getCapabilities();
@@ -210,12 +166,8 @@ final class ConstructorTest extends TestCase
         ];
     }
 
-    /**
-     * @param class-string $class
-     *
-     * @dataProvider provideNotInstantiableClasses
-     * @covers ::__construct
-     */
+    /** @param class-string $class */
+    #[DataProvider('provideNotInstantiableClasses')]
     public function testThrowsForNotInstantiableClass(string $class): void
     {
         static::expectException(AssertionFailed::class);
@@ -232,12 +184,8 @@ final class ConstructorTest extends TestCase
         ];
     }
 
-    /**
-     * @param class-string $class
-     *
-     * @dataProvider provideUnknownParameterNames
-     * @covers ::bindArgument
-     */
+    /** @param class-string $class */
+    #[DataProvider('provideUnknownParameterNames')]
     public function testBindArgumentThrowsForUnknownParameterName(string $class, string $name): void
     {
         static::expectException(AssertionFailed::class);
@@ -254,12 +202,8 @@ final class ConstructorTest extends TestCase
         ];
     }
 
-    /**
-     * @param class-string $class
-     *
-     * @dataProvider provideUnknownParameterPositions
-     * @covers ::bindArgumentAtPosition
-     */
+    /** @param class-string $class */
+    #[DataProvider('provideUnknownParameterPositions')]
     public function testBindArgumentAtPositionThrowsForUnknownPosition(string $class, int $position): void
     {
         static::expectException(AssertionFailed::class);
@@ -277,10 +221,7 @@ final class ConstructorTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideEqualConstructors
-     * @covers ::equals
-     */
+    #[DataProvider('provideEqualConstructors')]
     public function testEqualsReturnsTrueForEqualConstructors(Constructor $first, Constructor $second): void
     {
         static::assertTrue($first->equals($second));
@@ -300,7 +241,6 @@ final class ConstructorTest extends TestCase
         ];
     }
 
-    /** @covers ::equals */
     public function testEqualsReturnsFalseForDifferentClass(): void
     {
         $first  = new Constructor(StubClass::class);
@@ -309,7 +249,6 @@ final class ConstructorTest extends TestCase
         static::assertFalse($first->equals($second));
     }
 
-    /** @covers ::equals */
     public function testEqualsReturnsFalseForNonMethod(): void
     {
         static::assertFalse(
@@ -317,16 +256,12 @@ final class ConstructorTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider provideEqualConstructors
-     * @covers ::hash
-     */
+    #[DataProvider('provideEqualConstructors')]
     public function testHashIsSameForEqualConstructors(Constructor $first, Constructor $second): void
     {
         static::assertSame($first->hash(), $second->hash());
     }
 
-    /** @covers ::hash */
     public function testHashDiffersForDifferentClasses(): void
     {
         $first  = new Constructor(StubClass::class);
@@ -335,10 +270,9 @@ final class ConstructorTest extends TestCase
         static::assertNotSame($first->hash(), $second->hash());
     }
 
-    /** @covers ::bindArgument */
     public function testBindArgument(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
         $provider->method('provide')->willReturn('bound');
 
@@ -347,28 +281,26 @@ final class ConstructorTest extends TestCase
 
         static::assertNotSame($original, $bound);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('has')->willReturn(false);
 
         static::assertSame('bound', $bound->provide($container)->name);
         static::assertSame('default', $original->provide($container)->name);
     }
 
-    /** @covers ::bindArgument */
     public function testBindArgumentException(): void
     {
         static::expectException(AssertionFailed::class);
 
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
 
         (new Constructor(StubClass::class))->bindArgument('service')->toProvider($provider);
     }
 
-    /** @covers ::bindArgumentAtPosition */
     public function testBindArgumentAtPosition(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('array');
         $provider->method('provide')->willReturn(['a', 'b', 'c']);
 
@@ -376,27 +308,25 @@ final class ConstructorTest extends TestCase
             ->bindArgumentAtPosition(0)
             ->toProvider($provider);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         $result = $constructor->provide($container);
 
         static::assertSame(['a', 'b', 'c'], $result->names);
     }
 
-    /** @covers ::provide */
     public function testProvide(): void
     {
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         $result = (new Constructor(StubWithVariadicArgs::class))->provide($container);
 
         static::assertSame([], $result->names);
     }
 
-    /** @covers ::equals */
     public function testEquals(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn(StubService::class);
 
         $unbound = new Constructor(StubClass::class);
@@ -405,10 +335,9 @@ final class ConstructorTest extends TestCase
         static::assertTrue($unbound->equals($bound));
     }
 
-    /** @covers ::hash */
     public function testHash(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn(StubService::class);
 
         $unbound = new Constructor(StubClass::class);

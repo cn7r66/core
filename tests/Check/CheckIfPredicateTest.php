@@ -10,20 +10,19 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Check;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Check\CheckIfPredicate;
 
-/** @coversDefaultClass \Vivarium\Check\CheckIfPredicate */
+#[CoversClass(CheckIfPredicate::class)]
 final class CheckIfPredicateTest extends TestCase
 {
-    /** @covers ::isTrue() */
     public function testIsTrue(): void
     {
         static::assertTrue(CheckIfPredicate::isTrue(true));
         static::assertFalse(CheckIfPredicate::isTrue(false));
     }
 
-    /** @covers ::isFalse() */
     public function testIsFalse(): void
     {
         static::assertTrue(CheckIfPredicate::isFalse(false));

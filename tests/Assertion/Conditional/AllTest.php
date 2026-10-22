@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Conditional;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Conditional\All;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -17,13 +18,9 @@ use Vivarium\Assertion\String\Contains;
 use Vivarium\Assertion\String\IsLongAtLeast;
 use Vivarium\Assertion\Var\IsString;
 
-/** @coversDefaultClass \Vivarium\Assertion\Conditional\All */
+#[CoversClass(All::class)]
 final class AllTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     */
     public function testAssert(): void
     {
         static::expectNotToPerformAssertions();
@@ -34,10 +31,6 @@ final class AllTest extends TestCase
         ))->assert('Hello');
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     */
     public function testAssertException(): void
     {
         static::expectException(AssertionFailed::class);
@@ -49,10 +42,6 @@ final class AllTest extends TestCase
         ))->assert('Random');
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     */
     public function testAssertFailLater(): void
     {
         static::expectException(AssertionFailed::class);
@@ -64,7 +53,6 @@ final class AllTest extends TestCase
         ))->assert('Hi');
     }
 
-    /** @covers ::__invoke() */
     public function testInvoke(): void
     {
         $assertion = new All(
@@ -75,10 +63,6 @@ final class AllTest extends TestCase
         static::assertTrue($assertion('Hello'));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     */
     public function testInvokeFail(): void
     {
         $assertion = new All(

@@ -10,21 +10,14 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Set;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Vivarium\Collection\Pair\Pair;
 use Vivarium\Collection\Set\SetIterator;
 use Vivarium\Test\Collection\Iterator\IteratorTestCase;
 
-/** @coversDefaultClass \Vivarium\Collection\Set\SetIterator */
+#[CoversClass(SetIterator::class)]
 class SetIteratorTest extends IteratorTestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::rewind()
-     * @covers ::valid()
-     * @covers ::key()
-     * @covers ::current()
-     * @covers ::next()
-     */
     public function testSetIterator(): void
     {
         $values = [

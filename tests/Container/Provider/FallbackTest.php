@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Provider;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Container\Binding;
 use Vivarium\Container\Capability;
@@ -12,13 +13,9 @@ use Vivarium\Container\Provider;
 use Vivarium\Container\Provider\Fallback;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Container\Provider\Fallback */
+#[CoversClass(Fallback::class)]
 final class FallbackTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::provide
-     */
     public function testProvideReturnsPrimaryWhenAvailable(): void
     {
         $primary   = new Binding(StubClass::class, 'primary');
@@ -44,10 +41,6 @@ final class FallbackTest extends TestCase
         static::assertSame($primaryInstance, $provider->provide($container));
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::provide
-     */
     public function testProvideReturnsSecondaryWhenPrimaryUnavailable(): void
     {
         $primary   = new Binding(StubClass::class, 'primary');
@@ -73,22 +66,20 @@ final class FallbackTest extends TestCase
         static::assertSame($secondaryInstance, $provider->provide($container));
     }
 
-    /** @covers ::getTarget */
     public function testGetTargetReturnsUnionOfBothTypes(): void
     {
         $primary   = new Binding('string');
-        $secondary = $this->createMock(Provider::class);
+        $secondary = $this->createStub(Provider::class);
         $secondary->method('getTarget')->willReturn('int');
         $provider = new Fallback($primary, $secondary);
 
         static::assertSame('string|int', $provider->getTarget());
     }
 
-    /** @covers ::getCapabilities */
     public function testGetCapabilitiesReturnsInterceptableAndDecorableButNotInjectable(): void
     {
         $primary      = new Binding(StubClass::class);
-        $secondary    = $this->createMock(Provider::class);
+        $secondary    = $this->createStub(Provider::class);
         $provider     = new Fallback($primary, $secondary);
         $capabilities = $provider->getCapabilities();
 

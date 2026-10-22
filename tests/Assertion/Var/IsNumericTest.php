@@ -10,18 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Var;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Var\IsNumeric;
 
-/** @coversDefaultClass \Vivarium\Assertion\Var\IsNumeric */
+#[CoversClass(IsNumeric::class)]
 final class IsNumericTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(mixed $var): void
     {
         static::expectNotToPerformAssertions();
@@ -30,11 +28,7 @@ final class IsNumericTest extends TestCase
             ->assert($var);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testAssertException(mixed $var, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -44,11 +38,7 @@ final class IsNumericTest extends TestCase
             ->assert($var);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(mixed $var): void
     {
         static::assertTrue(
@@ -56,11 +46,7 @@ final class IsNumericTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(mixed $var): void
     {
         static::assertFalse(

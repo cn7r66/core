@@ -10,19 +10,15 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Comparator;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Comparator\Priority;
 use Vivarium\Comparator\ValueAndPriority;
 
-/** @coversDefaultClass \Vivarium\Comparator\ValueAndPriority */
+#[CoversClass(ValueAndPriority::class)]
 class ValueAndPriorityTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::getValue()
-     * @covers ::getPriority()
-     */
     public function testConstructorWithDefaultPriority(): void
     {
         $valueAndPriority = new ValueAndPriority('test');
@@ -31,11 +27,6 @@ class ValueAndPriorityTest extends TestCase
         static::assertEquals(Priority::NORMAL, $valueAndPriority->getPriority());
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::getValue()
-     * @covers ::getPriority()
-     */
     public function testConstructorWithCustomPriority(): void
     {
         $valueAndPriority = new ValueAndPriority('test', Priority::HIGH);
@@ -44,7 +35,6 @@ class ValueAndPriorityTest extends TestCase
         static::assertEquals(Priority::HIGH, $valueAndPriority->getPriority());
     }
 
-    /** @covers ::equals() */
     public function testEqualsWithDifferentType(): void
     {
         $valueAndPriority = new ValueAndPriority('test');
@@ -52,7 +42,6 @@ class ValueAndPriorityTest extends TestCase
         static::assertFalse($valueAndPriority->equals(new stdClass()));
     }
 
-    /** @covers ::equals() */
     public function testEqualsWithSameInstance(): void
     {
         $valueAndPriority = new ValueAndPriority('test');
@@ -60,7 +49,6 @@ class ValueAndPriorityTest extends TestCase
         static::assertTrue($valueAndPriority->equals($valueAndPriority));
     }
 
-    /** @covers ::equals() */
     public function testEqualsWithSameValue(): void
     {
         $first  = new ValueAndPriority('test', Priority::LOW);
@@ -69,7 +57,6 @@ class ValueAndPriorityTest extends TestCase
         static::assertTrue($first->equals($second));
     }
 
-    /** @covers ::equals() */
     public function testEqualsWithDifferentValue(): void
     {
         $first  = new ValueAndPriority('foo');
@@ -78,7 +65,6 @@ class ValueAndPriorityTest extends TestCase
         static::assertFalse($first->equals($second));
     }
 
-    /** @covers ::hash() */
     public function testHash(): void
     {
         $first  = new ValueAndPriority('test', Priority::LOW);

@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Set;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Set\SortedSet;
@@ -19,15 +20,9 @@ use Vivarium\Comparator\StringComparator;
 use Vivarium\Equality\Equal;
 use Vivarium\Equality\Equality;
 
-/** @coversDefaultClass \Vivarium\Collection\Set\SortedSet */
+#[CoversClass(SortedSet::class)]
 class SortedSetTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::add()
-     * @covers ::count()
-     * @covers ::toArray()
-     */
     public function testAdd(): void
     {
         /** @var int[] $values */
@@ -45,12 +40,6 @@ class SortedSetTest extends TestCase
         static::assertNotSame($set, $set->add(42));
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::remove()
-     * @covers ::count()
-     * @covers ::toArray()
-     */
     public function testRemove(): void
     {
         /** @var int[] $values */
@@ -66,10 +55,6 @@ class SortedSetTest extends TestCase
         static::assertNotSame($set, $set->remove(7));
     }
 
-    /**
-     * @covers ::clear()
-     * @covers ::isEmpty()
-     */
     public function testClear(): void
     {
         /** @var int[] $values */
@@ -82,7 +67,6 @@ class SortedSetTest extends TestCase
         static::assertTrue($set->isEmpty());
     }
 
-    /** @covers ::getIterator() */
     public function testGetIterator(): void
     {
         /** @var array<int> $values */
@@ -98,7 +82,6 @@ class SortedSetTest extends TestCase
         }
     }
 
-    /** @covers ::contains() */
     public function testContains(): void
     {
         /** @var string[] $values */
@@ -110,47 +93,41 @@ class SortedSetTest extends TestCase
         static::assertFalse($set->contains('z'));
     }
 
-    /** @covers ::contains() */
     public function testContainsWithObjects(): void
     {
-        $stub1 = $this->createMock(Equality::class);
-        $stub2 = $this->createMock(Equality::class);
-        $stub3 = $this->createMock(Equality::class);
+        $stub1 = static::createStub(Equality::class);
+        $stub2 = static::createStub(Equality::class);
+        $stub3 = static::createStub(Equality::class);
 
-        $stub2->method('equals')
-              ->with($stub1)
-              ->willReturn(false);
+        $stub2
+            ->method('equals')
+            ->willReturnMap([
+                [$stub1, false],
+                [$stub2, true],
+                [$stub3, false]
+            ]);
 
-        $stub2->method('equals')
-              ->with($stub2)
-              ->willReturn(true);
+        $comparator = static::createStub(Comparator::class);
 
-        $stub2->method('equals')
-              ->with($stub3)
-              ->willReturn(false);
-
-        $comparator = $this->createMock(Comparator::class);
-
-        $comparator->method('compare')->with($stub1, $stub1)->willReturn(0);
-        $comparator->method('compare')->with($stub1, $stub2)->willReturn(-1);
-        $comparator->method('compare')->with($stub1, $stub3)->willReturn(-1);
-        $comparator->method('compare')->with($stub2, $stub1)->willReturn(1);
-        $comparator->method('compare')->with($stub2, $stub2)->willReturn(0);
-        $comparator->method('compare')->with($stub2, $stub3)->willReturn(-1);
-        $comparator->method('compare')->with($stub3, $stub1)->willReturn(1);
-        $comparator->method('compare')->with($stub3, $stub2)->willReturn(1);
-        $comparator->method('compare')->with($stub3, $stub3)->willReturn(0);
-
+        $comparator
+            ->method('compare')
+            ->willReturnMap([
+                [$stub1, $stub1, 0],
+                [$stub1, $stub2, -1],
+                [$stub1, $stub3, -1],
+                [$stub2, $stub1, 1],
+                [$stub2, $stub2, 0],
+                [$stub2, $stub3, -1],
+                [$stub3, $stub1, 1],
+                [$stub3, $stub2, 1],
+                [$stub3, $stub3, 0],
+            ]);
+            
         $set = new SortedSet($comparator, $stub1, $stub2, $stub2, $stub3);
 
         static::assertTrue($set->contains($stub1));
     }
 
-    /**
-     * @covers ::union()
-     * @covers ::add()
-     * @covers ::toArray()
-     */
     public function testUnion(): void
     {
         /** @var int[] $values1 */
@@ -170,11 +147,6 @@ class SortedSetTest extends TestCase
         static::assertEquals($expected, $set->toArray());
     }
 
-    /**
-     * @covers ::intersection()
-     * @covers ::count()
-     * @covers ::toArray()
-     */
     public function testIntersection(): void
     {
         /** @var int[] $values1 */
@@ -195,11 +167,6 @@ class SortedSetTest extends TestCase
         static::assertEquals($expected, $set->toArray());
     }
 
-    /**
-     * @covers ::difference()
-     * @covers ::count()
-     * @covers ::toArray()
-     */
     public function testDifference(): void
     {
         /** @var int[] $values1 */
@@ -220,7 +187,6 @@ class SortedSetTest extends TestCase
         static::assertEquals($expected, $set->toArray());
     }
 
-    /** @covers ::isSubsetOf() */
     public function testIsSubsetOf(): void
     {
         /** @var int[] $values1 */
@@ -237,7 +203,6 @@ class SortedSetTest extends TestCase
         static::assertFalse($set->isSubsetOf($subset));
     }
 
-    /** @covers ::union() */
     public function testUnionImmutability(): void
     {
         /** @var int[] $values */
@@ -251,7 +216,6 @@ class SortedSetTest extends TestCase
         static::assertNotSame($set, $set1);
     }
 
-    /** @covers ::fromArray() */
     public function testFromArray(): void
     {
         /** @var int[] $values */
@@ -263,7 +227,6 @@ class SortedSetTest extends TestCase
         static::assertTrue(Equal::areEquals($set1, $set2));
     }
 
-    /** @covers ::equals() */
     public function testEquals(): void
     {
         /** @var int[] $values1 */
@@ -283,7 +246,6 @@ class SortedSetTest extends TestCase
         static::assertFalse($set1->equals(new stdClass()));
     }
 
-    /** @covers ::hash() */
     public function testHash(): void
     {
         /** @var int[] $values1 */

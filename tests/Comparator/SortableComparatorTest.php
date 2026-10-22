@@ -10,18 +10,15 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Comparator;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Comparator\Priority;
 use Vivarium\Comparator\SortableComparator;
 use Vivarium\Comparator\ValueAndPriority;
 
-/** @coversDefaultClass \Vivarium\Comparator\SortableComparator */
+#[CoversClass(SortableComparator::class)]
 class SortableComparatorTest extends TestCase
 {
-    /**
-     * @covers ::compare()
-     * @covers ::__invoke()
-     */
     public function testCompare(): void
     {
         $comparator = new SortableComparator();

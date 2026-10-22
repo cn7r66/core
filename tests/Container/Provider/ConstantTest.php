@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Provider;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Container\Container;
@@ -11,10 +12,9 @@ use Vivarium\Container\Provider\Constant;
 
 use const PHP_VERSION;
 
-/** @coversDefaultClass \Vivarium\Container\Provider\Constant */
+#[CoversClass(Constant::class)]
 final class ConstantTest extends TestCase
 {
-    /** @covers ::__construct */
     public function testConstructWithValidConstant(): void
     {
         static::expectNotToPerformAssertions();
@@ -22,7 +22,6 @@ final class ConstantTest extends TestCase
         new Constant('PHP_VERSION');
     }
 
-    /** @covers ::__construct */
     public function testConstructWithInvalidConstantThrows(): void
     {
         static::expectException(AssertionFailed::class);
@@ -30,16 +29,14 @@ final class ConstantTest extends TestCase
         new Constant('NONEXISTENT_CONSTANT');
     }
 
-    /** @covers ::provide */
     public function testProvideReturnsConstantValue(): void
     {
         $provider  = new Constant('PHP_VERSION');
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         static::assertSame(PHP_VERSION, $provider->provide($container));
     }
 
-    /** @covers ::getTarget */
     public function testGetTargetReturnsNormalizedType(): void
     {
         $provider = new Constant('PHP_VERSION');
@@ -47,7 +44,6 @@ final class ConstantTest extends TestCase
         static::assertSame('string', $provider->getTarget());
     }
 
-    /** @covers ::getCapabilities */
     public function testGetCapabilitiesReturnsEmptySet(): void
     {
         $provider     = new Constant('PHP_VERSION');

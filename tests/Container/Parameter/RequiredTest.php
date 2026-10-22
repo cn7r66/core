@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Parameter;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -22,10 +24,9 @@ use Vivarium\Test\Container\Stub\StubBase;
 use Vivarium\Test\Container\Stub\StubClass;
 use Vivarium\Test\Container\Stub\StubWithOptionalArg;
 
-/** @coversDefaultClass \Vivarium\Container\Parameter\Required */
+#[CoversClass(Required::class)]
 final class RequiredTest extends TestCase
 {
-    /** @covers ::__construct */
     public function testConstructor(): void
     {
         static::assertInstanceOf(
@@ -34,10 +35,7 @@ final class RequiredTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct
-     * @dataProvider provideInvalidConstructorArguments
-     */
+    #[DataProvider('provideInvalidConstructorArguments')]
     public function testConstructorException(string $name, string $type): void
     {
         static::expectException(AssertionFailed::class);
@@ -54,10 +52,6 @@ final class RequiredTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::getName
-     */
     public function testGetName(): void
     {
         $parameter = new Required('name', 'string', 'App\\Context');
@@ -65,10 +59,6 @@ final class RequiredTest extends TestCase
         static::assertSame('name', $parameter->getName());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::getType
-     */
     public function testGetType(): void
     {
         $parameter = new Required('name', 'string', 'App\\Context');
@@ -76,10 +66,6 @@ final class RequiredTest extends TestCase
         static::assertSame('string', $parameter->getType());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::getArgument
-     */
     public function testGetArgument(): void
     {
         $parameter = new Required('name', 'string', 'App\\Context');
@@ -87,14 +73,9 @@ final class RequiredTest extends TestCase
         static::assertInstanceOf(Provider::class, $parameter->getArgument());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::withArgument
-     * @covers ::getArgument
-     */
     public function testWithArgument(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
 
         $original = new Required('name', 'string', 'App\\Context');
@@ -106,14 +87,9 @@ final class RequiredTest extends TestCase
         static::assertSame($provider, $modified->getArgument());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::withArgument
-     * @covers ::getArgument
-     */
     public function testWithArgumentException(): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
 
         static::expectException(AssertionFailed::class);
@@ -121,13 +97,7 @@ final class RequiredTest extends TestCase
         (new Required('name', 'int', 'App\\Context'))->withArgument($provider);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::withArgument
-     * @covers ::isExplicit
-     * @covers ::getArgument
-     * @dataProvider provideFreshAndBoundParameters
-     */
+    #[DataProvider('provideFreshAndBoundParameters')]
     public function testIsExplicit(Required $parameter, bool $expected): void
     {
         static::assertSame($expected, $parameter->isExplicit());
@@ -148,11 +118,7 @@ final class RequiredTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::canReplace
-     * @dataProvider provideReplacementPairs
-     */
+    #[DataProvider('provideReplacementPairs')]
     public function testCanReplace(Required $parameter, ParameterContract $base, bool $expected): void
     {
         static::assertSame($expected, $parameter->canReplace($base));
@@ -210,10 +176,6 @@ final class RequiredTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::canBeOmitted
-     */
     public function testCanBeOmitted(): void
     {
         $parameter = new Required('name', 'string', 'App\\Context');

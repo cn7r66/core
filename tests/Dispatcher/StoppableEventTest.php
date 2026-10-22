@@ -10,17 +10,14 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Dispatcher;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Vivarium\Dispatcher\StoppableEvent;
 use Vivarium\Test\Dispatcher\Stub\StubStoppableEvent;
 
-/** @coversDefaultClass \Vivarium\Dispatcher\StoppableEvent */
+#[CoversClass(StoppableEvent::class)]
 final class StoppableEventTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::stopPropagation()
-     * @covers ::isPropagationStopped()
-     */
     public function testPropagation(): void
     {
         $event = new StubStoppableEvent();

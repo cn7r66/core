@@ -4,20 +4,18 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Type;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Type\IsClassOrInterface;
 use Vivarium\Test\Assertion\Stub\Stub;
 use Vivarium\Test\Assertion\Stub\StubClass;
 
-/** @coversDefaultClass \Vivarium\Assertion\Type\IsClassOrInterface */
+#[CoversClass(IsClassOrInterface::class)]
 final class IsClassOrInterfaceTest extends TestCase
 {
-    /**
-     * @covers ::assert()
-     * @covers ::__construct()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $type): void
     {
         static::expectNotToPerformAssertions();
@@ -26,12 +24,8 @@ final class IsClassOrInterfaceTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::assert()
-     * @covers ::__construct()
-     * @dataProvider provideFailure()
-     * @dataProvider provideInvalid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideInvalid')]
     public function testAssertException(string|int $type, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -41,11 +35,7 @@ final class IsClassOrInterfaceTest extends TestCase
             ->assert($type);
     }
 
-    /**
-     * @covers ::__invoke()
-     * @covers ::__construct()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(string $type): void
     {
         static::assertTrue(
@@ -53,11 +43,7 @@ final class IsClassOrInterfaceTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__invoke()
-     * @covers ::__construct()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string $type): void
     {
         static::assertFalse(

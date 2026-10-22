@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Map;
 
 use OutOfBoundsException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Map\HashMap;
@@ -24,10 +25,9 @@ use Vivarium\Test\Collection\Stub\KeyWithHashCollision;
 use function count;
 use function rand;
 
-/** @coversDefaultClass \Vivarium\Collection\Map\HashMap */
+#[CoversClass(HashMap::class)]
 class HashMapTest extends TestCase
 {
-    /** @covers ::__construct() */
     public function testEmptyConstructor(): void
     {
         $set = new HashSet();
@@ -35,7 +35,6 @@ class HashMapTest extends TestCase
         static::assertCount(0, $set);
     }
 
-    /** @covers ::__construct() */
     public function testConstructionWithPairs(): void
     {
         $map = new HashMap(
@@ -47,11 +46,6 @@ class HashMapTest extends TestCase
         static::assertCount(3, $map);
     }
 
-    /**
-     * @covers ::put()
-     * @covers ::count()
-     * @covers ::searchByKey()
-     */
     public function testPut(): void
     {
         /** @var Map<int, string> $map */
@@ -69,11 +63,6 @@ class HashMapTest extends TestCase
         static::assertNotSame($map, $map->put(5, 'e'));
     }
 
-    /**
-     * @covers ::put()
-     * @covers ::count()
-     * @covers ::searchByPair()
-     */
     public function testPutHashCollision(): void
     {
         /** @var Map<KeyWithHashCollision, string> $map */
@@ -90,7 +79,6 @@ class HashMapTest extends TestCase
         static::assertEquals('z', $map->get(new KeyWithHashCollision(3)));
     }
 
-    /** @covers ::get() */
     public function testGet(): void
     {
         $keys   = [1, 2, 3, 4];
@@ -104,10 +92,9 @@ class HashMapTest extends TestCase
         static::assertEquals($values[$index], $value);
     }
 
-    /** @covers ::get() */
     public function testGetWithEquality(): void
     {
-        $equality = $this->createMock(Equality::class);
+        $equality = $this->createStub(Equality::class);
         $equality->method('hash')
                  ->willReturn('a4bbe8f088dbfba72434f05585ed0ce4ecb3c952');
 
@@ -122,7 +109,6 @@ class HashMapTest extends TestCase
         static::assertEquals(1, $value);
     }
 
-    /** @covers ::get() */
     public function testGetException(): void
     {
         static::expectException(OutOfBoundsException::class);
@@ -134,11 +120,6 @@ class HashMapTest extends TestCase
         $map->get(new stdClass());
     }
 
-    /**
-     * @covers ::remove()
-     * @covers ::containsKey()
-     * @covers ::count()
-     */
     public function testRemove(): void
     {
         $keys   = [1, 2, 3, 4];
@@ -155,11 +136,6 @@ class HashMapTest extends TestCase
         static::assertSame($map, $map->remove(42));
     }
 
-    /**
-     * @covers ::remove()
-     * @covers ::count()
-     * @covers ::searchByKey()
-     */
     public function testRemoveHashCollision(): void
     {
         /** @var Map<KeyWithHashCollision, string> $map */
@@ -177,7 +153,6 @@ class HashMapTest extends TestCase
         static::assertCount(1, $map);
     }
 
-    /** @covers ::containsValue() */
     public function testContainsValue(): void
     {
         $keys   = [1, 2, 3, 4];
@@ -190,7 +165,6 @@ class HashMapTest extends TestCase
         static::assertFalse($map->containsValue(-42));
     }
 
-    /** @covers ::values() */
     public function testValues(): void
     {
         $keys   = [1, 2, 3, 4];
@@ -202,7 +176,6 @@ class HashMapTest extends TestCase
         static::assertEquals($values, $vals);
     }
 
-    /** @covers ::keys() */
     public function testKeys(): void
     {
         $keys   = [1, 2, 3, 4];
@@ -214,7 +187,6 @@ class HashMapTest extends TestCase
         static::assertEquals($keys, $keyz);
     }
 
-    /** @covers ::pairs() */
     public function testPairs(): void
     {
         /** @var array<int> $keys */
@@ -231,11 +203,6 @@ class HashMapTest extends TestCase
         }
     }
 
-    /**
-     * @covers ::clear()
-     * @covers ::isEmpty()
-     * @covers ::count()
-     */
     public function testClear(): void
     {
         $keys   = [1, 2, 3, 4];
@@ -248,7 +215,6 @@ class HashMapTest extends TestCase
         static::assertTrue($map->isEmpty());
     }
 
-    /** @covers ::getIterator */
     public function testGetIterator(): void
     {
         $map = new HashMap(
@@ -271,10 +237,6 @@ class HashMapTest extends TestCase
         }
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::fromKeyValue()
-     */
     public function testFromKeyValue(): void
     {
         $keys   = [1, 2, 3];
@@ -291,7 +253,6 @@ class HashMapTest extends TestCase
         static::assertTrue(Equal::areEquals($map1, $map2));
     }
 
-    /** @covers ::equals() */
     public function testEquality(): void
     {
         $keys   = [1, 2, 3];
@@ -311,7 +272,6 @@ class HashMapTest extends TestCase
         static::assertFalse($map1->equals($map3));
     }
 
-    /** @covers ::hash() */
     public function testHash(): void
     {
         $keys   = [1, 2, 3];

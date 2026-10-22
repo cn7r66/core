@@ -10,18 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Numeric;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Numeric\IsLessOrEqualThan;
 
-/** @coversDefaultClass \Vivarium\Assertion\Numeric\IsLessOrEqualThan */
+#[CoversClass(IsLessOrEqualThan::class)]
 final class IsLessOrEqualThanTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(int|float $test, int|float $limit): void
     {
         static::expectNotToPerformAssertions();
@@ -30,12 +28,8 @@ final class IsLessOrEqualThanTest extends TestCase
             ->assert($test);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideInvalid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideInvalid')]
     public function testAssertException(int|float|string $test, int|float $limit, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -45,11 +39,7 @@ final class IsLessOrEqualThanTest extends TestCase
             ->assert($test);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testInvoke(int|float $test, int|float $limit): void
     {
         static::assertTrue(
@@ -57,11 +47,7 @@ final class IsLessOrEqualThanTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(int|float $test, int|float $limit): void
     {
         static::assertFalse(

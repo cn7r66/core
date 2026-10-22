@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Provider;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Container\Capability;
@@ -13,18 +15,14 @@ use Vivarium\Test\Assertion\Stub\StubClass;
 
 use function in_array;
 
-/** @coversDefaultClass \Vivarium\Container\Provider\Instance */
+#[CoversClass(Instance::class)]
 final class InstanceTest extends TestCase
 {
-    /**
-     * @dataProvider provideWrappedValues
-     * @covers ::__construct
-     * @covers ::provide
-     */
+    #[DataProvider('provideWrappedValues')]
     public function testProvideReturnsWrappedValue(mixed $value): void
     {
         $provider  = new Instance($value);
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         static::assertSame($value, $provider->provide($container));
     }
@@ -38,10 +36,7 @@ final class InstanceTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideValuesAndTheirTargets
-     * @covers ::getTarget
-     */
+    #[DataProvider('provideValuesAndTheirTargets')]
     public function testGetTargetReturnsTypeOfValue(mixed $value, string $expected): void
     {
         static::assertSame($expected, (new Instance($value))->getTarget());
@@ -56,11 +51,7 @@ final class InstanceTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::getCapabilities
-     * @dataProvider provideCapabilityCases
-     */
+    #[DataProvider('provideCapabilityCases')]
     public function testReportsCapabilitiesByValueKind(mixed $value, Capability $capability, bool $expected): void
     {
         $capabilities = (new Instance($value))->getCapabilities();

@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Injection;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -21,13 +23,10 @@ use Vivarium\Test\Container\Stub\StubService;
 use Vivarium\Test\Container\Stub\StubWithPrivateMethodInjection;
 use Vivarium\Test\Container\Stub\StubWithWrongReturn;
 
-/** @coversDefaultClass \Vivarium\Container\Injection\ImmutableMethodCall */
+#[CoversClass(ImmutableMethodCall::class)]
 final class ImmutableMethodCallTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     * @dataProvider provideUncallableMethods
-     */
+    #[DataProvider('provideUncallableMethods')]
     public function testConstructorThrowsForUncallableMethod(string $class, string $method): void
     {
         static::expectException(AssertionFailed::class);
@@ -44,15 +43,10 @@ final class ImmutableMethodCallTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     * @covers ::resolveArguments
-     */
     public function testEnhanceReturnsNewInstanceWithDependencyInjected(): void
     {
         $service   = new StubService();
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('get')->willReturn($service);
 
         $initialService = new StubService();
@@ -66,45 +60,31 @@ final class ImmutableMethodCallTest extends TestCase
         static::assertSame($initialService, $instance->getService());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     * @covers ::resolveArguments
-     */
     public function testEnhanceFailsWhenInstanceTypeIsWrong(): void
     {
         static::expectException(AssertionFailed::class);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $injection = new ImmutableMethodCall(StubClass::class, 'withService');
         $injection->enhance(new StubService(), $container);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::enhance
-     * @covers ::resolveArguments
-     */
     public function testEnhanceFailsWhenMethodReturnsWrongType(): void
     {
         static::expectException(AssertionFailed::class);
 
         $service   = new StubService();
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('get')->willReturn($service);
 
         $injection = new ImmutableMethodCall(StubWithWrongReturn::class, 'withSomething');
         $injection->enhance(new StubWithWrongReturn(), $container);
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::accept
-     * @dataProvider provideAcceptTargets
-     */
+    #[DataProvider('provideAcceptTargets')]
     public function testAcceptAnswersWhetherTargetHasMethod(string $target, bool $expected): void
     {
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn($target);
 
         static::assertSame(
@@ -123,10 +103,6 @@ final class ImmutableMethodCallTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::getSlot
-     */
     public function testGetSlotReturnsMethodName(): void
     {
         $injection = new ImmutableMethodCall(StubClass::class, 'withService');
@@ -134,20 +110,16 @@ final class ImmutableMethodCallTest extends TestCase
         static::assertSame('withService', $injection->getSlot());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::bindArgument
-     */
     public function testBindArgument(): void
     {
         $boundService     = new StubService();
         $containerService = new StubService();
 
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn(StubService::class);
         $provider->method('provide')->willReturn($boundService);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('get')->willReturn($containerService);
 
         $original = new ImmutableMethodCall(StubClass::class, 'withService');
@@ -161,20 +133,16 @@ final class ImmutableMethodCallTest extends TestCase
         static::assertSame($containerService, $original->enhance($instance, $container)->getService());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::bindArgumentAtPosition
-     */
     public function testBindArgumentAtPosition(): void
     {
         $boundService     = new StubService();
         $containerService = new StubService();
 
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn(StubService::class);
         $provider->method('provide')->willReturn($boundService);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
         $container->method('get')->willReturn($containerService);
 
         $original = new ImmutableMethodCall(StubClass::class, 'withService');
@@ -188,11 +156,7 @@ final class ImmutableMethodCallTest extends TestCase
         static::assertSame($containerService, $original->enhance($instance, $container)->getService());
     }
 
-    /**
-     * @dataProvider provideEqualMethodCalls
-     * @covers ::__construct
-     * @covers ::equals
-     */
+    #[DataProvider('provideEqualMethodCalls')]
     public function testEqualsReturnsTrueForEqualMethodCalls(
         ImmutableMethodCall $first,
         ImmutableMethodCall $second,
@@ -200,21 +164,13 @@ final class ImmutableMethodCallTest extends TestCase
         static::assertTrue($first->equals($second));
     }
 
-    /**
-     * @dataProvider provideEqualMethodCalls
-     * @covers ::__construct
-     * @covers ::hash
-     */
+    #[DataProvider('provideEqualMethodCalls')]
     public function testHashIsSameForEqualMethodCalls(ImmutableMethodCall $first, ImmutableMethodCall $second): void
     {
         static::assertSame($first->hash(), $second->hash());
     }
 
-    /**
-     * @dataProvider provideDifferentObjects
-     * @covers ::__construct
-     * @covers ::equals
-     */
+    #[DataProvider('provideDifferentObjects')]
     public function testEqualsReturnsFalseForDifferentObjects(ImmutableMethodCall $first, object $second): void
     {
         static::assertFalse($first->equals($second));

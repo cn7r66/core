@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Throwable;
 use Vivarium\Assertion\Exception\AssertionFailed;
@@ -41,15 +43,9 @@ use Vivarium\Test\Container\Stub\StubWithUnionTypedArg;
 use Vivarium\Test\Container\Stub\StubWithValidFullSignature;
 use Vivarium\Type\Exception\NotAType;
 
-/** @coversDefaultClass \Vivarium\Container\Signature */
+#[CoversClass(Signature::class)]
 final class SignatureTest extends TestCase
 {
-    /**
-     * @covers ::ofConstructor
-     * @covers ::__construct
-     * @covers ::fromReflector
-     * @covers ::fromParameter
-     */
     public function testOfConstructor(): void
     {
         $noConstructor = Signature::ofConstructor(StubWithNoConstructor::class);
@@ -74,13 +70,7 @@ final class SignatureTest extends TestCase
         static::assertSame('int', $full->getParameter(2)->getType());
     }
 
-    /**
-     * @covers ::ofConstructor
-     * @covers ::__construct
-     * @covers ::fromReflector
-     * @covers ::fromParameter
-     * @dataProvider provideUnsupportedClasses
-     */
+    #[DataProvider('provideUnsupportedClasses')]
     public function testOfConstructorException(string $class, string $exception): void
     {
         static::expectException($exception);
@@ -97,12 +87,6 @@ final class SignatureTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::ofConstructor
-     * @covers ::__construct
-     * @covers ::fromReflector
-     * @covers ::fromParameter
-     */
     public function testOfConstructorWithNullableUnionParameter(): void
     {
         $signature = Signature::ofConstructor(StubWithFullSignature::class);
@@ -119,12 +103,6 @@ final class SignatureTest extends TestCase
         static::assertSame('string', $signature->getParameter(2)->getType());
     }
 
-    /**
-     * @covers ::ofMethod
-     * @covers ::__construct
-     * @covers ::fromReflector
-     * @covers ::fromParameter
-     */
     public function testOfMethod(): void
     {
         $signature = Signature::ofMethod(StubFactory::class, 'create');
@@ -135,12 +113,6 @@ final class SignatureTest extends TestCase
         static::assertSame(StubService::class, $signature->getParameter(0)->getType());
     }
 
-    /**
-     * @covers ::ofMethod
-     * @covers ::__construct
-     * @covers ::fromReflector
-     * @covers ::fromParameter
-     */
     public function testOfMethodException(): void
     {
         static::expectException(AssertionFailed::class);
@@ -148,13 +120,7 @@ final class SignatureTest extends TestCase
         Signature::ofMethod(StubService::class, 'nonExistentMethod');
     }
 
-    /**
-     * @covers ::ofFunction
-     * @covers ::__construct
-     * @covers ::fromReflector
-     * @covers ::fromParameter
-     * @dataProvider provideFunctionsWithParameterCount
-     */
+    #[DataProvider('provideFunctionsWithParameterCount')]
     public function testOfFunction(callable $fn, int $expectedCount): void
     {
         $signature = Signature::ofFunction($fn);
@@ -174,13 +140,7 @@ final class SignatureTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::ofFunction
-     * @covers ::__construct
-     * @covers ::fromReflector
-     * @covers ::fromParameter
-     * @dataProvider provideNonFunctionCallables
-     */
+    #[DataProvider('provideNonFunctionCallables')]
     public function testOfFunctionException(callable $fn): void
     {
         static::expectException(AssertionFailed::class);
@@ -197,10 +157,7 @@ final class SignatureTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::count
-     * @dataProvider provideClassesWithParameterCount
-     */
+    #[DataProvider('provideClassesWithParameterCount')]
     public function testCount(string $class, int $expected): void
     {
         static::assertSame($expected, Signature::ofConstructor($class)->count());
@@ -215,10 +172,7 @@ final class SignatureTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::getParameter
-     * @dataProvider provideMultipleArgsPositionsAndNames
-     */
+    #[DataProvider('provideMultipleArgsPositionsAndNames')]
     public function testGetParameter(int $position, string $name): void
     {
         $signature = Signature::ofConstructor(StubWithMultipleArgs::class);
@@ -240,10 +194,7 @@ final class SignatureTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::getParameter
-     * @dataProvider provideInvalidPositions
-     */
+    #[DataProvider('provideInvalidPositions')]
     public function testGetParameterException(int $position): void
     {
         static::expectException(AssertionFailed::class);
@@ -264,16 +215,12 @@ final class SignatureTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::positionOf
-     * @dataProvider provideMultipleArgsPositionsAndNames
-     */
+    #[DataProvider('provideMultipleArgsPositionsAndNames')]
     public function testPositionOf(int $position, string $name): void
     {
         static::assertSame($position, Signature::ofConstructor(StubWithMultipleArgs::class)->positionOf($name));
     }
 
-    /** @covers ::positionOf */
     public function testPositionOfException(): void
     {
         static::expectException(AssertionFailed::class);
@@ -281,10 +228,7 @@ final class SignatureTest extends TestCase
         Signature::ofConstructor(StubWithMultipleArgs::class)->positionOf('unknown');
     }
 
-    /**
-     * @covers ::hasArgument
-     * @dataProvider provideFreshAndBoundPositions
-     */
+    #[DataProvider('provideFreshAndBoundPositions')]
     public function testHasArgument(Signature $signature, int $position, bool $expected): void
     {
         static::assertSame($expected, $signature->hasArgument($position));
@@ -310,10 +254,7 @@ final class SignatureTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::hasArgument
-     * @dataProvider provideInvalidPositions
-     */
+    #[DataProvider('provideInvalidPositions')]
     public function testHasArgumentException(int $position): void
     {
         static::expectException(AssertionFailed::class);
@@ -321,10 +262,7 @@ final class SignatureTest extends TestCase
         Signature::ofConstructor(StubWithMultipleArgs::class)->hasArgument($position);
     }
 
-    /**
-     * @covers ::withArgument
-     * @dataProvider provideAcceptedBindings
-     */
+    #[DataProvider('provideAcceptedBindings')]
     public function testWithArgument(
         Signature $signature,
         int $position,
@@ -374,10 +312,7 @@ final class SignatureTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::withArgument
-     * @dataProvider provideRejectedBindings
-     */
+    #[DataProvider('provideRejectedBindings')]
     public function testWithArgumentException(Signature $signature, int $position, Provider $provider): void
     {
         static::expectException(AssertionFailed::class);
@@ -406,7 +341,6 @@ final class SignatureTest extends TestCase
         ];
     }
 
-    /** @covers ::getArguments */
     public function testGetArguments(): void
     {
         $signature = Signature::ofConstructor(StubWithValidFullSignature::class);
@@ -417,13 +351,13 @@ final class SignatureTest extends TestCase
         static::assertArrayHasKey(1, $arguments);
         static::assertArrayHasKey(2, $arguments);
 
-        $container = $this->createMock(Container::class);
+        $container = $this->createStub(Container::class);
 
         static::assertSame('default', $arguments[1]->provide($container));
         static::assertSame('array', $arguments[2]->getTarget());
         static::assertSame([], $arguments[2]->provide($container));
 
-        $provider = $this->createMock(Provider::class);
+        $provider = $this->createStub(Provider::class);
         $provider->method('getTarget')->willReturn('string');
 
         $bound = $signature->withArgument(1, $provider);
@@ -431,12 +365,7 @@ final class SignatureTest extends TestCase
         static::assertSame($provider, $bound->getArguments()[1]);
     }
 
-    /**
-     * @covers ::project
-     * @covers ::projectParameters
-     * @covers ::projectParameter
-     * @dataProvider provideExplicitBindingProjections
-     */
+    #[DataProvider('provideExplicitBindingProjections')]
     public function testProjectKeepsTheWinningExplicitBinding(
         Signature $source,
         Signature $target,
@@ -472,11 +401,6 @@ final class SignatureTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::project
-     * @covers ::projectParameters
-     * @covers ::projectParameter
-     */
     public function testProjectLeavesTheTargetDefaultWhenNeitherIsBound(): void
     {
         $projected = Signature::ofConstructor(StubWithRequiredStringArg::class)
@@ -489,11 +413,6 @@ final class SignatureTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::project
-     * @covers ::projectParameters
-     * @covers ::projectParameter
-     */
     public function testProjectResolvesNamesThroughTheTarget(): void
     {
         $projected = Signature::ofConstructor(StubWithRequiredStringArg::class)
@@ -502,11 +421,6 @@ final class SignatureTest extends TestCase
         static::assertSame(0, $projected->positionOf('value'));
     }
 
-    /**
-     * @covers ::project
-     * @covers ::projectParameters
-     * @covers ::projectParameter
-     */
     public function testProjectLetsAClassTypedTargetWidenFromASubclassTypedSource(): void
     {
         $projected = Signature::ofConstructor(StubWithSubclassTypedArg::class)
@@ -516,11 +430,6 @@ final class SignatureTest extends TestCase
         static::assertSame(StubBase::class, $projected->getParameter(0)->getType());
     }
 
-    /**
-     * @covers ::project
-     * @covers ::projectParameters
-     * @covers ::projectParameter
-     */
     public function testProjectLetsAVariadicTargetShadowAnOptionalSource(): void
     {
         $projected = Signature::ofConstructor(StubForVariadicShadowSource::class)
@@ -531,11 +440,6 @@ final class SignatureTest extends TestCase
         static::assertSame('array', $projected->getArguments()[0]->getTarget());
     }
 
-    /**
-     * @covers ::project
-     * @covers ::projectParameters
-     * @covers ::projectParameter
-     */
     public function testProjectOmitsAnExtraOptionalTargetPosition(): void
     {
         $projected = Signature::ofConstructor(StubWithNoArgs::class)
@@ -545,11 +449,6 @@ final class SignatureTest extends TestCase
         static::assertFalse($projected->hasArgument(0));
     }
 
-    /**
-     * @covers ::project
-     * @covers ::projectParameters
-     * @covers ::projectParameter
-     */
     public function testProjectOmitsAnExtraVariadicTargetPosition(): void
     {
         $projected = Signature::ofConstructor(StubWithNoArgs::class)
@@ -558,14 +457,8 @@ final class SignatureTest extends TestCase
         static::assertSame(1, $projected->count());
     }
 
-    /**
-     * @param class-string<Throwable> $exception
-     *
-     * @covers ::project
-     * @covers ::projectParameters
-     * @covers ::projectParameter
-     * @dataProvider provideIncompatibleProjections
-     */
+    /** @param class-string<Throwable> $exception */
+    #[DataProvider('provideIncompatibleProjections')]
     public function testProjectException(Signature $source, Signature $target, string $exception): void
     {
         static::expectException($exception);

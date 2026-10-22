@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Conditional;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Traversable;
 use Vivarium\Assertion\Conditional\Each;
@@ -19,19 +20,15 @@ use Vivarium\Assertion\Object\IsInstanceOf;
 use Vivarium\Assertion\String\IsLongAtLeast;
 use Vivarium\Assertion\Var\IsInteger;
 
-/** @coversDefaultClass \Vivarium\Assertion\Conditional\Each */
+#[CoversClass(Each::class)]
 final class EachTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     */
     public function testAssert(): void
     {
         static::expectException(AssertionFailed::class);
         static::expectExceptionMessage('Element at index 0 failed the assertion.');
 
-        $stub = $this->createMock(Traversable::class);
+        $stub = $this->createStub(Traversable::class);
 
         (new Each(
             new IsInstanceOf(Traversable::class),
@@ -46,10 +43,6 @@ final class EachTest extends TestCase
         ))->assert([42, 9, 3, 5]);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     */
     public function testAssertFailLater(): void
     {
         static::expectException(AssertionFailed::class);
@@ -60,10 +53,6 @@ final class EachTest extends TestCase
         ))->assert([0, 9, '3', 42]);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     */
     public function testAssertWithoutArray(): void
     {
         static::expectException(AssertionFailed::class);
@@ -74,7 +63,6 @@ final class EachTest extends TestCase
         ))->assert(42);
     }
 
-    /** @covers ::__invoke() */
     public function testInvoke(): void
     {
         $eachInClosedRange = new Each(
@@ -85,7 +73,6 @@ final class EachTest extends TestCase
         static::assertFalse($eachInClosedRange([0, 9, 3, 42]));
     }
 
-    /** @covers ::__invoke() */
     public function testInvokeWithoutArray(): void
     {
         static::expectException(AssertionFailed::class);

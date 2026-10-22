@@ -10,13 +10,13 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Container\Collector;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Container\Collector\NoOpCollector;
 
-/** @coversDefaultClass \Vivarium\Container\Collector\NoOpCollector */
+#[CoversClass(NoOpCollector::class)]
 final class NoOpCollectorTest extends TestCase
 {
-    /** @covers ::collect */
     public function testCollectRunsWithoutError(): void
     {
         $this->expectNotToPerformAssertions();

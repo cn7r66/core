@@ -10,18 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\String;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\String\IsLong;
 
-/** @coversDefaultClass \Vivarium\Assertion\String\IsLong */
+#[CoversClass(IsLong::class)]
 final class IsLongTest extends TestCase
 {
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideSuccess()
-     */
+    #[DataProvider('provideSuccess')]
     public function testAssert(string $string, int $length, string $encoding): void
     {
         static::expectNotToPerformAssertions();
@@ -30,12 +28,8 @@ final class IsLongTest extends TestCase
             ->assert($string);
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::assert()
-     * @dataProvider provideFailure()
-     * @dataProvider provideNonValid()
-     */
+    #[DataProvider('provideFailure')]
+    #[DataProvider('provideNonValid')]
     public function testAssertException(string|int $string, int $length, string $encoding, string $message): void
     {
         static::expectException(AssertionFailed::class);
@@ -45,11 +39,7 @@ final class IsLongTest extends TestCase
             ->assert($string);
     }
 
-        /**
-         * @covers ::__construct()
-         * @covers ::__invoke()
-         * @dataProvider provideSuccess()
-         */
+        #[DataProvider('provideSuccess')]
     public function testInvoke(string $string, int $length, string $encoding): void
     {
         static::assertTrue(
@@ -57,11 +47,7 @@ final class IsLongTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::__invoke()
-     * @dataProvider provideFailure()
-     */
+    #[DataProvider('provideFailure')]
     public function testInvokeFailure(string|int $string, int $length, string $encoding): void
     {
         static::assertFalse(
