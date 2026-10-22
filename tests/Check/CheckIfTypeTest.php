@@ -17,7 +17,7 @@ use Vivarium\Check\CheckIfType;
 #[CoversClass(CheckIfType::class)]
 final class CheckIfTypeTest extends CheckTestCase
 {
-    public const NAMESPACE = 'Vivarium\Test\Assertion\Type';
+    public const string NAMESPACE = 'Vivarium\Test\Assertion\Type';
 
     #[DataProvider('provideMethods')]
     public function testCallStatic(string $method): void

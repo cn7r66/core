@@ -34,9 +34,9 @@ use function substr;
 
 final class Binding implements Equality
 {
-    public const GLOBAL = '$GLOBAL';
+    public const string GLOBAL = '$GLOBAL';
 
-    public const DEFAULT = '$DEFAULT';
+    public const string DEFAULT = '$DEFAULT';
 
     public function __construct(
         private string $type,

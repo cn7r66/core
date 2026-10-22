@@ -12,12 +12,12 @@ namespace Vivarium\Test\Container\Stub;
 
 final class StubClass extends StubBase
 {
-    public const INT_CONSTANT    = 42;
-    public const STRING_CONSTANT = 'hello';
-    public const FLOAT_CONSTANT  = 3.14;
-    public const BOOL_CONSTANT   = true;
-    public const NULL_CONSTANT   = null;
-    public const ARRAY_CONSTANT  = ['foo', 'bar'];
+    public const int INT_CONSTANT       = 42;
+    public const string STRING_CONSTANT = 'hello';
+    public const float FLOAT_CONSTANT   = 3.14;
+    public const true BOOL_CONSTANT     = true;
+    public const null NULL_CONSTANT     = null;
+    public const array ARRAY_CONSTANT   = ['foo', 'bar'];
 
     public string $property;
 

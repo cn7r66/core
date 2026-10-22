@@ -17,7 +17,7 @@ use Vivarium\Check\CheckIfString;
 #[CoversClass(CheckIfString::class)]
 final class CheckIfStringTest extends CheckTestCase
 {
-    public const NAMESPACE = 'Vivarium\Test\Assertion\String';
+    public const string NAMESPACE = 'Vivarium\Test\Assertion\String';
 
     #[DataProvider('provideMethods')]
     public function testCallStatic(string $method): void

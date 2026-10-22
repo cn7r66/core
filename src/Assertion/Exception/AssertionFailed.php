@@ -15,9 +15,13 @@ use Vivarium\Assertion\Failure;
 
 final class AssertionFailed extends InvalidArgumentException
 {
-    public function __construct(
-        private Failure $failure,
-        private mixed $value,
-    ) {
+    public function __construct(private Failure $failure)
+    {
+        parent::__construct($failure->format());
+    }
+
+    public function getFailure(): Failure
+    {
+        return $this->failure;
     }
 }

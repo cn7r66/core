@@ -17,7 +17,7 @@ use Vivarium\Check\CheckIfElement;
 #[CoversClass(CheckIfElement::class)]
 final class CheckIfElementTest extends CheckTestCase
 {
-    public const NAMESPACE = 'Vivarium\Test\Assertion\Comparison';
+    public const string NAMESPACE = 'Vivarium\Test\Assertion\Comparison';
 
     #[DataProvider('provideMethods')]
     public function testCallStatic(string $method): void

@@ -34,12 +34,9 @@ abstract class BaseAssertion implements Assertion
             ->assert($value);
 
         if (! $this->condition($value)) {
-            $failure = $this->failure();
+            $failure = $this->failure($value);
 
-            throw new AssertionFailed(
-                $message === '' ? $failure : $failure->withTemplate($message),
-                $value,
-            );
+            throw new AssertionFailed($message === '' ? $failure : $failure->withTemplate($message));
         }
     }
 
@@ -60,5 +57,6 @@ abstract class BaseAssertion implements Assertion
     /** @param D $value */
     abstract protected function condition(mixed $value): bool;
 
-    abstract protected function failure(): Failure;
+    /** @param D $value */
+    abstract protected function failure(mixed $value): Failure;
 }

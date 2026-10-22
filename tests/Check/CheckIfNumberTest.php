@@ -17,7 +17,7 @@ use Vivarium\Check\CheckIfNumber;
 #[CoversClass(CheckIfNumber::class)]
 final class CheckIfNumberTest extends CheckTestCase
 {
-    public const NAMESPACE = 'Vivarium\Test\Assertion\Numeric';
+    public const string NAMESPACE = 'Vivarium\Test\Assertion\Numeric';
 
     #[DataProvider('provideMethods')]
     public function testCallStatic(string $method): void

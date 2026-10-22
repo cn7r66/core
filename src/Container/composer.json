@@ -12,7 +12,7 @@
         }
     ],
     "require": {
-        "php": ">=8.1",
+        "php": "^8.5",
         "psr/container": "^2.0",
         "vivarium/assertion": "^0.1",
         "vivarium/check": "^0.1",

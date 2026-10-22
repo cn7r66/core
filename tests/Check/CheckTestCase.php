@@ -21,9 +21,9 @@ use function ucfirst;
 
 abstract class CheckTestCase extends TestCase
 {
-    public const SUCCESS = 'provideSuccess';
+    public const string SUCCESS = 'provideSuccess';
 
-    public const FAILURE = 'provideFailure';
+    public const string FAILURE = 'provideFailure';
 
     protected function doTest(string|object $class, string $method, string $namespace): void
     {

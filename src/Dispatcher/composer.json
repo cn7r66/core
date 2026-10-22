@@ -12,7 +12,7 @@
         }
     ],
     "require": {
-        "php": ">=8.1",
+        "php": "^8.5",
         "vivarium/collection": "^0.1",
         "vivarium/comparator": "^0.1",
         "vivarium/equality": "^0.1"

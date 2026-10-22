@@ -26,9 +26,9 @@ use function count;
  */
 final class SortedSet implements Set
 {
-    private const PLACEHOLDER = 1;
+    private const int PLACEHOLDER = 1;
 
-    private const START = 0;
+    private const int START = 0;
 
     /** @var Map<T, int>*/
     private Map $map;

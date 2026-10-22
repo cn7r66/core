@@ -13,9 +13,7 @@ namespace Vivarium\Assertion\Var;
 use Override;
 use Vivarium\Assertion\Assertion;
 
-/**
- * @implements Assertion<mixed>
- */
+/** @implements Assertion<mixed> */
 final class IsAnything implements Assertion
 {
     #[Override]

@@ -26,8 +26,8 @@ final class IsString extends BaseAssertion
     }
 
     #[Override]
-    protected function failure(): Failure
+    protected function failure(mixed $value): Failure
     {
-        return new Failure('Expected value to be string. Got {value}.');
+        return new Failure('Expected value to be string. Got {value}.', $value);
     }
 }

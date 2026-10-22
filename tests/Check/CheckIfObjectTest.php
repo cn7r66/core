@@ -17,7 +17,7 @@ use Vivarium\Check\CheckIfObject;
 #[CoversClass(CheckIfObject::class)]
 final class CheckIfObjectTest extends CheckTestCase
 {
-    public const NAMESPACE = 'Vivarium\Test\Assertion\Object';
+    public const string NAMESPACE = 'Vivarium\Test\Assertion\Object';
 
     #[DataProvider('provideMethods')]
     public function testCallStatic(string $method): void

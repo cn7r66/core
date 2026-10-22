@@ -47,19 +47,19 @@ use function str_contains;
 
 final class Type
 {
-    public const INT      = 'int';
-    public const FLOAT    = 'float';
-    public const STRING   = 'string';
-    public const BOOL     = 'bool';
-    public const ARRAY    = 'array';
-    public const OBJECT   = 'object';
-    public const CALLABLE = 'callable';
-    public const MIXED    = 'mixed';
-    public const NULL     = 'null';
-    public const NEVER    = 'never';
-    public const VOID     = 'void';
+    public const string INT      = 'int';
+    public const string FLOAT    = 'float';
+    public const string STRING   = 'string';
+    public const string BOOL     = 'bool';
+    public const string ARRAY    = 'array';
+    public const string OBJECT   = 'object';
+    public const string CALLABLE = 'callable';
+    public const string MIXED    = 'mixed';
+    public const string NULL     = 'null';
+    public const string NEVER    = 'never';
+    public const string VOID     = 'void';
 
-    private const ALIASES = [
+    private const array ALIASES = [
         'integer' => self::INT,
         'double'  => self::FLOAT,
         'boolean' => self::BOOL,

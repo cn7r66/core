@@ -20,9 +20,9 @@ use function intval;
  */
 final class BinarySearch implements SearchAlgorithm
 {
-    private const LEFT_HALF = -1;
+    private const int LEFT_HALF = -1;
 
-    private const RIGHT_HALF = 1;
+    private const int RIGHT_HALF = 1;
 
     /** @var callable(T, V): int */
     private $comparator;

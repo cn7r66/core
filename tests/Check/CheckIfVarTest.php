@@ -17,7 +17,7 @@ use Vivarium\Check\CheckIfVar;
 #[CoversClass(CheckIfVar::class)]
 final class CheckIfVarTest extends CheckTestCase
 {
-    public const NAMESPACE = 'Vivarium\Test\Assertion\Var';
+    public const string NAMESPACE = 'Vivarium\Test\Assertion\Var';
 
     #[DataProvider('provideMethods')]
     public function testCallStatic(string $method): void

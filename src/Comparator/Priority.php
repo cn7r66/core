@@ -12,17 +12,17 @@ namespace Vivarium\Comparator;
 
 interface Priority
 {
-    public const VERY_VERY_LOW = -1000;
+    public const int VERY_VERY_LOW = -1000;
 
-    public const VERY_LOW = -100;
+    public const int VERY_LOW = -100;
 
-    public const LOW = -50;
+    public const int LOW = -50;
 
-    public const NORMAL = 0;
+    public const int NORMAL = 0;
 
-    public const HIGH = 50;
+    public const int HIGH = 50;
 
-    public const VERY_HIGH = 100;
+    public const int VERY_HIGH = 100;
 
-    public const VERY_VERY_HIGH = 1000;
+    public const int VERY_VERY_HIGH = 1000;
 }

@@ -20,13 +20,13 @@ use Vivarium\Check\Exception\TooMuchArguments;
 #[CoversClass(Check::class)]
 final class CheckTest extends CheckTestCase
 {
-    public const COMPARISON_NAMESPACE = 'Vivarium\Test\Assertion\Comparison';
-    public const ENCODING_NAMESPACE   = 'Vivarium\Test\Assertion\Encoding';
-    public const NUMERIC_NAMESPACE    = 'Vivarium\Test\Assertion\Numeric';
-    public const OBJECT_NAMESPACE     = 'Vivarium\Test\Assertion\Object';
-    public const STRING_NAMESPACE     = 'Vivarium\Test\Assertion\String';
-    public const TYPE_NAMESPACE       = 'Vivarium\Test\Assertion\Type';
-    public const VAR_NAMESPACE        = 'Vivarium\Test\Assertion\Var';
+    public const string COMPARISON_NAMESPACE = 'Vivarium\Test\Assertion\Comparison';
+    public const string ENCODING_NAMESPACE   = 'Vivarium\Test\Assertion\Encoding';
+    public const string NUMERIC_NAMESPACE    = 'Vivarium\Test\Assertion\Numeric';
+    public const string OBJECT_NAMESPACE     = 'Vivarium\Test\Assertion\Object';
+    public const string STRING_NAMESPACE     = 'Vivarium\Test\Assertion\String';
+    public const string TYPE_NAMESPACE       = 'Vivarium\Test\Assertion\Type';
+    public const string VAR_NAMESPACE        = 'Vivarium\Test\Assertion\Var';
 
     public function testBoolean(): void
     {

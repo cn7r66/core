@@ -17,7 +17,7 @@ use Vivarium\Check\CheckIfEncoding;
 #[CoversClass(CheckIfEncoding::class)]
 final class CheckIfEncodingTest extends CheckTestCase
 {
-    public const NAMESPACE = 'Vivarium\Test\Assertion\Encoding';
+    public const string NAMESPACE = 'Vivarium\Test\Assertion\Encoding';
 
     #[DataProvider('provideMethods')]
     public function testCallStatic(string $method): void
