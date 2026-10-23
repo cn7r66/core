@@ -15,7 +15,6 @@ use UnitEnum;
 
 use function array_fill_keys;
 use function array_keys;
-use function array_slice;
 use function count;
 use function get_debug_type;
 use function implode;
@@ -27,7 +26,6 @@ use function is_object;
 use function is_string;
 use function mb_ord;
 use function mb_scrub;
-use function mb_strlen;
 use function mb_substitute_character;
 use function preg_match;
 use function preg_match_all;
@@ -46,7 +44,9 @@ final class Failure
 
     private const int MAX_LIST_LENGTH = 80;
 
-    private const int REPLACEMENT_CHARACTER = 0xFFFD;
+    private const int REPLACEMENT_CODE_POINT = 0xFFFD;
+
+    private const string REPLACEMENT_CHARACTER = "\u{FFFD}";
 
     private const string ENCODING = 'UTF-8';
 
@@ -64,7 +64,7 @@ final class Failure
         mixed $value,
         mixed ...$parameters,
     ) {
-        $this->parameters = ['value' => $this->renderValue($value)];
+        $this->parameters = ['value' => $this->formatValue($value)];
 
         foreach (array_keys($parameters) as $name) {
             if (is_int($name)) {
@@ -74,11 +74,11 @@ final class Failure
             if (preg_match('/^[A-Za-z0-9_.]+$/', $name) !== 1) {
                 throw new InvalidArgumentException(sprintf(
                     'Expected parameter name to match [A-Za-z0-9_.]. Got %s.',
-                    $this->renderParameter($name),
+                    $this->formatParameter($name),
                 ));
             }
 
-            $this->parameters[$name] = $this->renderParameter($parameters[$name]);
+            $this->parameters[$name] = $this->formatParameter($parameters[$name]);
         }
     }
 
@@ -119,82 +119,85 @@ final class Failure
         return strtr($this->template, $map);
     }
 
-    private function renderValue(mixed $value): string
+    private function formatValue(mixed $value): string
     {
         return match (true) {
             $value === null => 'null',
-            is_bool($value) => 'bool ' . ($value ? 'true' : 'false'),
-            is_int($value) => 'int ' . $value,
-            is_float($value) => 'float ' . var_export($value, true),
-            is_string($value) => $this->renderString($value, true),
-            is_array($value) => 'array(' . count($value) . ')',
-            $value instanceof UnitEnum => 'enum ' . $this->renderEnum($value),
-            default => $this->renderOther($value),
+            is_bool($value) => 'bool ' . $this->formatBool($value),
+            is_int($value) => 'int ' . $this->formatInt($value),
+            is_float($value) => 'float ' . $this->formatFloat($value),
+            is_string($value) => $this->formatTypedString($value),
+            is_array($value) => $this->formatCount($value) . ' ' . $this->formatList($value),
+            $value instanceof UnitEnum => 'enum ' . $this->formatEnum($value),
+            is_object($value) => 'object ' . $this->formatObject($value),
+            default => $this->formatResource($value),
         };
     }
 
-    private function renderParameter(mixed $parameter): string
+    private function formatParameter(mixed $parameter): string
     {
         return match (true) {
             $parameter === null => 'null',
-            is_bool($parameter) => $parameter ? 'true' : 'false',
-            is_int($parameter) => (string) $parameter,
-            is_float($parameter) => var_export($parameter, true),
-            is_string($parameter) => $this->renderString($parameter, false),
-            is_array($parameter) => $this->renderList($parameter),
-            $parameter instanceof UnitEnum => $this->renderEnum($parameter),
-            default => $this->renderOther($parameter),
+            is_bool($parameter) => $this->formatBool($parameter),
+            is_int($parameter) => $this->formatInt($parameter),
+            is_float($parameter) => $this->formatFloat($parameter),
+            is_string($parameter) => $this->formatString(...$this->cut($parameter)),
+            is_array($parameter) => $this->formatList($parameter),
+            $parameter instanceof UnitEnum => $this->formatEnum($parameter),
+            is_object($parameter) => $this->formatObject($parameter),
+            default => $this->formatResource($parameter),
         };
     }
 
-    private function renderEnum(UnitEnum $enum): string
+    private function formatBool(bool $value): string
     {
-        return $enum::class . '::' . $enum->name;
+        return $value ? 'true' : 'false';
     }
 
-    private function renderOther(mixed $value): string
+    private function formatInt(int $value): string
     {
-        if (is_object($value)) {
-            return 'object "' . get_debug_type($value) . '"';
-        }
-
-        // resource (stream), resource (closed)
-        return get_debug_type($value);
+        return (string) $value;
     }
 
-    private function renderString(string $value, bool $typed): string
+    private function formatFloat(float $value): string
     {
-        preg_match_all('/\X/u', $this->scrub($value), $matches);
+        return var_export($value, true);
+    }
 
-        $count  = count($matches[0]);
-        $cut    = $count > self::MAX_GRAPHEMES;
-        $quoted = '"' . $this->escape(implode('', array_slice($matches[0], 0, self::MAX_GRAPHEMES))) . '"';
+    private function formatTypedString(string $value): string
+    {
+        [$head, $count] = $this->cut($value);
 
-        if ($cut) {
+        return ($count > self::MAX_GRAPHEMES ? 'string(' . $count . ') ' : 'string ')
+            . $this->formatString($head, $count);
+    }
+
+    private function formatString(string $head, int $count): string
+    {
+        $quoted = '"' . $this->escape($head) . '"';
+
+        if ($count > self::MAX_GRAPHEMES) {
             $quoted .= '…';
         }
 
-        if (! $typed) {
-            return $quoted;
-        }
-
-        return ($cut ? 'string(' . $count . ') ' : 'string ') . $quoted;
+        return $quoted;
     }
 
     /** @param array<mixed> $values */
-    private function renderList(array $values): string
+    private function formatList(array $values): string
     {
         $shown  = [];
         $length = 0;
-        foreach (array_keys($values) as $key) {
-            $rendered = $this->renderElement($values[$key]);
-            $length  += ($shown === [] ? 0 : 2) + mb_strlen($rendered, self::ENCODING);
+        /** @var mixed $element */
+        foreach ($values as $element) {
+            $formatted = is_array($element) ? $this->formatCount($element) : $this->formatParameter($element);
+            $length   += ($shown === [] ? 0 : 2) + $this->length($formatted);
 
             if ($shown !== [] && (count($shown) >= self::MAX_ELEMENTS || $length > self::MAX_LIST_LENGTH)) {
                 break;
             }
 
-            $shown[] = $rendered;
+            $shown[] = $formatted;
         }
 
         if (count($shown) < count($values)) {
@@ -204,20 +207,52 @@ final class Failure
         return '[' . implode(', ', $shown) . ']';
     }
 
-    private function renderElement(mixed $element): string
+    /** @param array<mixed> $values */
+    private function formatCount(array $values): string
     {
-        return match (true) {
-            is_array($element) => 'array(' . count($element) . ')',
-            is_object($element) => $this->renderValue($element),
-            default => $this->renderParameter($element),
-        };
+        return 'array(' . count($values) . ')';
+    }
+
+    private function formatEnum(UnitEnum $enum): string
+    {
+        return $enum::class . '::' . $enum->name;
+    }
+
+    private function formatObject(object $object): string
+    {
+        return get_debug_type($object);
+    }
+
+    /** "resource (stream)", "resource (closed)" */
+    private function formatResource(mixed $resource): string
+    {
+        return get_debug_type($resource);
+    }
+
+    /** @return array{string, int} the first MAX_GRAPHEMES graphemes and the total grapheme count */
+    private function cut(string $value): array
+    {
+        $scrubbed = $this->scrub($value);
+        $length   = $this->length($scrubbed);
+
+        if (preg_match('/^\X{0,' . self::MAX_GRAPHEMES . '}/u', $scrubbed, $head) !== 1) {
+            return [self::REPLACEMENT_CHARACTER, $length];
+        }
+
+        return [$head[0], $length];
+    }
+
+    /** Counts without building a match array: the value is untrusted and may be arbitrarily large. */
+    private function length(string $value): int
+    {
+        return (int) preg_match_all('/\X/u', $value);
     }
 
     /** Invalid UTF-8 becomes U+FFFD; the default substitute "?" would be indistinguishable from a real one. */
     private function scrub(string $value): string
     {
         $substitute = mb_substitute_character();
-        mb_substitute_character(self::REPLACEMENT_CHARACTER);
+        mb_substitute_character(self::REPLACEMENT_CODE_POINT);
 
         try {
             return mb_scrub($value, self::ENCODING);
@@ -231,7 +266,7 @@ final class Failure
         $escaped = preg_replace_callback(self::ESCAPED, $this->escapeCharacter(...), $value);
 
         if ($escaped === null) {
-            return $value;
+            return self::REPLACEMENT_CHARACTER;
         }
 
         return $escaped;
@@ -251,7 +286,6 @@ final class Failure
         };
     }
 
-    /** Psalm types mb_ord() as int|false, PHPStan as int; the scrubbed input never yields false. */
     private function escapeCodePoint(int|false $codePoint): string
     {
         if ($codePoint === false) {
