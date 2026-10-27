@@ -14,7 +14,7 @@
     <rule ref="rulesets/cleancode.xml/StaticAccess">
         <properties>
             <property name="ignorepattern">
-                <value>(^(create|from|of|empty))i</value>
+                <value>(^(create|from|of|empty|format))i</value>
             </property>
             <property name="exceptions">
                 <value>
@@ -22,7 +22,7 @@
                     \Vivarium\Collection\Util\KeyHash,
                     \Vivarium\Collection\Util\Vector,
                     \Vivarium\Equality\Equal,
-                    \Vivarium\Type\Type
+                    \Vivarium\Type\Types
                 </value>
             </property>
         </properties>

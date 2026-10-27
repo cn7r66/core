@@ -12,7 +12,8 @@
         }
     ],
     "require": {
-        "php": "^8.5"
+        "php": "^8.5",
+        "vivarium/equality": "^0.1"
     },
     "autoload": {
         "psr-4": {

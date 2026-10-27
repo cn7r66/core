@@ -1,26 +1,33 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * This file is part of Vivarium
  * SPDX-License-Identifier: MPL-2.0
  * Copyright (c) The Vivarium Project
  */
 
+declare(strict_types=1);
+
 namespace Vivarium\Type\Exception;
 
-use DomainException;
-use Vivarium\Type\Type;
+use InvalidArgumentException;
 
 use function sprintf;
 
-final class NotAType extends DomainException
+final class NotAType extends InvalidArgumentException implements InvalidType
 {
-    public function __construct(string $type)
+    public function __construct(private string $type, private string $reason)
     {
-        parent::__construct(
-            sprintf('Expected a valid type. Got %s.', Type::toLiteral($type)),
-        );
+        parent::__construct(sprintf('Expected "%s" to be a type: %s.', $type, $reason));
+    }
+
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    public function getReason(): string
+    {
+        return $this->reason;
     }
 }
