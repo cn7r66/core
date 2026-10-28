@@ -111,7 +111,6 @@ final class ArraySequence implements Sequence
     /** @return T */
     public function getAtIndex(int $index)
     {
-        /** @psalm-suppress UnusedMethodCall */
         $this->checkBounds($index);
 
         return $this->elements[$index];
@@ -124,7 +123,6 @@ final class ArraySequence implements Sequence
      */
     public function setAtIndex(int $index, $element): ArraySequence
     {
-        /** @psalm-suppress UnusedMethodCall */
         $this->checkBounds($index);
 
         $list                   = clone $this;
@@ -136,7 +134,6 @@ final class ArraySequence implements Sequence
     /** @return ArraySequence<T> */
     public function removeAtIndex(int $index): ArraySequence
     {
-        /** @psalm-suppress UnusedMethodCall */
         $this->checkBounds($index);
 
         $list = clone $this;

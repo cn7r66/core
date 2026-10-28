@@ -88,7 +88,6 @@ class ArrayStackTest extends TestCase
 
         $stack = new ArrayStack();
 
-        /** @psalm-suppress UnusedMethodCall */
         $stack->pop();
     }
 
@@ -98,7 +97,6 @@ class ArrayStackTest extends TestCase
         static::expectExceptionMessage('Cannot peek from an empty stack.');
 
         $stack = new ArrayStack();
-        /** @psalm-suppress UnusedMethodCall */
         $stack->peek();
     }
 

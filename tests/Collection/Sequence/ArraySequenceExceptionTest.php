@@ -31,7 +31,6 @@ class ArraySequenceExceptionTest extends TestCase
         static::expectExceptionMessage($message);
 
         $list = ArraySequence::fromArray($elements);
-        /** @psalm-suppress UnusedMethodCall */
         $list->getAtIndex($index);
     }
 
@@ -44,7 +43,6 @@ class ArraySequenceExceptionTest extends TestCase
         static::expectExceptionMessage($message);
 
         $list = ArraySequence::fromArray($elements);
-        /** @psalm-suppress UnusedMethodCall */
         $list->setAtIndex($index, 42);
     }
 
@@ -57,7 +55,6 @@ class ArraySequenceExceptionTest extends TestCase
         static::expectExceptionMessage($message);
 
         $list = ArraySequence::fromArray($elements);
-        /** @psalm-suppress UnusedMethodCall */
         $list->removeAtIndex($index);
     }
 

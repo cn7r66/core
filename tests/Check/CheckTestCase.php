@@ -67,7 +67,7 @@ abstract class CheckTestCase extends TestCase
         (new IsCallable())
             ->assert($fn);
 
-        /** @psalm-var array<array<mixed>> */
+        /** @phpstan-var array<array<mixed>> */
         return call_user_func($fn);
     }
 }

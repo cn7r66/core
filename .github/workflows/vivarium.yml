@@ -55,7 +55,6 @@ jobs:
           mkdir tests-results/infection
           mkdir tests-results/phpcs
           mkdir tests-results/phpmd
-          mkdir tests-results/psalm
           mkdir tests-results/phpstan
           mkdir tests-results/phpunit
 
@@ -83,12 +82,6 @@ jobs:
           (success() || failure())
           && steps.composer.conclusion == 'success'
         run: composer phpstan
-
-      - name: Run Psalm
-        if: >
-          (success() || failure())
-          && steps.composer.conclusion == 'success'
-        run: composer psalm
 
       - name: Run PHPUnit
         id: phpunit

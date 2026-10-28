@@ -24,7 +24,7 @@ abstract class BaseAssertion implements Assertion
     /**
      * @throws AssertionFailed
      *
-     * @psalm-assert T $value
+     * @phpstan-assert T $value
      */
     #[Override]
     final public function assert(mixed $value, string $message = ''): void
@@ -40,7 +40,7 @@ abstract class BaseAssertion implements Assertion
         }
     }
 
-    /** @psalm-assert-if-true T $value */
+    /** @phpstan-assert-if-true T $value */
     #[Override]
     final public function check(mixed $value): bool
     {

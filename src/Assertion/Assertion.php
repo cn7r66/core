@@ -18,10 +18,10 @@ interface Assertion
     /**
      * @throws AssertionFailed
      *
-     * @psalm-assert T $value
+     * @phpstan-assert T $value
      */
     public function assert(mixed $value, string $message = ''): void;
 
-    /** @psalm-assert-if-true T $value */
+    /** @phpstan-assert-if-true T $value */
     public function check(mixed $value): bool;
 }

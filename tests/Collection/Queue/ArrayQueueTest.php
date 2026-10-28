@@ -98,7 +98,6 @@ class ArrayQueueTest extends TestCase
         static::expectExceptionMessage('Cannot dequeue from an empty queue.');
 
         $queue = new ArrayQueue();
-        /** @psalm-suppress UnusedMethodCall */
         $queue->dequeue();
     }
 
@@ -108,7 +107,6 @@ class ArrayQueueTest extends TestCase
         static::expectExceptionMessage('Cannot peek from an empty queue.');
 
         $queue = new ArrayQueue();
-        /** @psalm-suppress UnusedMethodCall */
         $queue->peek();
     }
 

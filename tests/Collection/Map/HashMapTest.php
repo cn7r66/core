@@ -116,7 +116,6 @@ class HashMapTest extends TestCase
 
         $map = new HashMap();
 
-        /** @psalm-suppress UnusedMethodCall  */
         $map->get(new stdClass());
     }
 

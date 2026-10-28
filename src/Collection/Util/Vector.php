@@ -97,7 +97,7 @@ final class Vector
      * @param array<int, T>            $array
      * @param T                        $element
      * @param callable(T, T):bool|null $equals
-     * @psalm-param callable(T, T):bool|null $equals
+     * @phpstan-param callable(T, T):bool|null $equals
      *
      * @template T
      */
@@ -124,7 +124,7 @@ final class Vector
      * @param array<int, T>      $array
      * @param V                  $element
      * @param callable(T, V):int $equals
-     * @psalm-param callable(T, V):int $equals
+     * @phpstan-param callable(T, V):int $equals
      *
      * @template T
      * @template V

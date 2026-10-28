@@ -18,9 +18,7 @@ class StubReflectionChild extends StubReflectionParent
 {
     public const int TYPED = 1;
 
-    /** @psalm-suppress MissingClassConstType */
-    // phpcs:ignore SlevomatCodingStandard.TypeHints.ClassConstantTypeHint.MissingNativeTypeHint
-    public const UNTYPED = 'x';
+    public const string UNTYPED = 'x';
 
     public self|null $property = null;
 

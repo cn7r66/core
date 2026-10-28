@@ -106,7 +106,6 @@ class SortedMapTest extends TestCase
 
         $map = new SortedMap(new IntegerComparator());
 
-        /** @psalm-suppress UnusedMethodCall */
         $map->get(1);
     }
 

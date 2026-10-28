@@ -49,7 +49,7 @@ final class MultiValueMap implements MultiMap
             );
         }
 
-        /** @psalm-var Map<K, Collection<V>> $map */
+        /** @phpstan-var Map<K, Collection<V>> $map */
         $this->map = $map;
     }
 
