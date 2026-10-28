@@ -18,6 +18,7 @@ use Vivarium\Assertion\Var\IsAnything;
  * @template-covariant T
  * @template D
  * @implements Assertion<T>
+ * @SuppressWarnings("PHPMD.NumberOfChildren")
  */
 abstract class BaseAssertion implements Assertion
 {
