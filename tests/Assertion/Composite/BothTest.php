@@ -53,7 +53,10 @@ final class BothTest extends TestCase
         $this->expectException(AssertionFailed::class);
         $this->expectExceptionMessageMatches('/^' . preg_quote('Custom int 6.', '/') . '$/');
 
-        (new Both(new IsInteger(), new IsSameAs(5)))->assert(6, 'Custom {value}.');
+        (new Both(
+            new IsInteger(),
+            new IsSameAs(5),
+        ))->assert(6, 'Custom {value}.');
     }
 
     public function testAssertStopsAtFirstFailure(): void
@@ -89,7 +92,10 @@ final class BothTest extends TestCase
     /** @return array<string, array{Assertion<mixed>, mixed, string|null}> */
     public static function provideValues(): array
     {
-        $isFive = new Both(new IsInteger(), new IsSameAs(5));
+        $isFive = new Both(
+            new IsInteger(),
+            new IsSameAs(5),
+        );
 
         return [
             'int five' => [$isFive, 5, null],

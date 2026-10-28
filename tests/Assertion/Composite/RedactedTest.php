@@ -52,13 +52,17 @@ final class RedactedTest extends TestCase
         $this->expectException(AssertionFailed::class);
         $this->expectExceptionMessageMatches('/^' . preg_quote('Custom [redacted].', '/') . '$/');
 
-        (new Redacted(new IsSameAs('secret')))->assert('guess', 'Custom {value}.');
+        (new Redacted(
+            new IsSameAs('secret'),
+        ))->assert('guess', 'Custom {value}.');
     }
 
     public function testAssertMasksEveryParameter(): void
     {
         try {
-            (new Redacted(new IsSameAs('secret')))->assert('guess');
+            (new Redacted(
+                new IsSameAs('secret'),
+            ))->assert('guess');
         } catch (AssertionFailed $failed) {
             self::assertSame(
                 'Expected value to be the same as {compare}. Got {value}.',
@@ -96,14 +100,18 @@ final class RedactedTest extends TestCase
     /** @return array<string, array{Assertion<mixed>, mixed, string|null}> */
     public static function provideValues(): array
     {
+        $redactedSecret = new Redacted(
+            new IsSameAs('secret'),
+        );
+
+        $redactedConstant = new Redacted(
+            new IsConstant(),
+        );
+
         return [
-            'same' => [new Redacted(new IsSameAs('secret')), 'secret', null],
-            'other' => [
-                new Redacted(new IsSameAs('secret')),
-                'guess',
-                'Expected value to be the same as [redacted]. Got [redacted].',
-            ],
-            'precondition' => [new Redacted(new IsConstant()), 42, 'Expected value to be string. Got [redacted].'],
+            'same' => [$redactedSecret, 'secret', null],
+            'other' => [$redactedSecret, 'guess', 'Expected value to be the same as [redacted]. Got [redacted].'],
+            'precondition' => [$redactedConstant, 42, 'Expected value to be string. Got [redacted].'],
         ];
     }
 }

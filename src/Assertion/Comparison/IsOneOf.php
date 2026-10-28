@@ -12,7 +12,7 @@ namespace Vivarium\Assertion\Comparison;
 
 use Override;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Exception\AssertionFailed;
+use Vivarium\Assertion\Composite\Not;
 use Vivarium\Assertion\Failure;
 use Vivarium\Equality\Equal;
 
@@ -22,7 +22,9 @@ final class IsOneOf extends BaseAssertion
     /** @param array<mixed> $choices */
     public function __construct(private readonly array $choices)
     {
-        $this->assertNotEmpty($choices);
+        (new Not(
+            new IsSameAs([]),
+        ))->assert($choices, 'Expected choices not to be empty.');
     }
 
     #[Override]
@@ -41,13 +43,5 @@ final class IsOneOf extends BaseAssertion
     protected function failure(mixed $value): Failure
     {
         return new Failure('Expected value to be one of {choices}. Got {value}.', $value, choices: $this->choices);
-    }
-
-    /** @param array<mixed> $choices */
-    private function assertNotEmpty(array $choices): void
-    {
-        if ($choices === []) {
-            throw new AssertionFailed(new Failure('Expected choices not to be empty.', $choices));
-        }
     }
 }

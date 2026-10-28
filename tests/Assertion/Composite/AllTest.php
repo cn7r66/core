@@ -54,7 +54,10 @@ final class AllTest extends TestCase
         $this->expectException(AssertionFailed::class);
         $this->expectExceptionMessageMatches('/^' . preg_quote('Custom int 6.', '/') . '$/');
 
-        (new All(new IsInteger(), new IsSameAs(5)))->assert(6, 'Custom {value}.');
+        (new All(
+            new IsInteger(),
+            new IsSameAs(5),
+        ))->assert(6, 'Custom {value}.');
     }
 
     public function testAssertStopsAtFirstFailure(): void
@@ -90,13 +93,20 @@ final class AllTest extends TestCase
     /** @return array<string, array{Assertion<mixed>, mixed, string|null}> */
     public static function provideValues(): array
     {
-        $isFive = new All(new IsInteger(), new IsSameAs(5));
+        $isFive = new All(
+            new IsInteger(),
+            new IsSameAs(5),
+        );
+
+        $allNull = new All(
+            new IsNull(),
+        );
 
         return [
             'int five' => [$isFive, 5, null],
             'int six' => [$isFive, 6, 'Expected value to be the same as 5. Got int 6.'],
             'string' => [$isFive, 'a', 'Expected value to be int. Got string "a".'],
-            'single child' => [new All(new IsNull()), null, null],
+            'single child' => [$allNull, null, null],
         ];
     }
 }

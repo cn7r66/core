@@ -52,7 +52,9 @@ final class EachTest extends TestCase
         $this->expectException(AssertionFailed::class);
         $this->expectExceptionMessageMatches('/^' . preg_quote('Custom string "a".', '/') . '$/');
 
-        (new Each(new IsInteger()))->assert([1, 'a'], 'Custom {value}.');
+        (new Each(
+            new IsInteger(),
+        ))->assert([1, 'a'], 'Custom {value}.');
     }
 
     public function testAssertPassesMessage(): void
@@ -69,18 +71,24 @@ final class EachTest extends TestCase
         $this->expectException(AssertionFailed::class);
         $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
 
-        (new Each(new IsInteger()))->assert($value, 'Custom {value}.');
+        (new Each(
+            new IsInteger(),
+        ))->assert($value, 'Custom {value}.');
     }
 
     /** @return array<string, array{Assertion<mixed>, mixed, string|null}> */
     public static function provideValues(): array
     {
+        $eachInteger = new Each(
+            new IsInteger(),
+        );
+
         return [
-            'ints' => [new Each(new IsInteger()), [1, 2], null],
-            'empty array' => [new Each(new IsInteger()), [], null],
-            'map of ints' => [new Each(new IsInteger()), ['a' => 1], null],
-            'one string' => [new Each(new IsInteger()), [1, 'a', 'b'], 'Expected value to be int. Got string "a".'],
-            'not an array' => [new Each(new IsInteger()), 'abc', 'Expected value to be array. Got string "abc".'],
+            'ints' => [$eachInteger, [1, 2], null],
+            'empty array' => [$eachInteger, [], null],
+            'map of ints' => [$eachInteger, ['a' => 1], null],
+            'one string' => [$eachInteger, [1, 'a', 'b'], 'Expected value to be int. Got string "a".'],
+            'not an array' => [$eachInteger, 'abc', 'Expected value to be array. Got string "abc".'],
         ];
     }
 }

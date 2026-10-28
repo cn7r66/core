@@ -53,7 +53,10 @@ final class AnyTest extends TestCase
         $this->expectException(AssertionFailed::class);
         $this->expectExceptionMessageMatches('/^' . preg_quote('Custom null.', '/') . '$/');
 
-        (new Any(new IsInteger(), new IsString()))->assert(null, 'Custom {value}.');
+        (new Any(
+            new IsInteger(),
+            new IsString(),
+        ))->assert(null, 'Custom {value}.');
     }
 
     public function testCheckStopsAtFirstPass(): void
@@ -78,12 +81,21 @@ final class AnyTest extends TestCase
     /** @return array<string, array{Assertion<mixed>, mixed, string|null}> */
     public static function provideValues(): array
     {
+        $integerOrString = new Any(
+            new IsInteger(),
+            new IsString(),
+        );
+
+        $anyNull = new Any(
+            new IsNull(),
+        );
+
         return [
-            'int' => [new Any(new IsInteger(), new IsString()), 5, null],
-            'string' => [new Any(new IsInteger(), new IsString()), 'a', null],
-            'single child' => [new Any(new IsNull()), null, null],
+            'int' => [$integerOrString, 5, null],
+            'string' => [$integerOrString, 'a', null],
+            'single child' => [$anyNull, null, null],
             'none' => [
-                new Any(new IsInteger(), new IsString()),
+                $integerOrString,
                 null,
                 'Expected value to satisfy one of [' . IsInteger::class . ', ' . IsString::class . ']. Got null.',
             ],

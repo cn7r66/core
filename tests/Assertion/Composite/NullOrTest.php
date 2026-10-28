@@ -51,7 +51,9 @@ final class NullOrTest extends TestCase
         $this->expectException(AssertionFailed::class);
         $this->expectExceptionMessageMatches('/^' . preg_quote('Custom string "a".', '/') . '$/');
 
-        (new NullOr(new IsInteger()))->assert('a', 'Custom {value}.');
+        (new NullOr(
+            new IsInteger(),
+        ))->assert('a', 'Custom {value}.');
     }
 
     public function testAssertPassesMessage(): void
@@ -84,11 +86,15 @@ final class NullOrTest extends TestCase
     /** @return array<string, array{Assertion<mixed>, mixed, string|null}> */
     public static function provideValues(): array
     {
+        $nullOrInteger = new NullOr(
+            new IsInteger(),
+        );
+
         return [
-            'null' => [new NullOr(new IsInteger()), null, null],
-            'int' => [new NullOr(new IsInteger()), 5, null],
-            'string' => [new NullOr(new IsInteger()), 'a', 'Expected value to be int. Got string "a".'],
-            'false' => [new NullOr(new IsInteger()), false, 'Expected value to be int. Got bool false.'],
+            'null' => [$nullOrInteger, null, null],
+            'int' => [$nullOrInteger, 5, null],
+            'string' => [$nullOrInteger, 'a', 'Expected value to be int. Got string "a".'],
+            'false' => [$nullOrInteger, false, 'Expected value to be int. Got bool false.'],
         ];
     }
 }

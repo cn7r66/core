@@ -52,7 +52,9 @@ final class NotTest extends TestCase
         $this->expectException(AssertionFailed::class);
         $this->expectExceptionMessageMatches('/^' . preg_quote('Custom null.', '/') . '$/');
 
-        (new Not(new IsNull()))->assert(null, 'Custom {value}.');
+        (new Not(
+            new IsNull(),
+        ))->assert(null, 'Custom {value}.');
     }
 
     public function testCheckNeverAsserts(): void
@@ -67,16 +69,24 @@ final class NotTest extends TestCase
     /** @return array<string, array{Assertion<mixed>, mixed, string|null}> */
     public static function provideValues(): array
     {
+        $notNull = new Not(
+            new IsNull(),
+        );
+
+        $notInteger = new Not(
+            new IsInteger(),
+        );
+
         return [
-            'not null, given int' => [new Not(new IsNull()), 1, null],
-            'not int, given string' => [new Not(new IsInteger()), 'a', null],
+            'not null, given int' => [$notNull, 1, null],
+            'not int, given string' => [$notInteger, 'a', null],
             'not null, given null' => [
-                new Not(new IsNull()),
+                $notNull,
                 null,
                 'Expected value not to satisfy ' . IsNull::class . '. Got null.',
             ],
             'not int, given int' => [
-                new Not(new IsInteger()),
+                $notInteger,
                 5,
                 'Expected value not to satisfy ' . IsInteger::class . '. Got int 5.',
             ],
