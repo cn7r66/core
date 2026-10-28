@@ -10,67 +10,60 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Var;
 
+use ArrayObject;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Var\IsObject;
-use Vivarium\Test\Assertion\Stub\StubClass;
+use Vivarium\Test\Assertion\Stub\StubEnum;
+
+use function preg_quote;
 
 #[CoversClass(IsObject::class)]
 final class IsObjectTest extends TestCase
 {
-    #[DataProvider('provideSuccess')]
-    public function testAssert(mixed $var): void
+    #[DataProvider('provideValues')]
+    public function testCheck(mixed $value, string|null $message): void
     {
-        static::expectNotToPerformAssertions();
-
-        (new IsObject())
-            ->assert($var);
+        self::assertSame($message === null, (new IsObject())->check($value));
     }
 
-    #[DataProvider('provideFailure')]
-    public function testAssertException(mixed $var, string $message): void
+    #[DataProvider('provideValues')]
+    public function testAssert(mixed $value, string|null $message): void
     {
-        static::expectException(AssertionFailed::class);
-        static::expectExceptionMessage($message);
+        if ($message === null) {
+            $this->expectNotToPerformAssertions();
+        }
 
-        (new IsObject())
-            ->assert($var);
+        if ($message !== null) {
+            $this->expectException(AssertionFailed::class);
+            $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+        }
+
+        (new IsObject())->assert($value);
     }
 
-    #[DataProvider('provideSuccess')]
-    public function testInvoke(mixed $var): void
+    #[TestWith(['ArrayObject', 'Custom string "ArrayObject".'])]
+    public function testAssertWithCustomMessage(mixed $value, string $message): void
     {
-        static::assertTrue(
-            (new IsObject())($var),
-        );
+        $this->expectException(AssertionFailed::class);
+        $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+
+        (new IsObject())->assert($value, 'Custom {value}.');
     }
 
-    #[DataProvider('provideFailure')]
-    public function testInvokeFailure(mixed $var): void
-    {
-        static::assertFalse(
-            (new IsObject())($var),
-        );
-    }
-
-    /** @return array<array<object>> */
-    public static function provideSuccess(): array
+    /** @return array<string, array{mixed, string|null}> */
+    public static function provideValues(): array
     {
         return [
-            [new stdClass()],
-            [new StubClass()],
-        ];
-    }
-
-    /** @return array<array{0:mixed, 1:string}> */
-    public static function provideFailure(): array
-    {
-        return [
-            [[], 'Expected value to be object. Got array.'],
-            [42, 'Expected value to be object. Got int.'],
+            'object' => [new ArrayObject(), null],
+            'closure' => [static fn (): int => 1, null],
+            'enum case' => [StubEnum::First, null],
+            'class name' => ['ArrayObject', 'Expected value to be object. Got string "ArrayObject".'],
+            'array' => [[], 'Expected value to be object. Got array(0) [].'],
+            'null' => [null, 'Expected value to be object. Got null.'],
         ];
     }
 }

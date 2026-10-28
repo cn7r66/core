@@ -12,64 +12,59 @@ namespace Vivarium\Test\Assertion\Var;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Var\IsFloat;
 
+use function preg_quote;
+
+use const INF;
+use const NAN;
+
 #[CoversClass(IsFloat::class)]
 final class IsFloatTest extends TestCase
 {
-        #[DataProvider('provideSuccess')]
-    public function testAssert(mixed $var): void
+    #[DataProvider('provideValues')]
+    public function testCheck(mixed $value, string|null $message): void
     {
-        static::expectNotToPerformAssertions();
-
-        (new IsFloat())
-            ->assert($var);
+        self::assertSame($message === null, (new IsFloat())->check($value));
     }
 
-    #[DataProvider('provideFailure')]
-    public function testAssertException(mixed $var, string $message): void
+    #[DataProvider('provideValues')]
+    public function testAssert(mixed $value, string|null $message): void
     {
-        static::expectException(AssertionFailed::class);
-        static::expectExceptionMessage($message);
+        if ($message === null) {
+            $this->expectNotToPerformAssertions();
+        }
 
-        (new IsFloat())
-            ->assert($var);
+        if ($message !== null) {
+            $this->expectException(AssertionFailed::class);
+            $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+        }
+
+        (new IsFloat())->assert($value);
     }
 
-    #[DataProvider('provideSuccess')]
-    public function testInvoke(mixed $var): void
+    #[TestWith([1, 'Custom int 1.'])]
+    public function testAssertWithCustomMessage(mixed $value, string $message): void
     {
-        static::assertTrue(
-            (new IsFloat())($var),
-        );
+        $this->expectException(AssertionFailed::class);
+        $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+
+        (new IsFloat())->assert($value, 'Custom {value}.');
     }
 
-    #[DataProvider('provideFailure')]
-    public function testInvokeFailure(mixed $var): void
-    {
-        static::assertFalse(
-            (new IsFloat())($var),
-        );
-    }
-
-    /** @return array<array<float>> */
-    public static function provideSuccess(): array
+    /** @return array<string, array{mixed, string|null}> */
+    public static function provideValues(): array
     {
         return [
-            [4.5],
-            [4.0],
-            [4.999999],
-        ];
-    }
-
-    /** @return array<array{0:mixed, 1:string}> */
-    public static function provideFailure(): array
-    {
-        return [
-            [42, 'Expected value to be float. Got int.'],
-            ['string', 'Expected value to be float. Got string.'],
+            'fraction' => [1.5, null],
+            'zero' => [0.0, null],
+            'not a number' => [NAN, null],
+            'infinity' => [INF, null],
+            'int' => [1, 'Expected value to be float. Got int 1.'],
+            'numeric string' => ['1.5', 'Expected value to be float. Got string "1.5".'],
         ];
     }
 }

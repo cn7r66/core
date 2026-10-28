@@ -12,64 +12,63 @@ namespace Vivarium\Test\Assertion\Var;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Var\IsConstant;
 
+use function preg_quote;
+
 #[CoversClass(IsConstant::class)]
 final class IsConstantTest extends TestCase
 {
-    #[DataProvider('provideSuccess')]
-    public function testAssert(string $var): void
+    #[DataProvider('provideValues')]
+    public function testCheck(mixed $value, string|null $message): void
     {
-        static::expectNotToPerformAssertions();
-
-        (new IsConstant())
-            ->assert($var);
+        self::assertSame($message === null, (new IsConstant())->check($value));
     }
 
-    #[DataProvider('provideFailure')]
-    public function testAssertException(mixed $var, string $message): void
+    #[DataProvider('provideValues')]
+    public function testAssert(mixed $value, string|null $message): void
     {
-        static::expectException(AssertionFailed::class);
-        static::expectExceptionMessage($message);
+        if ($message === null) {
+            $this->expectNotToPerformAssertions();
+        }
 
-        (new IsConstant())
-            ->assert($var);
+        if ($message !== null) {
+            $this->expectException(AssertionFailed::class);
+            $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+        }
+
+        (new IsConstant())->assert($value);
     }
 
-    #[DataProvider('provideSuccess')]
-    public function testInvoke(string $var): void
+    #[TestWith(['NOPE', 'Custom string "NOPE".'])]
+    public function testAssertWithCustomMessage(mixed $value, string $message): void
     {
-        static::assertTrue(
-            (new IsConstant())($var),
-        );
+        $this->expectException(AssertionFailed::class);
+        $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+
+        (new IsConstant())->assert($value, 'Custom {value}.');
     }
 
-    #[DataProvider('provideFailure')]
-    public function testInvokeFailure(mixed $var): void
-    {
-        static::assertFalse(
-            (new IsConstant())($var),
-        );
-    }
-
-    /** @return array<array{0:string}> */
-    public static function provideSuccess(): array
+    /** @return array<string, array{mixed, string|null}> */
+    public static function provideValues(): array
     {
         return [
-            ['PHP_INT_MAX'],
-            ['PHP_EOL'],
-            ['PHP_VERSION'],
-        ];
-    }
-
-    /** @return array<array{0:mixed, 1:string}> */
-    public static function provideFailure(): array
-    {
-        return [
-            ['NOT_A_CONSTANT', 'Expected "NOT_A_CONSTANT" to be a defined constant.'],
-            [42, 'Expected 42 to be a defined constant.'],
+            'global constant' => ['PHP_EOL', null],
+            'error level' => ['E_ALL', null],
+            'class constant' => ['ArrayObject::STD_PROP_LIST', null],
+            'unknown constant' => [
+                'NOT_A_CONSTANT',
+                'Expected value to be a defined constant name. Got string "NOT_A_CONSTANT".',
+            ],
+            'unknown class constant' => [
+                'ArrayObject::NOPE',
+                'Expected value to be a defined constant name. Got string "ArrayObject::NOPE".',
+            ],
+            'int' => [42, 'Expected value to be string. Got int 42.'],
+            'null' => [null, 'Expected value to be string. Got null.'],
         ];
     }
 }

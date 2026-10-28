@@ -10,35 +10,24 @@ declare(strict_types=1);
 
 namespace Vivarium\Assertion\Var;
 
-use Vivarium\Assertion\Assertion;
-use Vivarium\Assertion\Exception\AssertionFailed;
-use Vivarium\Assertion\String\IsEmpty;
-use Vivarium\Type\Type;
+use Override;
+use Vivarium\Assertion\BaseAssertion;
+use Vivarium\Assertion\Failure;
 
 use function is_array;
-use function sprintf;
 
-/** @template-implements Assertion<array> */
-final class IsArray implements Assertion
+/** @template-extends BaseAssertion<array, mixed> */
+final class IsArray extends BaseAssertion
 {
-    /** @psalm-assert array $value */
-    public function assert(mixed $value, string $message = ''): void
-    {
-        if (! $this($value)) {
-            $message = sprintf(
-                ! (new IsEmpty())($message) ?
-                     $message : 'Expected value to be array. Got %2$s.',
-                Type::toLiteral($value),
-                Type::toString($value),
-            );
-
-            throw new AssertionFailed($message);
-        }
-    }
-
-    /** @psalm-assert-if-true array $value */
-    public function __invoke(mixed $value): bool
+    #[Override]
+    protected function condition(mixed $value): bool
     {
         return is_array($value);
+    }
+
+    #[Override]
+    protected function failure(mixed $value): Failure
+    {
+        return new Failure('Expected value to be array. Got {value}.', $value);
     }
 }

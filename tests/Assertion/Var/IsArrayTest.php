@@ -10,66 +10,59 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Var;
 
+use ArrayObject;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Var\IsArray;
 
+use function preg_quote;
+
 #[CoversClass(IsArray::class)]
 final class IsArrayTest extends TestCase
 {
-    #[DataProvider('provideSuccess')]
-    public function testAssert(mixed $var): void
+    #[DataProvider('provideValues')]
+    public function testCheck(mixed $value, string|null $message): void
     {
-        static::expectNotToPerformAssertions();
-
-        (new IsArray())
-            ->assert($var);
+        self::assertSame($message === null, (new IsArray())->check($value));
     }
 
-    #[DataProvider('provideFailure')]
-    public function testAssertException(mixed $var, string $message): void
+    #[DataProvider('provideValues')]
+    public function testAssert(mixed $value, string|null $message): void
     {
-        static::expectException(AssertionFailed::class);
-        static::expectExceptionMessage($message);
+        if ($message === null) {
+            $this->expectNotToPerformAssertions();
+        }
 
-        (new IsArray())
-            ->assert($var);
+        if ($message !== null) {
+            $this->expectException(AssertionFailed::class);
+            $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+        }
+
+        (new IsArray())->assert($value);
     }
 
-    #[DataProvider('provideSuccess')]
-    public function testInvoke(mixed $var): void
+    #[TestWith(['abc', 'Custom string "abc".'])]
+    public function testAssertWithCustomMessage(mixed $value, string $message): void
     {
-        static::assertTrue(
-            (new IsArray())($var),
-        );
+        $this->expectException(AssertionFailed::class);
+        $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+
+        (new IsArray())->assert($value, 'Custom {value}.');
     }
 
-    #[DataProvider('provideFailure')]
-    public function testInvokeFailure(mixed $var): void
-    {
-        static::assertFalse(
-            (new IsArray())($var),
-        );
-    }
-
-    /** @return array<array<array<scalar>>> */
-    public static function provideSuccess(): array
+    /** @return array<string, array{mixed, string|null}> */
+    public static function provideValues(): array
     {
         return [
-            [[]],
-            [[1, 2, 3]],
-            [['a', 'b', 'c']],
-        ];
-    }
-
-    /** @return array<array{0:mixed, 1:string}> */
-    public static function provideFailure(): array
-    {
-        return [
-            [42, 'Expected value to be array. Got int.'],
-            ['string', 'Expected value to be array. Got string.'],
+            'empty' => [[], null],
+            'list' => [[1, 2], null],
+            'map' => [['a' => 1], null],
+            'string' => ['abc', 'Expected value to be array. Got string "abc".'],
+            'array-like object' => [new ArrayObject(), 'Expected value to be array. Got object ArrayObject.'],
+            'null' => [null, 'Expected value to be array. Got null.'],
         ];
     }
 }

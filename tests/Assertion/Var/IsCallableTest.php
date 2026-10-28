@@ -10,71 +10,62 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Var;
 
+use ArrayObject;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Var\IsCallable;
-use Vivarium\Assertion\Var\IsInteger;
+
+use function preg_quote;
 
 #[CoversClass(IsCallable::class)]
 final class IsCallableTest extends TestCase
 {
-        #[DataProvider('provideSuccess')]
-    public function testAssert(mixed $var): void
+    #[DataProvider('provideValues')]
+    public function testCheck(mixed $value, string|null $message): void
     {
-        static::expectNotToPerformAssertions();
-
-        (new IsCallable())
-            ->assert($var);
+        self::assertSame($message === null, (new IsCallable())->check($value));
     }
 
-    #[DataProvider('provideFailure')]
-    public function testAssertException(mixed $var, string $message): void
+    #[DataProvider('provideValues')]
+    public function testAssert(mixed $value, string|null $message): void
     {
-        static::expectException(AssertionFailed::class);
-        static::expectExceptionMessage($message);
+        if ($message === null) {
+            $this->expectNotToPerformAssertions();
+        }
 
-        (new IsCallable())
-            ->assert($var);
+        if ($message !== null) {
+            $this->expectException(AssertionFailed::class);
+            $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+        }
+
+        (new IsCallable())->assert($value);
     }
 
-    #[DataProvider('provideSuccess')]
-    public function testInvoke(mixed $var): void
+    #[TestWith([42, 'Custom int 42.'])]
+    public function testAssertWithCustomMessage(mixed $value, string $message): void
     {
-        static::assertTrue(
-            (new IsCallable())($var),
-        );
+        $this->expectException(AssertionFailed::class);
+        $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+
+        (new IsCallable())->assert($value, 'Custom {value}.');
     }
 
-    #[DataProvider('provideFailure')]
-    public function testInvokeFailure(mixed $var): void
-    {
-        static::assertFalse(
-            (new IsCallable())($var),
-        );
-    }
-
-    /** @return array<array<callable>> */
-    public static function provideSuccess(): array
+    /** @return array<string, array{mixed, string|null}> */
+    public static function provideValues(): array
     {
         return [
-            [new IsInteger()],
-            [
-                static function (): int {
-                    return 42;
-                },
+            'function name' => ['strlen', null],
+            'closure' => [static fn (): int => 1, null],
+            'method array' => [[new ArrayObject(), 'count'], null],
+            'unknown function' => ['not_a_function', 'Expected value to be callable. Got string "not_a_function".'],
+            'unknown method' => [
+                [new ArrayObject(), 'nope'],
+                'Expected value to be callable. Got array(2) [ArrayObject, "nope"].',
             ],
-            [static fn (int $a): int => $a],
-        ];
-    }
-
-    /** @return array<array{0:mixed, 1:string}> */
-    public static function provideFailure(): array
-    {
-        return [
-            [42, 'Expected value to be callable. Got int.'],
-            ['string', 'Expected value to be callable. Got string.'],
+            'int' => [42, 'Expected value to be callable. Got int 42.'],
         ];
     }
 }

@@ -12,65 +12,59 @@ namespace Vivarium\Test\Assertion\Var;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Var\IsInteger;
 
+use function preg_quote;
+
+use const PHP_INT_MAX;
+
 #[CoversClass(IsInteger::class)]
 final class IsIntegerTest extends TestCase
 {
-    #[DataProvider('provideSuccess')]
-    public function testAssert(mixed $var): void
+    #[DataProvider('provideValues')]
+    public function testCheck(mixed $value, string|null $message): void
     {
-        static::expectNotToPerformAssertions();
-
-        (new IsInteger())
-            ->assert($var);
+        self::assertSame($message === null, (new IsInteger())->check($value));
     }
 
-    #[DataProvider('provideFailure')]
-    public function testAssertException(mixed $var, string $message): void
+    #[DataProvider('provideValues')]
+    public function testAssert(mixed $value, string|null $message): void
     {
-        static::expectException(AssertionFailed::class);
-        static::expectExceptionMessage($message);
+        if ($message === null) {
+            $this->expectNotToPerformAssertions();
+        }
 
-        (new IsInteger())
-            ->assert($var);
+        if ($message !== null) {
+            $this->expectException(AssertionFailed::class);
+            $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+        }
+
+        (new IsInteger())->assert($value);
     }
 
-    #[DataProvider('provideSuccess')]
-    public function testInvoke(mixed $var): void
+    #[TestWith(['1', 'Custom string "1".'])]
+    public function testAssertWithCustomMessage(mixed $value, string $message): void
     {
-        static::assertTrue(
-            (new IsInteger())($var),
-        );
+        $this->expectException(AssertionFailed::class);
+        $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+
+        (new IsInteger())->assert($value, 'Custom {value}.');
     }
 
-    #[DataProvider('provideFailure')]
-    public function testInvokeFailure(mixed $var): void
-    {
-        static::assertFalse(
-            (new IsInteger())($var),
-        );
-    }
-
-    /** @return array<array<int>> */
-    public static function provideSuccess(): array
+    /** @return array<string, array{mixed, string|null}> */
+    public static function provideValues(): array
     {
         return [
-            [1],
-            [0],
-            [-1],
-        ];
-    }
-
-    /** @return array<array{0:mixed, 1:string}> */
-    public static function provideFailure(): array
-    {
-        return [
-            [42.0, 'Expected value to be integer. Got float.'],
-            [0.99999, 'Expected value to be integer. Got float.'],
-            ['string', 'Expected value to be integer. Got string.'],
+            'zero' => [0, null],
+            'positive' => [1, null],
+            'negative' => [-1, null],
+            'max' => [PHP_INT_MAX, null],
+            'numeric string' => ['1', 'Expected value to be int. Got string "1".'],
+            'integral float' => [1.0, 'Expected value to be int. Got float 1.0.'],
+            'bool' => [true, 'Expected value to be int. Got bool true.'],
         ];
     }
 }

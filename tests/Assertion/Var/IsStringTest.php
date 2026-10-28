@@ -10,67 +10,61 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Assertion\Var;
 
+use ArrayObject;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Var\IsString;
+use Vivarium\Test\Assertion\Stub\StubEnum;
+
+use function preg_quote;
 
 #[CoversClass(IsString::class)]
 final class IsStringTest extends TestCase
 {
-        #[DataProvider('provideSuccess')]
-    public function testAssert(mixed $var): void
+    #[DataProvider('provideValues')]
+    public function testCheck(mixed $value, string|null $message): void
     {
-        static::expectNotToPerformAssertions();
-
-        (new IsString())
-            ->assert($var);
+        self::assertSame($message === null, (new IsString())->check($value));
     }
 
-    #[DataProvider('provideFailure')]
-    public function testAssertException(mixed $var, string $message): void
+    #[DataProvider('provideValues')]
+    public function testAssert(mixed $value, string|null $message): void
     {
-        static::expectException(AssertionFailed::class);
-        static::expectExceptionMessage($message);
+        if ($message === null) {
+            $this->expectNotToPerformAssertions();
+        }
 
-        (new IsString())
-            ->assert($var);
+        if ($message !== null) {
+            $this->expectException(AssertionFailed::class);
+            $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+        }
+
+        (new IsString())->assert($value);
     }
 
-    #[DataProvider('provideSuccess')]
-    public function testInvoke(mixed $var): void
+    #[TestWith([1, 'Custom int 1.'])]
+    public function testAssertWithCustomMessage(mixed $value, string $message): void
     {
-        static::assertTrue(
-            (new IsString())($var),
-        );
+        $this->expectException(AssertionFailed::class);
+        $this->expectExceptionMessageMatches('/^' . preg_quote($message, '/') . '$/');
+
+        (new IsString())->assert($value, 'Custom {value}.');
     }
 
-    #[DataProvider('provideFailure')]
-    public function testInvokeFailure(mixed $var): void
-    {
-        static::assertFalse(
-            (new IsString())($var),
-        );
-    }
-
-    /** @return array<array<string>> */
-    public static function provideSuccess(): array
+    /** @return array<string, array{mixed, string|null}> */
+    public static function provideValues(): array
     {
         return [
-            [''],
-            ['Hello World'],
-            ['a'],
-            ['42'],
-        ];
-    }
-
-    /** @return array<array{0:mixed, 1:string}> */
-    public static function provideFailure(): array
-    {
-        return [
-            [[], 'Expected value to be string. Got array.'],
-            [42, 'Expected value to be string. Got int.'],
+            'string' => ['abc', null],
+            'empty string' => ['', null],
+            'numeric string' => ['1', null],
+            'int' => [1, 'Expected value to be string. Got int 1.'],
+            'null' => [null, 'Expected value to be string. Got null.'],
+            'object' => [new ArrayObject(), 'Expected value to be string. Got object ArrayObject.'],
+            'enum case' => [StubEnum::First, 'Expected value to be string. Got enum ' . StubEnum::class . '::First.'],
         ];
     }
 }

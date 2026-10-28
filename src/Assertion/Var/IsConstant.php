@@ -10,35 +10,31 @@ declare(strict_types=1);
 
 namespace Vivarium\Assertion\Var;
 
+use Override;
 use Vivarium\Assertion\Assertion;
-use Vivarium\Assertion\Exception\AssertionFailed;
-use Vivarium\Assertion\String\IsEmpty;
-use Vivarium\Type\Type;
+use Vivarium\Assertion\BaseAssertion;
+use Vivarium\Assertion\Failure;
 
 use function defined;
-use function is_string;
-use function sprintf;
 
-/** @template-implements Assertion<string> */
-final class IsConstant implements Assertion
+/** @template-extends BaseAssertion<string, string> */
+final class IsConstant extends BaseAssertion
 {
-    /** @psalm-assert string $value */
-    public function assert(mixed $value, string $message = ''): void
+    #[Override]
+    protected function precondition(): Assertion
     {
-        if (! $this($value)) {
-            $message = sprintf(
-                ! (new IsEmpty())($message) ?
-                    $message : 'Expected %s to be a defined constant.',
-                Type::toLiteral($value),
-            );
-
-            throw new AssertionFailed($message);
-        }
+        return new IsString();
     }
 
-    /** @psalm-assert-if-true string $value */
-    public function __invoke(mixed $value): bool
+    #[Override]
+    protected function condition(mixed $value): bool
     {
-        return is_string($value) && defined($value);
+        return defined($value);
+    }
+
+    #[Override]
+    protected function failure(mixed $value): Failure
+    {
+        return new Failure('Expected value to be a defined constant name. Got {value}.', $value);
     }
 }

@@ -10,35 +10,24 @@ declare(strict_types=1);
 
 namespace Vivarium\Assertion\Var;
 
-use Vivarium\Assertion\Assertion;
-use Vivarium\Assertion\Exception\AssertionFailed;
-use Vivarium\Assertion\String\IsEmpty;
-use Vivarium\Type\Type;
+use Override;
+use Vivarium\Assertion\BaseAssertion;
+use Vivarium\Assertion\Failure;
 
 use function is_int;
-use function sprintf;
 
-/** @template-implements Assertion<int> */
-final class IsInteger implements Assertion
+/** @template-extends BaseAssertion<int, mixed> */
+final class IsInteger extends BaseAssertion
 {
-    /** @psalm-assert int $value */
-    public function assert(mixed $value, string $message = ''): void
-    {
-        if (! $this($value)) {
-            $message = sprintf(
-                ! (new IsEmpty())($message) ?
-                     $message : 'Expected value to be integer. Got %2$s.',
-                Type::toLiteral($value),
-                Type::toString($value),
-            );
-
-            throw new AssertionFailed($message);
-        }
-    }
-
-    /** @psalm-assert-if-true int $value */
-    public function __invoke(mixed $value): bool
+    #[Override]
+    protected function condition(mixed $value): bool
     {
         return is_int($value);
+    }
+
+    #[Override]
+    protected function failure(mixed $value): Failure
+    {
+        return new Failure('Expected value to be int. Got {value}.', $value);
     }
 }

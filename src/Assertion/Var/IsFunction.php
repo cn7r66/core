@@ -11,44 +11,27 @@ declare(strict_types=1);
 namespace Vivarium\Assertion\Var;
 
 use Closure;
-use Vivarium\Assertion\Assertion;
-use Vivarium\Assertion\Exception\AssertionFailed;
-use Vivarium\Assertion\String\IsEmpty;
-use Vivarium\Type\Type;
+use Override;
+use Vivarium\Assertion\BaseAssertion;
+use Vivarium\Assertion\Failure;
 
 use function function_exists;
 use function is_string;
-use function sprintf;
 
-/** @template-implements Assertion<Closure|string> */
-final class IsFunction implements Assertion
+/** @template-extends BaseAssertion<mixed, mixed> */
+final class IsFunction extends BaseAssertion
 {
-    /** @psalm-assert Closure|string $value */
-    public function assert(mixed $value, string $message = ''): void
+    #[Override]
+    protected function condition(mixed $value): bool
     {
-        if (! $this($value)) {
-            $message = sprintf(
-                ! (new IsEmpty())($message) ?
-                    $message : 'Expected value to be a function. Got %2$s.',
-                Type::toLiteral($value),
-                Type::toString($value),
-            );
-
-            throw new AssertionFailed($message);
-        }
+        return $value instanceof Closure
+            || (is_string($value)
+            && function_exists($value));
     }
 
-    /** @psalm-assert-if-true Closure|string $value */
-    public function __invoke(mixed $value): bool
+    #[Override]
+    protected function failure(mixed $value): Failure
     {
-        if ($value instanceof Closure) {
-            return true;
-        }
-
-        if (is_string($value)) {
-            return function_exists($value);
-        }
-
-        return false;
+        return new Failure('Expected value to be a Closure or a function name. Got {value}.', $value);
     }
 }

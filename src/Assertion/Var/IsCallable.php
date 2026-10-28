@@ -10,35 +10,24 @@ declare(strict_types=1);
 
 namespace Vivarium\Assertion\Var;
 
-use Vivarium\Assertion\Assertion;
-use Vivarium\Assertion\Exception\AssertionFailed;
-use Vivarium\Assertion\String\IsEmpty;
-use Vivarium\Type\Type;
+use Override;
+use Vivarium\Assertion\BaseAssertion;
+use Vivarium\Assertion\Failure;
 
 use function is_callable;
-use function sprintf;
 
-/** @template-implements Assertion<callable> */
-final class IsCallable implements Assertion
+/** @template-extends BaseAssertion<callable, mixed> */
+final class IsCallable extends BaseAssertion
 {
-    /** @psalm-assert callable $value */
-    public function assert(mixed $value, string $message = ''): void
-    {
-        if (! $this($value)) {
-            $message = sprintf(
-                ! (new IsEmpty())($message) ?
-                     $message : 'Expected value to be callable. Got %2$s.',
-                Type::toLiteral($value),
-                Type::toString($value),
-            );
-
-            throw new AssertionFailed($message);
-        }
-    }
-
-    /** @psalm-assert-if-true callable $value */
-    public function __invoke(mixed $value): bool
+    #[Override]
+    protected function condition(mixed $value): bool
     {
         return is_callable($value);
+    }
+
+    #[Override]
+    protected function failure(mixed $value): Failure
+    {
+        return new Failure('Expected value to be callable. Got {value}.', $value);
     }
 }

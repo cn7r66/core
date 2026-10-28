@@ -10,35 +10,24 @@ declare(strict_types=1);
 
 namespace Vivarium\Assertion\Var;
 
-use Vivarium\Assertion\Assertion;
-use Vivarium\Assertion\Exception\AssertionFailed;
-use Vivarium\Assertion\String\IsEmpty;
-use Vivarium\Type\Type;
+use Override;
+use Vivarium\Assertion\BaseAssertion;
+use Vivarium\Assertion\Failure;
 
 use function is_float;
-use function sprintf;
 
-/** @template-implements Assertion<float> */
-final class IsFloat implements Assertion
+/** @template-extends BaseAssertion<float, mixed> */
+final class IsFloat extends BaseAssertion
 {
-    /** @psalm-assert float $value */
-    public function assert(mixed $value, string $message = ''): void
-    {
-        if (! $this($value)) {
-            $message = sprintf(
-                ! (new IsEmpty())($message) ?
-                     $message : 'Expected value to be float. Got %2$s.',
-                Type::toLiteral($value),
-                Type::toString($value),
-            );
-
-            throw new AssertionFailed($message);
-        }
-    }
-
-    /** @psalm-assert-if-true float $value */
-    public function __invoke(mixed $value): bool
+    #[Override]
+    protected function condition(mixed $value): bool
     {
         return is_float($value);
+    }
+
+    #[Override]
+    protected function failure(mixed $value): Failure
+    {
+        return new Failure('Expected value to be float. Got {value}.', $value);
     }
 }
