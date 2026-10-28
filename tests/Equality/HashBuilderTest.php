@@ -10,13 +10,20 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Equality;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Vivarium\Equality\Equality;
 use Vivarium\Equality\HashBuilder;
 use Vivarium\Test\Equality\Stub\EqualityStub;
+
+use function fclose;
+use function fopen;
+use function hrtime;
+use function range;
 
 #[CoversClass(HashBuilder::class)]
 final class HashBuilderTest extends TestCase
@@ -39,13 +46,30 @@ final class HashBuilderTest extends TestCase
         );
     }
 
-    #[DataProvider('provideObjects')]
-    public function testAppendObject(object $object): void
+    #[DataProvider('provideIdentities')]
+    public function testAppendSameValue(mixed $value): void
     {
         self::assertSame(
-            (new HashBuilder())->append($object)->getHashCode(),
-            (new HashBuilder())->append($object)->getHashCode(),
+            (new HashBuilder())->append($value)->getHashCode(),
+            (new HashBuilder())->append($value)->getHashCode(),
         );
+    }
+
+    public function testAppendEmptyArray(): void
+    {
+        self::assertNotSame(
+            (new HashBuilder())->append(1)->getHashCode(),
+            (new HashBuilder())->append(1)->append([])->getHashCode(),
+        );
+    }
+
+    public function testAppendLargeArray(): void
+    {
+        $start = hrtime(true);
+
+        (new HashBuilder())->append(range(1, 200_000));
+
+        self::assertLessThan(2_000_000_000, hrtime(true) - $start);
     }
 
     public function testAppendLeavesOriginalUnchanged(): void
@@ -67,12 +91,36 @@ final class HashBuilderTest extends TestCase
             'list order' => [[1, 2], [2, 1]],
             'map order' => [['a' => 1, 'b' => 2], ['b' => 2, 'a' => 1]],
             'different instances' => [new stdClass(), new stdClass()],
+            'nested array boundary' => [[[1], 2], [[1, 2]]],
+            'equality hash spelled like a scalar' => [
+                new class implements Equality {
+                    #[Override]
+                    public function equals(object $object): bool
+                    {
+                        return false;
+                    }
+
+                    #[Override]
+                    public function hash(): string
+                    {
+                        return 'i:1;';
+                    }
+                },
+                1,
+            ],
+            'different resources' => [fopen('php://memory', 'r'), fopen('php://memory', 'r')],
+            'resource and zero' => [fopen('php://memory', 'r'), 0],
         ];
     }
 
-    /** @return array<string, array{object}> */
-    public static function provideObjects(): array
+    /** @return array<string, array{mixed}> */
+    public static function provideIdentities(): array
     {
+        $closed = fopen('php://memory', 'r');
+        if ($closed !== false) {
+            fclose($closed);
+        }
+
         return [
             'plain object' => [new stdClass()],
             'closure' => [static fn (): int => 1],
@@ -81,6 +129,8 @@ final class HashBuilderTest extends TestCase
                 },
             ],
             'equality object' => [new EqualityStub()],
+            'resource' => [fopen('php://memory', 'r')],
+            'closed resource' => [$closed],
         ];
     }
 }

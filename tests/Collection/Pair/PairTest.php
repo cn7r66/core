@@ -40,8 +40,7 @@ class PairTest extends TestCase
 
     public function testHash(): void
     {
-        $pair = new Pair('a', 1);
-
-        static::assertEquals('7b48edecef9b6487b09facffac1912fdc88c4cbe', $pair->hash());
+        static::assertSame((new Pair('a', 1))->hash(), (new Pair('a', 1))->hash());
+        static::assertNotSame((new Pair('a', 1))->hash(), (new Pair('b', 2))->hash());
     }
 }
