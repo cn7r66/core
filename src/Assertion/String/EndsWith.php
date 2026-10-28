@@ -1,0 +1,49 @@
+<?php
+
+/*
+ * This file is part of Vivarium
+ * SPDX-License-Identifier: MPL-2.0
+ * Copyright (c) The Vivarium Project
+ */
+
+declare(strict_types=1);
+
+namespace Vivarium\Assertion\String;
+
+use Override;
+use Vivarium\Assertion\Assertion;
+use Vivarium\Assertion\BaseAssertion;
+use Vivarium\Assertion\Failure;
+use Vivarium\Assertion\Var\IsString;
+
+use function str_ends_with;
+
+/** @template-extends BaseAssertion<mixed, string> */
+final class EndsWith extends BaseAssertion
+{
+    public function __construct(private readonly string $suffix)
+    {
+    }
+
+    #[Override]
+    protected function precondition(): Assertion
+    {
+        return new IsString();
+    }
+
+    #[Override]
+    protected function condition(mixed $value): bool
+    {
+        return str_ends_with($value, $this->suffix);
+    }
+
+    #[Override]
+    protected function failure(mixed $value): Failure
+    {
+        return new Failure(
+            'Expected value to end with {suffix}. Got {value}.',
+            $value,
+            suffix: $this->suffix,
+        );
+    }
+}

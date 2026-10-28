@@ -17,7 +17,7 @@ use Vivarium\Assertion\Failure;
 
 use function defined;
 
-/** @template-extends BaseAssertion<string, string> */
+/** @template-extends BaseAssertion<non-empty-string, string> */
 final class IsConstant extends BaseAssertion
 {
     #[Override]
