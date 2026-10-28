@@ -10,12 +10,10 @@ declare(strict_types=1);
 
 namespace Vivarium\Equality;
 
-use Vivarium\Float\NearlyEquals;
-
 use function array_keys;
-use function count;
 use function is_array;
 use function is_float;
+use function is_nan;
 use function is_object;
 
 final class EqualsBuilder
@@ -37,7 +35,7 @@ final class EqualsBuilder
             return $this;
         }
 
-        if ($first instanceof Equality && is_object($second)) {
+        if (is_object($first) && is_object($second)) {
             return $this->appendObject($first, $second);
         }
 
@@ -49,18 +47,27 @@ final class EqualsBuilder
             return $this->appendFloat($first, $second);
         }
 
-        $builder           = clone $this;
-        $builder->isEquals = $first === $second;
-
-        return $builder;
+        return $this->withEquals($first === $second);
     }
 
-    private function appendFloat(float $first, float $second): EqualsBuilder
+    public function isEquals(): bool
     {
-        $builder           = clone $this;
-        $builder->isEquals = (new NearlyEquals())($first, $second);
+        return $this->isEquals;
+    }
 
-        return $builder;
+    /**
+     * Both sides must agree, so the result does not depend on the argument order.
+     */
+    private function appendObject(object $first, object $second): EqualsBuilder
+    {
+        if (! $first instanceof Equality && ! $second instanceof Equality) {
+            return $this->withEquals($first === $second);
+        }
+
+        return $this->withEquals(
+            (! $first instanceof Equality || $first->equals($second))
+            && (! $second instanceof Equality || $second->equals($first)),
+        );
     }
 
     /**
@@ -69,40 +76,27 @@ final class EqualsBuilder
      */
     private function appendEach(array $first, array $second): EqualsBuilder
     {
-        if (count($first) !== count($second)) {
-            return $this->reject();
+        if (array_keys($first) !== array_keys($second)) {
+            return $this->withEquals(false);
         }
 
-        $builder           = clone $this;
-        $builder->isEquals = $this->isEquals;
-        foreach (array_keys($first) as $key) {
-            if (! isset($second[$key])) {
-                return $builder->reject();
-            }
-
-            $builder = $builder->append($first[$key], $second[$key]);
+        $builder = $this;
+        foreach ($first as $key => $value) {
+            $builder = $builder->append($value, $second[$key]);
         }
 
         return $builder;
     }
 
-    private function appendObject(Equality $first, object $second): EqualsBuilder
+    private function appendFloat(float $first, float $second): EqualsBuilder
     {
-        $builder           = clone $this;
-        $builder->isEquals = $first->equals($second);
-
-        return $builder;
+        return $this->withEquals($first === $second || (is_nan($first) && is_nan($second)));
     }
 
-    public function isEquals(): bool
-    {
-        return $this->isEquals;
-    }
-
-    private function reject(): EqualsBuilder
+    private function withEquals(bool $isEquals): EqualsBuilder
     {
         $builder           = clone $this;
-        $builder->isEquals = false;
+        $builder->isEquals = $isEquals;
 
         return $builder;
     }

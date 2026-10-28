@@ -10,10 +10,9 @@ declare(strict_types=1);
 
 namespace Vivarium\Equality;
 
-use Closure;
-
 use function array_keys;
 use function is_array;
+use function is_float;
 use function is_object;
 use function serialize;
 use function sha1;
@@ -35,12 +34,13 @@ final class HashBuilder
             return $this->appendEach($value);
         }
 
-        if ($value instanceof Closure) {
-            return $this->appendCallable($value);
-        }
-
         if (is_object($value)) {
             return $this->appendObject($value);
+        }
+
+        // -0.0 === 0.0, but serialize() tells them apart
+        if (is_float($value) && $value === 0.0) {
+            $value = 0.0;
         }
 
         $builder         = clone $this;
@@ -66,19 +66,11 @@ final class HashBuilder
         return $builder;
     }
 
-    private function appendCallable(Closure $closure): HashBuilder
-    {
-        $builder         = clone $this;
-        $builder->total .= spl_object_id($closure);
-
-        return $builder;
-    }
-
     private function appendObject(object $object): HashBuilder
     {
         $builder         = clone $this;
         $builder->total .= $object instanceof Equality ?
-            $object->hash() : serialize($object);
+            $object->hash() : serialize(spl_object_id($object));
 
         return $builder;
     }

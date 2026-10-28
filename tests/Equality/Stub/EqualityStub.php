@@ -10,16 +10,19 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Equality\Stub;
 
+use Override;
 use Vivarium\Equality\Equality;
 use Vivarium\Equality\HashBuilder;
 
 final class EqualityStub implements Equality
 {
+    #[Override]
     public function equals(object $object): bool
     {
         return $object instanceof EqualityStub;
     }
 
+    #[Override]
     public function hash(): string
     {
         return (new HashBuilder())
