@@ -88,6 +88,7 @@ final class EachTest extends TestCase
             'empty array' => [$eachInteger, [], null],
             'map of ints' => [$eachInteger, ['a' => 1], null],
             'one string' => [$eachInteger, [1, 'a', 'b'], 'Expected value to be int. Got string "a".'],
+            'later string' => [$eachInteger, [1, 2, 'a', 4], 'Expected value to be int. Got string "a".'],
             'not an array' => [$eachInteger, 'abc', 'Expected value to be array. Got string "abc".'],
         ];
     }

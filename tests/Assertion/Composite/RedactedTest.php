@@ -12,6 +12,7 @@ namespace Vivarium\Test\Assertion\Composite;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\Comparison\IsSameAs;
@@ -47,22 +48,24 @@ final class RedactedTest extends TestCase
         $assertion->assert($value);
     }
 
-    public function testAssertWithCustomMessage(): void
+    #[TestWith(['guess'])]
+    public function testAssertWithCustomMessage(mixed $value): void
     {
         $this->expectException(AssertionFailed::class);
         $this->expectExceptionMessageMatches('/^' . preg_quote('Custom [redacted].', '/') . '$/');
 
         (new Redacted(
             new IsSameAs('secret'),
-        ))->assert('guess', 'Custom {value}.');
+        ))->assert($value, 'Custom {value}.');
     }
 
-    public function testAssertMasksEveryParameter(): void
+    #[TestWith(['guess'])]
+    public function testAssertMasksEveryParameter(mixed $value): void
     {
         try {
             (new Redacted(
                 new IsSameAs('secret'),
-            ))->assert('guess');
+            ))->assert($value);
         } catch (AssertionFailed $failed) {
             self::assertSame(
                 'Expected value to be the same as {compare}. Got {value}.',

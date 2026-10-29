@@ -14,10 +14,13 @@ use Override;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\Exception\AssertionFailed;
 
-/** @implements Assertion<mixed> */
+/**
+ * @template T
+ * @implements Assertion<T>
+ */
 final class Redacted implements Assertion
 {
-    /** @param Assertion<mixed> $assertion */
+    /** @param Assertion<T> $assertion */
     public function __construct(private readonly Assertion $assertion)
     {
     }

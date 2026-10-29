@@ -86,6 +86,11 @@ final class IsRegexEncodingTest extends TestCase
                 'nope',
                 'Expected value to be an encoding supported by mbstring regex functions. Got string "nope".',
             ],
+            'empty' => [
+                $assertion,
+                '',
+                'Expected value to be an encoding supported by mbstring regex functions. Got string "".',
+            ],
             'int' => [$assertion, 42, 'Expected value to be string. Got int 42.'],
         ];
     }

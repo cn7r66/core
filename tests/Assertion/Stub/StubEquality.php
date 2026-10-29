@@ -1,0 +1,32 @@
+<?php
+
+/**
+ * This file is part of Vivarium
+ * SPDX-License-Identifier: MPL-2.0
+ * Copyright (c) The Vivarium Project
+ */
+
+declare(strict_types=1);
+
+namespace Vivarium\Test\Assertion\Stub;
+
+use Override;
+use Vivarium\Equality\Equality;
+use Vivarium\Equality\HashBuilder;
+
+final class StubEquality implements Equality
+{
+    #[Override]
+    public function equals(object $object): bool
+    {
+        return $object instanceof StubEquality;
+    }
+
+    #[Override]
+    public function hash(): string
+    {
+        return (new HashBuilder())
+            ->append(42)
+            ->getHashCode();
+    }
+}

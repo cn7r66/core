@@ -16,6 +16,7 @@ use Vivarium\Assertion\BaseAssertion;
 use Vivarium\Assertion\Failure;
 use Vivarium\Assertion\String\IsNotEmpty;
 
+use function is_object;
 use function method_exists;
 
 /** @template-extends BaseAssertion<mixed, object|class-string> */
@@ -36,7 +37,9 @@ final class HasMethod extends BaseAssertion
     #[Override]
     protected function condition(mixed $value): bool
     {
-        return method_exists($value, $this->method);
+        $class = is_object($value) ? $value::class : $value;
+
+        return method_exists($class, $this->method);
     }
 
     #[Override]

@@ -76,6 +76,11 @@ final class HasPrivateMethodTest extends TestCase
                 StubChild::class,
                 'Expected value to have a private method "secret". Got string "' . StubChild::class . '".',
             ],
+            'parent private, seen from a child object' => [
+                new HasPrivateMethod('secret'),
+                new StubChild(),
+                'Expected value to have a private method "secret". Got object ' . StubChild::class . '.',
+            ],
             'public' => [
                 new HasPrivateMethod('touch'),
                 StubChild::class,

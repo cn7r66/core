@@ -16,8 +16,8 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Comparison\IsEqualTo;
 use Vivarium\Assertion\Exception\AssertionFailed;
-use Vivarium\Test\Equality\Stub\EqualityStub;
-use Vivarium\Test\Equality\Stub\StubEqualToAnything;
+use Vivarium\Test\Assertion\Stub\StubEquality;
+use Vivarium\Test\Assertion\Stub\StubEqualToAnything;
 
 use function preg_quote;
 
@@ -64,7 +64,7 @@ final class IsEqualToTest extends TestCase
             'list' => [[1, 2], [1, 2], null],
             'map' => [['a' => 1, 'b' => 2], ['a' => 1, 'b' => 2], null],
             'float not a number' => [NAN, NAN, null],
-            'equality objects' => [new EqualityStub(), new EqualityStub(), null],
+            'equality objects' => [new StubEquality(), new StubEquality(), null],
             'other int' => [5, 6, 'Expected value to be equal to 5. Got int 6.'],
             'int and float' => [1, 1.0, 'Expected value to be equal to 1. Got float 1.0.'],
             'map order' => [
@@ -78,9 +78,9 @@ final class IsEqualToTest extends TestCase
                 'Expected value to be equal to 0.3. Got float 0.30000000000000004.',
             ],
             'equality objects that disagree' => [
-                new EqualityStub(),
+                new StubEquality(),
                 new StubEqualToAnything(),
-                'Expected value to be equal to ' . EqualityStub::class
+                'Expected value to be equal to ' . StubEquality::class
                     . '. Got object ' . StubEqualToAnything::class . '.',
             ],
         ];

@@ -16,7 +16,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Comparison\IsOneOf;
 use Vivarium\Assertion\Exception\AssertionFailed;
-use Vivarium\Test\Equality\Stub\EqualityStub;
+use Vivarium\Test\Assertion\Stub\StubEquality;
 
 use function preg_quote;
 
@@ -69,7 +69,7 @@ final class IsOneOfTest extends TestCase
     {
         return [
             'hit' => [[1, 5, 7], 5, null],
-            'equality object' => [[new EqualityStub()], new EqualityStub(), null],
+            'equality object' => [[new StubEquality()], new StubEquality(), null],
             'miss' => [[1, 5, 7], 27, 'Expected value to be one of [1, 5, 7]. Got int 27.'],
             'numeric string' => [[5], '5', 'Expected value to be one of [5]. Got string "5".'],
             'capped choices' => [

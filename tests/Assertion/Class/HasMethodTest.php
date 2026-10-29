@@ -79,6 +79,11 @@ final class HasMethodTest extends TestCase
                 StubChild::class,
                 'Expected value to have a method "secret". Got string "' . StubChild::class . '".',
             ],
+            'parent private, seen from a child object' => [
+                new HasMethod('secret'),
+                new StubChild(),
+                'Expected value to have a method "secret". Got object ' . StubChild::class . '.',
+            ],
             'trait' => [new HasMethod('mixed'), StubChild::class, null],
             'interface' => [new HasMethod('described'), StubContractA::class, null],
             'missing' => [
