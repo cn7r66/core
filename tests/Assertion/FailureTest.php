@@ -183,7 +183,9 @@ final class FailureTest extends TestCase
     {
         $open   = fopen('php://memory', 'r');
         $closed = fopen('php://memory', 'r');
-        fclose($closed);
+        if ($closed !== false) {
+            fclose($closed);
+        }
 
         $enum = StubEnum::class . '::First';
 

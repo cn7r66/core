@@ -61,6 +61,14 @@ final class TypesTest extends TestCase
         self::assertTrue($type->equals(Types::fromString((string) $type)));
     }
 
+    public function testFrom(): void
+    {
+        $type = Types::fromString('int|string');
+
+        self::assertSame($type, Types::from($type));
+        self::assertTrue($type->equals(Types::from('string|int')));
+    }
+
     #[DataProvider('provideSyntaxErrors')]
     public function testFromStringException(string $input, string $reason): void
     {

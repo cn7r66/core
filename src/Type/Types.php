@@ -41,6 +41,11 @@ final class Types
 {
     private const array CONTEXTUAL = ['self', 'parent', 'static'];
 
+    public static function from(string|Type $type): Type
+    {
+        return $type instanceof Type ? $type : self::fromString($type);
+    }
+
     public static function fromString(string $type): Type
     {
         return self::parse($type, null, null);

@@ -14,7 +14,8 @@
     "require": {
         "php": "^8.5",
         "ext-mbstring": "*",
-        "vivarium/equality": "^0.1"
+        "vivarium/equality": "^0.1",
+        "vivarium/type": "^0.1"
     },
     "autoload": {
         "psr-4": {
