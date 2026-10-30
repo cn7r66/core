@@ -10,7 +10,14 @@ declare(strict_types=1);
 
 namespace Vivarium\Comparator;
 
-/** @template T */
+/**
+ * Only the sign of compare() carries the answer: negative when the first value comes before the
+ * second, positive when it comes after, zero when they are equivalent. The order must be
+ * antisymmetric (swapping the values flips the sign) and transitive, so zero is an equivalence
+ * a sort or a search can rely on.
+ *
+ * @template-contravariant T
+ */
 interface Comparator
 {
     /**
@@ -18,10 +25,4 @@ interface Comparator
      * @param T $second
      */
     public function compare($first, $second): int;
-
-    /**
-     * @param T $first
-     * @param T $second
-     */
-    public function __invoke($first, $second): int;
 }

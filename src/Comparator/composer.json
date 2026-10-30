@@ -13,8 +13,7 @@
     ],
     "require": {
         "php": "^8.5",
-        "vivarium/equality": "^0.1",
-        "vivarium/float": "^0.1"
+        "vivarium/assertion": "^0.1"
     },
     "autoload": {
         "psr-4": {
