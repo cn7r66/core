@@ -18,6 +18,8 @@ use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Test\Equality\Stub\EqualityStub;
 use Vivarium\Test\Equality\Stub\StubEqualToAnything;
 
+use function fopen;
+
 use const INF;
 use const NAN;
 
@@ -59,7 +61,8 @@ final class EqualsBuilderTest extends TestCase
     /** @return array<string, array{mixed, mixed}> */
     public static function provideEqual(): array
     {
-        $object = new stdClass();
+        $object   = new stdClass();
+        $resource = fopen('php://memory', 'r');
 
         return [
             'int' => [42, 42],
@@ -76,6 +79,7 @@ final class EqualsBuilderTest extends TestCase
             'null element' => [[null], [null]],
             'nested array' => [['a' => 1, 'b' => ['1', 'z' => 'k']], ['a' => 1, 'b' => ['1', 'z' => 'k']]],
             'same instance' => [$object, $object],
+            'same resource' => [$resource, $resource],
             'equality objects' => [new EqualityStub(), new EqualityStub()],
             'equality objects in arrays' => [[new EqualityStub()], [new EqualityStub()]],
         ];
@@ -93,6 +97,7 @@ final class EqualsBuilderTest extends TestCase
             'null and false' => [null, false],
             'float' => [3.140000001, 3.140000002],
             'float sum' => [0.1 + 0.2, 0.3],
+            'float not a number and a number' => [NAN, 3.14],
             'list order' => [[1, 2], [2, 1]],
             'map order' => [['a' => 1, 'b' => 2], ['b' => 2, 'a' => 1]],
             'different size' => [[1, 2, 3], [1, 2, 3, 4]],
@@ -102,7 +107,9 @@ final class EqualsBuilderTest extends TestCase
             'array and scalar' => [[1, 2, 3, 4], 5],
             'float and string' => [0.5, 'Hello'],
             'different instances' => [new stdClass(), new stdClass()],
+            'different resources' => [fopen('php://memory', 'r'), fopen('php://memory', 'r')],
             'equality and plain object' => [new EqualityStub(), new stdClass()],
+            'equality equal to anything and plain object' => [new StubEqualToAnything(), new stdClass()],
             'object and scalar' => [new EqualityStub(), 42],
             'equality objects that disagree' => [new StubEqualToAnything(), new EqualityStub()],
         ];

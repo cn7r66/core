@@ -1,6 +1,6 @@
 <?php
 
-/**
+/*
  * This file is part of Vivarium
  * SPDX-License-Identifier: MPL-2.0
  * Copyright (c) The Vivarium Project
@@ -56,18 +56,16 @@ final class EqualsBuilder
     }
 
     /**
+     * An Equality is never equal to an object without one: their hashes could not agree.
      * Both sides must agree, so the result does not depend on the argument order.
      */
     private function appendObject(object $first, object $second): EqualsBuilder
     {
-        if (! $first instanceof Equality && ! $second instanceof Equality) {
+        if (! $first instanceof Equality || ! $second instanceof Equality) {
             return $this->withEquals($first === $second);
         }
 
-        return $this->withEquals(
-            (! $first instanceof Equality || $first->equals($second))
-            && (! $second instanceof Equality || $second->equals($first)),
-        );
+        return $this->withEquals($first->equals($second) && $second->equals($first));
     }
 
     /**

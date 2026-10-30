@@ -1,6 +1,6 @@
 {
   "name": "vivarium/equality",
-  "description": "A module for check object equality.",
+  "description": "A module for checking object equality.",
   "type": "library",
   "minimum-stability": "dev",
   "prefer-stable": true,
@@ -16,7 +16,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Vivarium\\Equality\\": "src/"
+      "Vivarium\\Equality\\": "./"
     }
   }
 }

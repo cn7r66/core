@@ -55,11 +55,24 @@ final class HashBuilderTest extends TestCase
         );
     }
 
+    public function testGetHashCodeIsHexadecimal(): void
+    {
+        self::assertMatchesRegularExpression('/^[0-9a-f]{32}$/', (new HashBuilder())->append(1)->getHashCode());
+    }
+
     public function testAppendEmptyArray(): void
     {
         self::assertNotSame(
-            (new HashBuilder())->append(1)->getHashCode(),
-            (new HashBuilder())->append(1)->append([])->getHashCode(),
+            (new HashBuilder())->getHashCode(),
+            (new HashBuilder())->append([])->getHashCode(),
+        );
+    }
+
+    public function testAppendKeepsEarlierValues(): void
+    {
+        self::assertNotSame(
+            (new HashBuilder())->append(2)->getHashCode(),
+            (new HashBuilder())->append(1)->append(2)->getHashCode(),
         );
     }
 
@@ -85,29 +98,34 @@ final class HashBuilderTest extends TestCase
     /** @return array<string, array{mixed, mixed}> */
     public static function provideDistinct(): array
     {
+        $spelledLikeOne = new class implements Equality {
+            #[Override]
+            public function equals(object $object): bool
+            {
+                return false;
+            }
+
+            #[Override]
+            public function hash(): string
+            {
+                return 'i:1;';
+            }
+        };
+
         return [
             'int and numeric string' => [1, '1'],
             'int and float' => [1, 1.0],
+            'zero and one' => [0.0, 1.0],
             'list order' => [[1, 2], [2, 1]],
+            'list first element' => [[1, 2], [3, 2]],
             'map order' => [['a' => 1, 'b' => 2], ['b' => 2, 'a' => 1]],
+            'map keys' => [['a' => 1], ['b' => 1]],
+            'map keys and values swapped' => [['a' => 1, 'b' => 2], [1 => 'a', 2 => 'b']],
             'different instances' => [new stdClass(), new stdClass()],
+            'equality objects with different hashes' => [new EqualityStub(), $spelledLikeOne],
             'nested array boundary' => [[[1], 2], [[1, 2]]],
-            'equality hash spelled like a scalar' => [
-                new class implements Equality {
-                    #[Override]
-                    public function equals(object $object): bool
-                    {
-                        return false;
-                    }
-
-                    #[Override]
-                    public function hash(): string
-                    {
-                        return 'i:1;';
-                    }
-                },
-                1,
-            ],
+            'equality hash spelled like an int' => [$spelledLikeOne, 1],
+            'equality hash and the same string' => [$spelledLikeOne, 'i:1;'],
             'different resources' => [fopen('php://memory', 'r'), fopen('php://memory', 'r')],
             'resource and zero' => [fopen('php://memory', 'r'), 0],
         ];

@@ -1,6 +1,6 @@
 <?php
 
-/**
+/*
  * This file is part of Vivarium
  * SPDX-License-Identifier: MPL-2.0
  * Copyright (c) The Vivarium Project

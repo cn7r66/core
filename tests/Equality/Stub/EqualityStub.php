@@ -1,6 +1,6 @@
 <?php
 
-/**
+/*
  * This file is part of Vivarium
  * SPDX-License-Identifier: MPL-2.0
  * Copyright (c) The Vivarium Project
@@ -12,7 +12,6 @@ namespace Vivarium\Test\Equality\Stub;
 
 use Override;
 use Vivarium\Equality\Equality;
-use Vivarium\Equality\HashBuilder;
 
 final class EqualityStub implements Equality
 {
@@ -25,8 +24,6 @@ final class EqualityStub implements Equality
     #[Override]
     public function hash(): string
     {
-        return (new HashBuilder())
-            ->append(42)
-            ->getHashCode();
+        return 'equality-stub';
     }
 }
