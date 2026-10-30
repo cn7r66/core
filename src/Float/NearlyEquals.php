@@ -10,34 +10,44 @@ declare(strict_types=1);
 
 namespace Vivarium\Float;
 
+use Vivarium\Assertion\Numeric\IsInRightOpenRange;
+
 use function abs;
 use function min;
 
+use const INF;
+use const PHP_FLOAT_EPSILON;
+use const PHP_FLOAT_MAX;
+use const PHP_FLOAT_MIN;
+
+/**
+ * Two floats are nearly equal when their difference, relative to the sum of their magnitudes,
+ * is at most epsilon. A difference below PHP_FLOAT_MIN is compared absolutely, to
+ * epsilon * PHP_FLOAT_MIN, so values around zero can be nearly equal.
+ *
+ * Not transitive, so never an equality: no hash or ordering can agree with it.
+ * NAN is never nearly equal to anything, itself included; an infinity only to itself.
+ * An epsilon of 0.0 means exact equality.
+ */
 final class NearlyEquals
 {
-    public function __construct(
-        private float $epsilon = FloatingPoint::EPSILON,
-        private float $min = FloatingPoint::FLOAT_MIN,
-        private float $max = FloatingPoint::FLOAT_MAX,
-    ) {
+    public function __construct(private float $epsilon = PHP_FLOAT_EPSILON)
+    {
+        (new IsInRightOpenRange(0.0, INF))
+            ->assert($epsilon, 'Expected epsilon to be finite and non-negative. Got {value}.');
     }
 
-    public function __invoke(float $first, float $second, float|null $epsilon = null): bool
+    public function equals(float $first, float $second): bool
     {
-        $epsilon ??= $this->epsilon;
-
         if ($first === $second) {
             return true;
         }
 
         $diff = abs($first - $second);
-        if ($diff < $this->min) {
-            return $diff < $epsilon * $this->min;
+        if ($diff < PHP_FLOAT_MIN) {
+            return $diff <= $this->epsilon * PHP_FLOAT_MIN;
         }
 
-        $first  = abs($first);
-        $second = abs($second);
-
-        return $diff / min($first + $second, $this->max) < $epsilon;
+        return $diff / min(abs($first) + abs($second), PHP_FLOAT_MAX) <= $this->epsilon;
     }
 }

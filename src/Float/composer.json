@@ -1,6 +1,6 @@
 {
   "name": "vivarium/float",
-  "description": "A module for check floating point numbers equality.",
+  "description": "A module for checking floating point numbers equality.",
   "type": "library",
   "minimum-stability": "dev",
   "prefer-stable": true,
@@ -12,11 +12,12 @@
     }
   ],
   "require": {
-    "php": "^8.5"
+    "php": "^8.5",
+    "vivarium/assertion": "^0.1"
   },
   "autoload": {
     "psr-4": {
-      "Vivarium\\Float\\": "src/"
+      "Vivarium\\Float\\": "./"
     }
   }
 }

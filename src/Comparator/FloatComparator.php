@@ -10,15 +10,16 @@ declare(strict_types=1);
 
 namespace Vivarium\Comparator;
 
-use Vivarium\Float\FloatingPoint;
 use Vivarium\Float\NearlyEquals;
+
+use const PHP_FLOAT_EPSILON;
 
 /** @template-implements Comparator<float> */
 final class FloatComparator implements Comparator
 {
     private NearlyEquals $nearlyEquals;
 
-    public function __construct(float $epsilon = FloatingPoint::EPSILON)
+    public function __construct(float $epsilon = PHP_FLOAT_EPSILON)
     {
         $this->nearlyEquals = new NearlyEquals($epsilon);
     }
@@ -29,7 +30,7 @@ final class FloatComparator implements Comparator
      */
     public function compare($first, $second): int
     {
-        if (($this->nearlyEquals)($first, $second)) {
+        if ($this->nearlyEquals->equals($first, $second)) {
             return 0;
         }
 
