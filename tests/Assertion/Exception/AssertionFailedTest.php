@@ -14,6 +14,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
+use Vivarium\Failure\Failed;
 use Vivarium\Failure\Failure;
 
 #[CoversClass(AssertionFailed::class)]
@@ -26,6 +27,7 @@ final class AssertionFailedTest extends TestCase
         $exception = new AssertionFailed($failure);
 
         self::assertInstanceOf(InvalidArgumentException::class, $exception);
+        self::assertInstanceOf(Failed::class, $exception);
         self::assertSame('Expected "x". Got int 1.', $exception->getMessage());
     }
 

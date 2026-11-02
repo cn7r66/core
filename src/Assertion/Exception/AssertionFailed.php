@@ -11,15 +11,18 @@ declare(strict_types=1);
 namespace Vivarium\Assertion\Exception;
 
 use InvalidArgumentException;
+use Override;
+use Vivarium\Failure\Failed;
 use Vivarium\Failure\Failure;
 
-final class AssertionFailed extends InvalidArgumentException
+final class AssertionFailed extends InvalidArgumentException implements Failed
 {
     public function __construct(private Failure $failure)
     {
         parent::__construct($failure->format());
     }
 
+    #[Override]
     public function getFailure(): Failure
     {
         return $this->failure;
