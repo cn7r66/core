@@ -8,7 +8,7 @@
 
 declare(strict_types=1);
 
-namespace Vivarium\Assertion;
+namespace Vivarium\Failure;
 
 use InvalidArgumentException;
 use UnitEnum;

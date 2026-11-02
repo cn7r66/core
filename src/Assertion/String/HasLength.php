@@ -14,9 +14,9 @@ use Override;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\BaseAssertion;
 use Vivarium\Assertion\Encoding\IsEncoding;
-use Vivarium\Assertion\Failure;
 use Vivarium\Assertion\Numeric\IsGreaterThanOrEqualTo;
 use Vivarium\Assertion\Var\IsString;
+use Vivarium\Failure\Failure;
 
 use function mb_strlen;
 

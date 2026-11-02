@@ -13,8 +13,8 @@ namespace Vivarium\Assertion\String;
 use Override;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Failure;
 use Vivarium\Assertion\Var\IsString;
+use Vivarium\Failure\Failure;
 
 /** @template-extends BaseAssertion<'', string> */
 final class IsEmpty extends BaseAssertion

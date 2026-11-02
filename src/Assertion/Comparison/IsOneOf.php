@@ -13,8 +13,8 @@ namespace Vivarium\Assertion\Comparison;
 use Override;
 use Vivarium\Assertion\BaseAssertion;
 use Vivarium\Assertion\Composite\Not;
-use Vivarium\Assertion\Failure;
 use Vivarium\Equality\Equal;
+use Vivarium\Failure\Failure;
 
 /** @template-extends BaseAssertion<mixed, mixed> */
 final class IsOneOf extends BaseAssertion

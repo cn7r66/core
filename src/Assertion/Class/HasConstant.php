@@ -14,8 +14,8 @@ use Override;
 use ReflectionClass;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Failure;
 use Vivarium\Assertion\String\IsNotEmpty;
+use Vivarium\Failure\Failure;
 
 /** @template-extends BaseAssertion<mixed, object|class-string> */
 final class HasConstant extends BaseAssertion

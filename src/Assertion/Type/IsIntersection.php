@@ -13,7 +13,7 @@ namespace Vivarium\Assertion\Type;
 use Override;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Failure;
+use Vivarium\Failure\Failure;
 use Vivarium\Type\Intersection;
 use Vivarium\Type\Type;
 use Vivarium\Type\Types;

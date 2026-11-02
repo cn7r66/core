@@ -1,0 +1,23 @@
+{
+    "name": "vivarium/failure",
+    "description": "Structured, safely rendered failure messages for the Vivarium ecosystem.",
+    "type": "library",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "license": "MPL-2.0",
+    "authors": [
+        {
+            "name": "Luca Cantoreggi",
+            "email": "luca.cantoreggi@vivarium.cloud"
+        }
+    ],
+    "require": {
+        "php": "^8.5",
+        "ext-mbstring": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Vivarium\\Failure\\": "./"
+        }
+    }
+}

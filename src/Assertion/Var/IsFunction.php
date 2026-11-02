@@ -13,7 +13,7 @@ namespace Vivarium\Assertion\Var;
 use Closure;
 use Override;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Failure;
+use Vivarium\Failure\Failure;
 
 use function function_exists;
 use function is_string;

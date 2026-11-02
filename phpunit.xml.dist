@@ -47,6 +47,9 @@
     <testsuite name="equality">
       <directory>tests/Equality</directory>
     </testsuite>
+    <testsuite name="failure">
+      <directory>tests/Failure</directory>
+    </testsuite>
     <testsuite name="float">
       <directory>tests/Float</directory>
     </testsuite>

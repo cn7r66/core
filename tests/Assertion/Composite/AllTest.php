@@ -17,9 +17,9 @@ use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\Comparison\IsSameAs;
 use Vivarium\Assertion\Composite\All;
 use Vivarium\Assertion\Exception\AssertionFailed;
-use Vivarium\Assertion\Failure;
 use Vivarium\Assertion\Var\IsInteger;
 use Vivarium\Assertion\Var\IsNull;
+use Vivarium\Failure\Failure;
 
 use function preg_quote;
 

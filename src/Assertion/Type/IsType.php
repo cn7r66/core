@@ -12,7 +12,7 @@ namespace Vivarium\Assertion\Type;
 
 use Override;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Failure;
+use Vivarium\Failure\Failure;
 use Vivarium\Type\Exception\InvalidType;
 use Vivarium\Type\Type;
 use Vivarium\Type\Types;

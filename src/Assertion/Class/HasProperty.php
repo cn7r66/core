@@ -13,8 +13,8 @@ namespace Vivarium\Assertion\Class;
 use Override;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Failure;
 use Vivarium\Assertion\String\IsNotEmpty;
+use Vivarium\Failure\Failure;
 
 use function property_exists;
 

@@ -13,6 +13,7 @@ namespace Vivarium\Assertion;
 use Override;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Assertion\Var\IsAnything;
+use Vivarium\Failure\Failure;
 
 /**
  * @template-covariant T

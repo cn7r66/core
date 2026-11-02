@@ -42,6 +42,7 @@
         "vivarium/container": "self.version",
         "vivarium/dispatcher": "self.version",
         "vivarium/equality": "self.version",
+        "vivarium/failure": "self.version",
         "vivarium/float": "self.version",
         "vivarium/type": "self.version"
     },

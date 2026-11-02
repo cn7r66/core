@@ -14,8 +14,8 @@ use Override;
 use ValueError;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Failure;
 use Vivarium\Assertion\Var\IsString;
+use Vivarium\Failure\Failure;
 
 use function mb_check_encoding;
 

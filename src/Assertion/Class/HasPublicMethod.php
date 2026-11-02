@@ -14,8 +14,8 @@ use Override;
 use ReflectionClass;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Failure;
 use Vivarium\Assertion\String\IsNotEmpty;
+use Vivarium\Failure\Failure;
 
 use function is_object;
 use function method_exists;

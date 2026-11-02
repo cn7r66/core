@@ -13,8 +13,8 @@ namespace Vivarium\Assertion\Comparison;
 use Override;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Failure;
 use Vivarium\Assertion\Var\IsBoolean;
+use Vivarium\Failure\Failure;
 
 /** @template-extends BaseAssertion<true, bool> */
 final class IsTrue extends BaseAssertion

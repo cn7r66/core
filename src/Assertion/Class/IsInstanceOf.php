@@ -13,8 +13,8 @@ namespace Vivarium\Assertion\Class;
 use Override;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Failure;
 use Vivarium\Assertion\Var\IsObject;
+use Vivarium\Failure\Failure;
 
 /**
  * @template C of object

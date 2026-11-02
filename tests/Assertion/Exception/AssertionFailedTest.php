@@ -14,7 +14,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
-use Vivarium\Assertion\Failure;
+use Vivarium\Failure\Failure;
 
 #[CoversClass(AssertionFailed::class)]
 final class AssertionFailedTest extends TestCase

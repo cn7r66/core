@@ -13,7 +13,7 @@ namespace Vivarium\Assertion\Composite;
 use Override;
 use Vivarium\Assertion\Assertion;
 use Vivarium\Assertion\Exception\AssertionFailed;
-use Vivarium\Assertion\Failure;
+use Vivarium\Failure\Failure;
 
 /** @implements Assertion<mixed> */
 final class Not implements Assertion

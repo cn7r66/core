@@ -12,7 +12,7 @@ namespace Vivarium\Assertion\Var;
 
 use Override;
 use Vivarium\Assertion\BaseAssertion;
-use Vivarium\Assertion\Failure;
+use Vivarium\Failure\Failure;
 
 /** @template-extends BaseAssertion<null, mixed> */
 final class IsNull extends BaseAssertion

@@ -8,15 +8,15 @@
 
 declare(strict_types=1);
 
-namespace Vivarium\Test\Assertion;
+namespace Vivarium\Test\Failure;
 
 use ArrayObject;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Vivarium\Assertion\Failure;
-use Vivarium\Test\Assertion\Stub\StubEnum;
+use Vivarium\Failure\Failure;
+use Vivarium\Test\Failure\Stub\StubEnum;
 
 use function fclose;
 use function fopen;
