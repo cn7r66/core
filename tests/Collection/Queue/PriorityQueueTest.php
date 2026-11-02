@@ -14,195 +14,218 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Vivarium\Collection\Exception\CollectionIsEmpty;
 use Vivarium\Collection\Queue\PriorityQueue;
-use Vivarium\Comparator\ByByte;
-use Vivarium\Comparator\ByNumber;
-use Vivarium\Equality\Equal;
+use Vivarium\Comparator\Priority;
 
-use function usort;
+use function iterator_to_array;
+
+use const PHP_INT_MAX;
+use const PHP_INT_MIN;
 
 #[CoversClass(PriorityQueue::class)]
-class PriorityQueueTest extends TestCase
+final class PriorityQueueTest extends TestCase
 {
-    public function testEnqueue(): void
+    public function testConstructor(): void
     {
-        $queue = new PriorityQueue(new ByNumber());
-        $queue = $queue
-            ->enqueue(4)
-            ->enqueue(3)
-            ->enqueue(3)
-            ->enqueue(1);
+        $queue = new PriorityQueue('a', 'b', 'c');
 
-        static::assertCount(4, $queue);
-        static::assertEquals(1, $queue->peek());
-        static::assertNotSame($queue, $queue->enqueue(7));
-    }
-
-    public function testAdd(): void
-    {
-        /** @var int[] $values */
-        $values = [1, 2, 3];
-
-        $queue = new PriorityQueue(new ByNumber(), ...$values);
-        $queue = $queue->add(4);
-
-        static::assertCount(4, $queue);
-        static::assertEquals(1, $queue->peek());
-        static::assertEquals([1, 2, 3, 4], $queue->toArray());
-        static::assertNotSame($queue, $queue->enqueue(5));
-    }
-
-    public function testDequeue(): void
-    {
-        /** @var string[] $elements */
-        $elements = ['z', 'k', 'v', 'a', 'd'];
-        $queue    = PriorityQueue::fromArray(new ByByte(), $elements);
-
-        usort($elements, (new ByByte())->compare(...));
-
-        $index = 0;
-        while (! $queue->isEmpty()) {
-            $element = $queue->peek();
-            $queue   = $queue->dequeue();
-
-            static::assertEquals($elements[$index], $element);
-            ++$index;
-        }
-
-        static::assertTrue($queue->isEmpty());
-
-        $queue = $queue->enqueue('e');
-        static::assertNotSame($queue, $queue->dequeue());
-    }
-
-    public function testContains(): void
-    {
-        /** @var int[] $values */
-        $values = [1, 2, 3, 4, 5];
-
-        $queue = new PriorityQueue(new ByNumber(), ...$values);
-
-        static::assertTrue($queue->contains(3));
-        static::assertFalse($queue->contains(42));
-    }
-
-    /**
-     * @param list<int> $elements
-     * @param list<int> $expected
-     */
-    #[DataProvider('provideRemove')]
-    public function testRemove(array $elements, int $element, array $expected): void
-    {
-        $collection = PriorityQueue::fromArray(new ByNumber(), $elements);
-        $removed    = $collection->remove($element);
-
-        static::assertSame($expected, $removed->toArray());
-        static::assertFalse($removed->contains($element));
-        static::assertNotSame($collection, $removed);
-    }
-
-    /** @return array<string, array{list<int>, int, list<int>}> */
-    public static function provideRemove(): array
-    {
-        return [
-            'first in order' => [[3, 4, 5, 1, 2, 6], 1, [2, 3, 4, 5, 6]],
-            'every occurrence' => [[3, 1, 2, 1], 1, [2, 3]],
-        ];
-    }
-
-    public function testRemoveMissing(): void
-    {
-        $collection = PriorityQueue::fromArray(new ByNumber(), [1, 2, 3]);
-
-        static::assertSame($collection, $collection->remove(4));
-    }
-
-    public function testClear(): void
-    {
-        /** @var int[] $values */
-        $values = [5, 2, 1];
-
-        $queue = new PriorityQueue(new ByNumber(), ...$values);
-        $queue = $queue->clear();
-
-        static::assertCount(0, $queue);
-    }
-
-    public function testGetIterator(): void
-    {
-        /** @var int[] $values */
-        $values = [3, 2, 1];
-
-        $queue = new PriorityQueue(new ByNumber(), ...$values);
-        /** @var array<int> $order */
-        $order = [1, 2, 3];
-
-        $index    = 0;
-        $iterator = $queue->getIterator();
-        while ($iterator->valid()) {
-            static::assertEquals($order[$index], $iterator->current());
-            $iterator->next();
-            ++$index;
-        }
-    }
-
-    public function testToArray(): void
-    {
-        /** @var int[] $values */
-        $values = [42, 6, 3, 23, 1];
-
-        $queue = new PriorityQueue(new ByNumber(), ...$values);
-
-        $expected = [1, 3, 6, 23, 42];
-
-        static::assertEquals($expected, $queue->toArray());
+        static::assertSame(['a', 'b', 'c'], $queue->toArray());
+        static::assertCount(3, $queue);
     }
 
     public function testFromArray(): void
     {
-        /** @var int[] $values */
-        $values = [1, 2, 3];
+        static::assertTrue(PriorityQueue::fromArray(['a', 'b'])->equals(new PriorityQueue('a', 'b')));
+    }
 
-        $queue1 = PriorityQueue::fromArray(new ByNumber(), $values);
-        $queue2 = new PriorityQueue(new ByNumber(), ...$values);
+    /**
+     * @param list<array{string, int}> $enqueued
+     * @param list<string>             $expected
+     */
+    #[DataProvider('provideEnqueue')]
+    public function testEnqueue(array $enqueued, array $expected): void
+    {
+        $queue = new PriorityQueue();
+        foreach ($enqueued as [$element, $priority]) {
+            $queue = $queue->enqueue($element, $priority);
+        }
 
-        static::assertTrue(Equal::areEquals($queue1, $queue2));
+        static::assertSame($expected, $queue->toArray());
+    }
+
+    /** @return array<string, array{list<array{string, int}>, list<string>}> */
+    public static function provideEnqueue(): array
+    {
+        return [
+            'lowest priority first' => [
+                [['high', Priority::HIGH], ['low', Priority::LOW], ['normal', Priority::NORMAL]],
+                ['low', 'normal', 'high'],
+            ],
+            'ties first in first out' => [
+                [['a', Priority::NORMAL], ['b', Priority::NORMAL], ['c', Priority::NORMAL]],
+                ['a', 'b', 'c'],
+            ],
+            'ties among other priorities' => [
+                [['a', 10], ['x', 0], ['b', 10], ['y', 0], ['c', 20], ['z', 0]],
+                ['x', 'y', 'z', 'a', 'b', 'c'],
+            ],
+            'beyond the constants' => [
+                [['last', PHP_INT_MAX], ['first', PHP_INT_MIN]],
+                ['first', 'last'],
+            ],
+        ];
+    }
+
+    public function testEnqueueDefaultsToNormal(): void
+    {
+        $queue = (new PriorityQueue())
+            ->enqueue('high', Priority::HIGH)
+            ->enqueue('default')
+            ->enqueue('low', Priority::LOW);
+
+        static::assertSame(['low', 'default', 'high'], $queue->toArray());
+    }
+
+    public function testAdd(): void
+    {
+        $queue = (new PriorityQueue())
+            ->enqueue('high', Priority::HIGH)
+            ->add('added');
+
+        static::assertSame(['added', 'high'], $queue->toArray());
+    }
+
+    public function testDequeue(): void
+    {
+        $queue = $this->queueOf([['b', 2], ['a', 1]]);
+
+        static::assertSame('a', $queue->peek());
+        static::assertSame('b', $queue->dequeue()->peek());
+        static::assertTrue($queue->dequeue()->dequeue()->isEmpty());
+    }
+
+    #[DataProvider('provideEmptyQueueCalls')]
+    public function testDequeueOnEmpty(string $operation): void
+    {
+        $queue = new PriorityQueue();
+
+        static::expectException(CollectionIsEmpty::class);
+        static::expectExceptionMessage(
+            'Expected an element to ' . $operation . '. Got object ' . PriorityQueue::class . ' with no elements.',
+        );
+
+        $operation === 'peek' ? $queue->peek() : $queue->dequeue();
+    }
+
+    /** @return array<string, array{string}> */
+    public static function provideEmptyQueueCalls(): array
+    {
+        return ['dequeue' => ['dequeue'], 'peek' => ['peek']];
+    }
+
+    /**
+     * @param list<array{string, int}> $left
+     * @param list<array{string, int}> $right
+     * @param list<string>             $expected
+     */
+    #[DataProvider('provideMerge')]
+    public function testMerge(array $left, array $right, array $expected): void
+    {
+        static::assertSame($expected, $this->queueOf($left)->merge($this->queueOf($right))->toArray());
+    }
+
+    /** @return array<string, array{list<array{string, int}>, list<array{string, int}>, list<string>}> */
+    public static function provideMerge(): array
+    {
+        return [
+            'interleaved priorities' => [
+                [['l1', 1], ['l3', 3]],
+                [['r0', 0], ['r2', 2], ['r4', 4]],
+                ['r0', 'l1', 'r2', 'l3', 'r4'],
+            ],
+            'ties: left first' => [
+                [['l1', 5], ['l2', 5]],
+                [['r1', 5], ['r2', 5]],
+                ['l1', 'l2', 'r1', 'r2'],
+            ],
+            'empty right' => [[['l', 1]], [], ['l']],
+            'empty left' => [[], [['r', 1]], ['r']],
+        ];
+    }
+
+    public function testRemove(): void
+    {
+        $queue = (new PriorityQueue())
+            ->enqueue('a', 1)
+            ->enqueue('b', 2)
+            ->enqueue('a', 3);
+
+        $removed = $queue->remove('a');
+
+        static::assertSame(['b'], $removed->toArray());
+        static::assertFalse($removed->contains('a'));
+    }
+
+    public function testRemoveMissing(): void
+    {
+        $queue = new PriorityQueue('a', 'b');
+
+        static::assertSame($queue, $queue->remove('z'));
+    }
+
+    public function testContains(): void
+    {
+        $queue = (new PriorityQueue())->enqueue('a', Priority::HIGH);
+
+        static::assertTrue($queue->contains('a'));
+        static::assertFalse($queue->contains('b'));
+    }
+
+    public function testClear(): void
+    {
+        static::assertTrue((new PriorityQueue('a', 'b'))->clear()->isEmpty());
+    }
+
+    public function testGetIterator(): void
+    {
+        $queue = (new PriorityQueue())
+            ->enqueue('b', 2)
+            ->enqueue('a', 1);
+
+        static::assertSame(['a', 'b'], iterator_to_array($queue));
     }
 
     public function testEquals(): void
     {
-        /** @var int[] $values1 */
-        $values1 = [1, 2, 3];
+        $queue = (new PriorityQueue())->enqueue('a', 1)->enqueue('b', 2);
 
-        $queue1 = new PriorityQueue(new ByNumber(), ...$values1);
-        $queue2 = new PriorityQueue(new ByNumber(), ...$values1);
-
-        /** @var int[] $values2 */
-        $values2 = [4, 5, 6];
-
-        $queue3 = new PriorityQueue(new ByNumber(), ...$values2);
-
-        static::assertTrue($queue1->equals($queue1));
-        static::assertTrue($queue1->equals($queue2));
-        static::assertFalse($queue1->equals($queue3));
-        static::assertFalse($queue1->equals(new stdClass()));
+        static::assertTrue($queue->equals($queue));
+        static::assertTrue($queue->equals((new PriorityQueue())->enqueue('b', 2)->enqueue('a', 1)));
+        static::assertFalse($queue->equals((new PriorityQueue())->enqueue('a', 1)->enqueue('b', 3)));
+        static::assertFalse($queue->equals(new stdClass()));
     }
 
     public function testHash(): void
     {
-        /** @var int[] $values1 */
-        $values1 = [1, 2, 3];
+        $queue = (new PriorityQueue())->enqueue('a', 1)->enqueue('b', 2);
 
-        $queue1 = new PriorityQueue(new ByNumber(), ...$values1);
-        $queue2 = new PriorityQueue(new ByNumber(), ...$values1);
+        static::assertSame($queue->hash(), (new PriorityQueue())->enqueue('b', 2)->enqueue('a', 1)->hash());
+        static::assertNotSame($queue->hash(), (new PriorityQueue())->enqueue('a', 1)->enqueue('b', 3)->hash());
+    }
 
-        /** @var int[] $values2 */
-        $values2 = [4, 5, 6];
+    /**
+     * @param list<array{string, int}> $entries
+     *
+     * @return PriorityQueue<string>
+     */
+    private function queueOf(array $entries): PriorityQueue
+    {
+        $queue = new PriorityQueue();
+        foreach ($entries as [$element, $priority]) {
+            $queue = $queue->enqueue($element, $priority);
+        }
 
-        $queue3 = new PriorityQueue(new ByNumber(), ...$values2);
-
-        static::assertSame($queue1->hash(), $queue1->hash());
-        static::assertSame($queue1->hash(), $queue2->hash());
-        static::assertNotSame($queue1->hash(), $queue3->hash());
+        return $queue;
     }
 }

@@ -10,44 +10,137 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\Queue;
 
+use ArrayIterator;
 use Iterator;
-use Vivarium\Comparator\Comparator;
+use Override;
+use Vivarium\Collection\Exception\CollectionIsEmpty;
+use Vivarium\Collection\Pair\Pair;
+use Vivarium\Collection\Util\BinarySearch;
+use Vivarium\Collection\Util\Vector;
+use Vivarium\Comparator\Priority;
+use Vivarium\Equality\Equal;
 use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Equality\HashBuilder;
 
-use function usort;
+use function array_any;
+use function array_filter;
+use function array_map;
+use function array_slice;
+use function array_values;
+use function count;
 
 /**
+ * Lowest priority first, first in first out among equal priorities. Priorities stay inside the
+ * queue: elements go in with one and come out alone.
+ *
  * @template T
  * @template-implements Queue<T>
  */
 final class PriorityQueue implements Queue
 {
-    /** @var ArrayQueue<T> */
-    private ArrayQueue $queue;
+    /** @var array<int, Pair<int, T>> */
+    private array $entries = [];
 
-    /**
-     * @param Comparator<T> $comparator
-     * @param T             ...$elements
-     */
-    public function __construct(private Comparator $comparator, ...$elements)
+    /** @param T ...$elements */
+    public function __construct(...$elements)
     {
-        usort($elements, $comparator->compare(...));
-
-        $this->queue = new ArrayQueue(...$elements);
+        foreach ($elements as $element) {
+            $this->entries[] = new Pair(Priority::NORMAL, $element);
+        }
     }
 
     /**
-     * @param Comparator<K> $comparator
-     * @param array<K>      $elements
+     * @param array<K> $elements
      *
      * @return PriorityQueue<K>
      *
      * @template K
      */
-    public static function fromArray(Comparator $comparator, array $elements): PriorityQueue
+    public static function fromArray(array $elements): PriorityQueue
     {
-        return new PriorityQueue($comparator, ...$elements);
+        return new PriorityQueue(...array_values($elements));
+    }
+
+    /**
+     * The element goes after every entry with an equal priority: first in, first out among ties.
+     *
+     * @param T $element
+     *
+     * @return PriorityQueue<T>
+     */
+    #[Override]
+    public function enqueue($element, int $priority = Priority::NORMAL): PriorityQueue
+    {
+        $miss = (new BinarySearch(
+            /** Equal priorities compare as lower, so the search always misses, after the last tie. */
+            static fn (Pair $entry, int $target): int => $entry->getKey() <= $target ? -1 : 1,
+        ))->search($this->entries, $priority);
+
+        $queue          = clone $this;
+        $queue->entries = Vector::insertAtIndex(
+            $this->entries,
+            new Pair($priority, $element),
+            -($miss + 1),
+        );
+
+        return $queue;
+    }
+
+    /** @return PriorityQueue<T> */
+    #[Override]
+    public function dequeue(): PriorityQueue
+    {
+        if ($this->isEmpty()) {
+            throw new CollectionIsEmpty('dequeue', $this);
+        }
+
+        $queue          = clone $this;
+        $queue->entries = array_slice($this->entries, 1);
+
+        return $queue;
+    }
+
+    /** @return T */
+    #[Override]
+    public function peek()
+    {
+        if ($this->isEmpty()) {
+            throw new CollectionIsEmpty('peek', $this);
+        }
+
+        return $this->entries[0]->getValue();
+    }
+
+    /**
+     * Both queues' elements by priority; on equal priority this queue's come first.
+     *
+     * @param PriorityQueue<T> $other
+     *
+     * @return PriorityQueue<T>
+     */
+    public function merge(PriorityQueue $other): PriorityQueue
+    {
+        $left      = $this->entries;
+        $right     = $other->entries;
+        $merged    = [];
+        $nextLeft  = 0;
+        $nextRight = 0;
+        while ($nextLeft < count($left) && $nextRight < count($right)) {
+            if ($right[$nextRight]->getKey() < $left[$nextLeft]->getKey()) {
+                $merged[] = $right[$nextRight];
+                $nextRight++;
+
+                continue;
+            }
+
+            $merged[] = $left[$nextLeft];
+            $nextLeft++;
+        }
+
+        $queue          = clone $this;
+        $queue->entries = [...$merged, ...array_slice($left, $nextLeft), ...array_slice($right, $nextRight)];
+
+        return $queue;
     }
 
     /**
@@ -55,95 +148,87 @@ final class PriorityQueue implements Queue
      *
      * @return PriorityQueue<T>
      */
+    #[Override]
     public function add($element): PriorityQueue
     {
         return $this->enqueue($element);
     }
 
     /**
+     * Removes the element at every priority it was queued with.
+     *
      * @param T $element
      *
      * @return PriorityQueue<T>
      */
+    #[Override]
     public function remove($element): PriorityQueue
     {
-        $queue = $this->queue->remove($element);
-        if ($queue === $this->queue) {
+        $remaining = array_values(array_filter(
+            $this->entries,
+            /** @param Pair<int, T> $entry */
+            static fn (Pair $entry): bool => ! Equal::areEquals($entry->getValue(), $element),
+        ));
+
+        if (count($remaining) === count($this->entries)) {
             return $this;
         }
 
-        $priority        = clone $this;
-        $priority->queue = $queue;
+        $queue          = clone $this;
+        $queue->entries = $remaining;
 
-        return $priority;
-    }
-
-    /** @return Iterator<int, T> */
-    public function getIterator(): Iterator
-    {
-        return $this->queue->getIterator();
-    }
-
-    public function count(): int
-    {
-        return $this->queue->count();
-    }
-
-    /** @return PriorityQueue<T> */
-    public function clear(): PriorityQueue
-    {
-        return new PriorityQueue($this->comparator);
-    }
-
-    /**
-     * @param T $element
-     *
-     * @return PriorityQueue<T>
-     */
-    public function enqueue($element): PriorityQueue
-    {
-        $priority   = clone $this;
-        $elements   = $priority->queue->toArray();
-        $elements[] = $element;
-
-        usort($elements, $this->comparator->compare(...));
-        $priority->queue = new ArrayQueue(...$elements);
-
-        return $priority;
-    }
-
-    /** @return PriorityQueue<T> */
-    public function dequeue(): PriorityQueue
-    {
-        $priorityQueue        = clone $this;
-        $priorityQueue->queue = $priorityQueue->queue->dequeue();
-
-        return $priorityQueue;
-    }
-
-    /** @return T */
-    public function peek()
-    {
-        return $this->queue->peek();
-    }
-
-    /** @return array<int, T> */
-    public function toArray(): array
-    {
-        return $this->queue->toArray();
+        return $queue;
     }
 
     /** @param T $element */
+    #[Override]
     public function contains($element): bool
     {
-        return $this->queue->contains($element);
+        return array_any(
+            $this->entries,
+            /** @param Pair<int, T> $entry */
+            static fn (Pair $entry): bool => Equal::areEquals($entry->getValue(), $element),
+        );
     }
 
+    /** @return PriorityQueue<T> */
+    #[Override]
+    public function clear(): PriorityQueue
+    {
+        return new PriorityQueue();
+    }
+
+    /** @return array<int, T> */
+    #[Override]
+    public function toArray(): array
+    {
+        return array_map(
+            /** @param Pair<int, T> $entry */
+            static fn (Pair $entry): mixed => $entry->getValue(),
+            $this->entries,
+        );
+    }
+
+    /** @return Iterator<int, T> */
+    #[Override]
+    public function getIterator(): Iterator
+    {
+        return new ArrayIterator($this->toArray());
+    }
+
+    #[Override]
+    public function count(): int
+    {
+        return count($this->entries);
+    }
+
+    #[Override]
     public function isEmpty(): bool
     {
-        return $this->queue->isEmpty();
+        return $this->entries === [];
     }
 
+    #[Override]
     public function equals(object $object): bool
     {
         if (! $object instanceof PriorityQueue) {
@@ -155,14 +240,15 @@ final class PriorityQueue implements Queue
         }
 
         return (new EqualsBuilder())
-            ->append($this->queue, $object->queue)
+            ->append($this->entries, $object->entries)
             ->isEquals();
     }
 
+    #[Override]
     public function hash(): string
     {
         return (new HashBuilder())
-            ->append($this->queue)
+            ->append($this->entries)
             ->getHashCode();
     }
 }
