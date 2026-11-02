@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Collection\Queue;
 
 use ArrayIterator;
+use Closure;
 use Iterator;
 use Override;
 use Vivarium\Collection\Exception\CollectionIsEmpty;
@@ -25,6 +26,7 @@ use Vivarium\Equality\HashBuilder;
 use function array_any;
 use function array_filter;
 use function array_map;
+use function array_reduce;
 use function array_slice;
 use function array_values;
 use function count;
@@ -196,6 +198,68 @@ final class PriorityQueue implements Queue
     public function clear(): PriorityQueue
     {
         return new PriorityQueue();
+    }
+
+    /**
+     * The accepted elements keep their priorities.
+     *
+     * @param Closure(T): bool $predicate
+     *
+     * @return PriorityQueue<T>
+     */
+    #[Override]
+    public function filter(Closure $predicate): PriorityQueue
+    {
+        $queue          = clone $this;
+        $queue->entries = array_values(array_filter(
+            $this->entries,
+            /** @param Pair<int, T> $entry */
+            static fn (Pair $entry): bool => $predicate($entry->getValue()),
+        ));
+
+        return $queue;
+    }
+
+    /**
+     * Each mapped element keeps the priority of its source.
+     *
+     * @param Closure(T): U $mapper
+     *
+     * @return PriorityQueue<U>
+     *
+     * @template U
+     */
+    #[Override]
+    public function map(Closure $mapper): PriorityQueue
+    {
+        $values = array_map($mapper, $this->toArray());
+
+        $queue          = new PriorityQueue(...$values);
+        $queue->entries = array_map(
+            /**
+             * @param Pair<int, T> $entry
+             * @param U            $value
+             */
+            static fn (Pair $entry, $value): Pair => new Pair($entry->getKey(), $value),
+            $this->entries,
+            $values,
+        );
+
+        return $queue;
+    }
+
+    /**
+     * @param Closure(R, T): R $reducer
+     * @param R                $initial
+     *
+     * @return R
+     *
+     * @template R
+     */
+    #[Override]
+    public function reduce(Closure $reducer, $initial)
+    {
+        return array_reduce($this->toArray(), $reducer, $initial);
     }
 
     /** @return array<int, T> */

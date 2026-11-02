@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Stack;
 
+use ArrayObject;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -17,6 +18,8 @@ use stdClass;
 use Vivarium\Collection\Exception\CollectionIsEmpty;
 use Vivarium\Collection\Stack\ArrayStack;
 use Vivarium\Equality\Equal;
+
+use function count;
 
 #[CoversClass(ArrayStack::class)]
 class ArrayStackTest extends TestCase
@@ -183,5 +186,89 @@ class ArrayStackTest extends TestCase
         static::assertSame($stack1->hash(), $stack1->hash());
         static::assertSame($stack1->hash(), $stack2->hash());
         static::assertNotSame($stack1->hash(), $stack3->hash());
+    }
+
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideFilter')]
+    public function testFilter(array $elements, array $expected): void
+    {
+        $collection = ArrayStack::fromArray($elements);
+        $filtered   = $collection->filter(static fn (int $element): bool => $element % 2 === 1);
+
+        static::assertSame($expected, $filtered->toArray());
+        static::assertCount(count($elements), $collection);
+        static::assertNotSame($collection, $filtered);
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [[1, 2, 3, 4], [3, 1]],
+            'none kept' => [[2, 4], []],
+            'all kept' => [[1, 3], [3, 1]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /**
+     * @param list<int>    $elements
+     * @param list<string> $expected
+     */
+    #[DataProvider('provideMap')]
+    public function testMap(array $elements, array $expected): void
+    {
+        $mapped = ArrayStack::fromArray($elements)->map(static fn (int $element): string => (string) $element);
+
+        static::assertSame($expected, $mapped->toArray());
+    }
+
+    /** @return array<string, array{list<int>, list<string>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'elements' => [[1, 2, 3], ['3', '2', '1']],
+            'empty' => [[], []],
+        ];
+    }
+
+    public function testVisitsInIterationOrder(): void
+    {
+        $stack   = ArrayStack::fromArray([1, 2, 3]);
+        $visited = new ArrayObject();
+        $record  = static function (int $element) use ($visited): bool {
+            $visited->append($element);
+
+            return true;
+        };
+
+        $stack->filter($record);
+        $stack->map($record);
+
+        static::assertSame([3, 2, 1, 3, 2, 1], $visited->getArrayCopy());
+    }
+
+    /** @param list<int> $elements */
+    #[DataProvider('provideReduce')]
+    public function testReduce(array $elements, string $expected): void
+    {
+        $collection = ArrayStack::fromArray($elements);
+
+        static::assertSame($expected, $collection->reduce(
+            static fn (string $carry, int $element): string => $carry . $element,
+            '>',
+        ));
+    }
+
+    /** @return array<string, array{list<int>, string}> */
+    public static function provideReduce(): array
+    {
+        return [
+            'empty' => [[], '>'],
+            'in iteration order' => [[1, 2, 3], '>321'],
+        ];
     }
 }

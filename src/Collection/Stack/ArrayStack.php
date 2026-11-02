@@ -11,12 +11,17 @@ declare(strict_types=1);
 namespace Vivarium\Collection\Stack;
 
 use ArrayIterator;
+use Closure;
 use Iterator;
+use Override;
 use Vivarium\Collection\Exception\CollectionIsEmpty;
 use Vivarium\Collection\Sequence\ArraySequence;
 use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Equality\HashBuilder;
 
+use function array_filter;
+use function array_map;
+use function array_reduce;
 use function array_reverse;
 use function count;
 
@@ -121,6 +126,44 @@ final class ArrayStack implements Stack
     public function clear(): ArrayStack
     {
         return new ArrayStack();
+    }
+
+    /**
+     * @param Closure(T): bool $predicate
+     *
+     * @return ArrayStack<T>
+     */
+    #[Override]
+    public function filter(Closure $predicate): ArrayStack
+    {
+        return new ArrayStack(...array_reverse(array_filter($this->toArray(), $predicate)));
+    }
+
+    /**
+     * @param Closure(T): U $mapper
+     *
+     * @return ArrayStack<U>
+     *
+     * @template U
+     */
+    #[Override]
+    public function map(Closure $mapper): ArrayStack
+    {
+        return new ArrayStack(...array_reverse(array_map($mapper, $this->toArray())));
+    }
+
+    /**
+     * @param Closure(R, T): R $reducer
+     * @param R                $initial
+     *
+     * @return R
+     *
+     * @template R
+     */
+    #[Override]
+    public function reduce(Closure $reducer, $initial)
+    {
+        return array_reduce($this->toArray(), $reducer, $initial);
     }
 
     /** @return array<int, T> */

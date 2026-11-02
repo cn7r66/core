@@ -18,6 +18,9 @@ use Vivarium\Collection\Set\HashSet;
 use Vivarium\Equality\Equal;
 use Vivarium\Equality\Equality;
 
+use function count;
+use function intdiv;
+
 #[CoversClass(HashSet::class)]
 class HashSetTest extends TestCase
 {
@@ -275,5 +278,61 @@ class HashSetTest extends TestCase
             'one element differs' => [new HashSet(1, 2, 3), new HashSet(1, 2, 4)],
             'one extra element' => [new HashSet(1, 2, 3), new HashSet(1, 2, 3, 4)],
         ];
+    }
+
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideFilter')]
+    public function testFilter(array $elements, array $expected): void
+    {
+        $set      = HashSet::fromArray($elements);
+        $filtered = $set->filter(static fn (int $element): bool => $element > 2);
+
+        static::assertTrue(HashSet::fromArray($expected)->equals($filtered));
+        static::assertCount(count($elements), $set);
+        static::assertNotSame($set, $filtered);
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [[1, 2, 3, 4], [3, 4]],
+            'none kept' => [[1, 2], []],
+            'all kept' => [[3, 4], [3, 4]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideMap')]
+    public function testMap(array $elements, array $expected): void
+    {
+        $mapped = HashSet::fromArray($elements)->map(static fn (int $element): int => intdiv($element, 2));
+
+        static::assertTrue(HashSet::fromArray($expected)->equals($mapped));
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'elements' => [[2, 4], [1, 2]],
+            'equal results merge' => [[2, 3, 4], [1, 2]],
+            'empty' => [[], []],
+        ];
+    }
+
+    public function testReduce(): void
+    {
+        $sum = static fn (int $carry, int $element): int => $carry + $element;
+
+        static::assertSame(10, HashSet::fromArray([1, 2, 3, 4])->reduce($sum, 0));
+        static::assertSame(7, (new HashSet())->reduce($sum, 7));
     }
 }

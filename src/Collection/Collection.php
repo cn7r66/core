@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection;
 
+use Closure;
 use Countable;
 use Iterator;
 use IteratorAggregate;
@@ -42,6 +43,38 @@ interface Collection extends Countable, IteratorAggregate, Equality
 
     /** @return self<T> */
     public function clear(): self;
+
+    /**
+     * The elements $predicate accepts, in iteration order.
+     *
+     * @param Closure(T): bool $predicate
+     *
+     * @return self<T>
+     */
+    public function filter(Closure $predicate): self;
+
+    /**
+     * Every element through $mapper, in iteration order.
+     *
+     * @param Closure(T): U $mapper
+     *
+     * @return self<U>
+     *
+     * @template U
+     */
+    public function map(Closure $mapper): self;
+
+    /**
+     * Folds the elements in iteration order, starting from $initial.
+     *
+     * @param Closure(R, T): R $reducer
+     * @param R                $initial
+     *
+     * @return R
+     *
+     * @template R
+     */
+    public function reduce(Closure $reducer, $initial);
 
     /** @return array<int, T> */
     public function toArray(): array;

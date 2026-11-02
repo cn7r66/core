@@ -10,13 +10,18 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\Set;
 
+use Closure;
 use Iterator;
+use Override;
 use Vivarium\Collection\Map\HashMap;
 use Vivarium\Collection\Map\Map;
 use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Equality\HashBuilder;
 
 use function array_fill;
+use function array_filter;
+use function array_map;
+use function array_reduce;
 use function array_values;
 use function count;
 
@@ -157,6 +162,46 @@ final class HashSet implements Set
         }
 
         return true;
+    }
+
+    /**
+     * @param Closure(T): bool $predicate
+     *
+     * @return HashSet<T>
+     */
+    #[Override]
+    public function filter(Closure $predicate): HashSet
+    {
+        return new HashSet(...array_filter($this->toArray(), $predicate));
+    }
+
+    /**
+     * Mapped elements that are equal become one.
+     *
+     * @param Closure(T): U $mapper
+     *
+     * @return HashSet<U>
+     *
+     * @template U
+     */
+    #[Override]
+    public function map(Closure $mapper): HashSet
+    {
+        return new HashSet(...array_map($mapper, $this->toArray()));
+    }
+
+    /**
+     * @param Closure(R, T): R $reducer
+     * @param R                $initial
+     *
+     * @return R
+     *
+     * @template R
+     */
+    #[Override]
+    public function reduce(Closure $reducer, $initial)
+    {
+        return array_reduce($this->toArray(), $reducer, $initial);
     }
 
     /** @param T $element */

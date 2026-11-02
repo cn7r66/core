@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Collection\Queue;
 
 use ArrayIterator;
+use Closure;
 use Iterator;
 use Override;
 use Vivarium\Collection\Exception\CollectionIsEmpty;
@@ -23,6 +24,8 @@ use Vivarium\Equality\HashBuilder;
 
 use function array_any;
 use function array_filter;
+use function array_map;
+use function array_reduce;
 use function array_slice;
 use function array_values;
 use function count;
@@ -167,6 +170,49 @@ final class SortedQueue implements Queue
     public function clear(): SortedQueue
     {
         return new SortedQueue($this->comparator);
+    }
+
+    /**
+     * @param Closure(T): bool $predicate
+     *
+     * @return SortedQueue<T>
+     */
+    #[Override]
+    public function filter(Closure $predicate): SortedQueue
+    {
+        $queue           = clone $this;
+        $queue->elements = array_values(array_filter($this->elements, $predicate));
+
+        return $queue;
+    }
+
+    /**
+     * An ArrayQueue in the current order: the comparator orders T, not the mapped elements.
+     *
+     * @param Closure(T): U $mapper
+     *
+     * @return ArrayQueue<U>
+     *
+     * @template U
+     */
+    #[Override]
+    public function map(Closure $mapper): ArrayQueue
+    {
+        return new ArrayQueue(...array_map($mapper, $this->elements));
+    }
+
+    /**
+     * @param Closure(R, T): R $reducer
+     * @param R                $initial
+     *
+     * @return R
+     *
+     * @template R
+     */
+    #[Override]
+    public function reduce(Closure $reducer, $initial)
+    {
+        return array_reduce($this->elements, $reducer, $initial);
     }
 
     /** @return array<int, T> */

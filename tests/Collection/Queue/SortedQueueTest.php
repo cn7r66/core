@@ -15,11 +15,14 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Exception\CollectionIsEmpty;
+use Vivarium\Collection\Queue\ArrayQueue;
 use Vivarium\Collection\Queue\SortedQueue;
 use Vivarium\Comparator\ByByte;
 use Vivarium\Comparator\ByNumber;
 use Vivarium\Equality\Equal;
 
+use function array_reverse;
+use function count;
 use function usort;
 
 #[CoversClass(SortedQueue::class)]
@@ -240,5 +243,78 @@ class SortedQueueTest extends TestCase
         static::assertSame($queue1->hash(), $queue1->hash());
         static::assertSame($queue1->hash(), $queue2->hash());
         static::assertNotSame($queue1->hash(), $queue3->hash());
+    }
+
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideFilter')]
+    public function testFilter(array $elements, array $expected): void
+    {
+        $collection = SortedQueue::fromArray(new ByNumber(), $elements);
+        $filtered   = $collection->filter(static fn (int|float $element): bool => $element > 1);
+
+        static::assertSame($expected, $filtered->toArray());
+        static::assertCount(count($elements), $collection);
+        static::assertNotSame($collection, $filtered);
+        static::assertSame([0, ...$expected], $filtered->enqueue(0)->toArray());
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [[3, 1, 4, 2], [2, 3, 4]],
+            'none kept' => [[1, 0], []],
+            'all kept' => [[3, 2, 3], [2, 3, 3]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideMap')]
+    public function testMap(array $elements, array $expected): void
+    {
+        $mapped = SortedQueue::fromArray(new ByNumber(), $elements)->map(
+            static fn (int|float $element): int|float => -$element,
+        );
+
+        static::assertInstanceOf(ArrayQueue::class, $mapped);
+        static::assertSame($expected, $mapped->toArray());
+        static::assertSame([...$expected, 0], $mapped->enqueue(0)->toArray());
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'elements' => [[3, 1, 2], [-1, -2, -3]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @param list<int> $elements */
+    #[DataProvider('provideReduce')]
+    public function testReduce(array $elements, string $expected): void
+    {
+        $collection = SortedQueue::fromArray(new ByNumber(), array_reverse($elements));
+
+        static::assertSame($expected, $collection->reduce(
+            static fn (string $carry, int|float $element): string => $carry . $element,
+            '>',
+        ));
+    }
+
+    /** @return array<string, array{list<int>, string}> */
+    public static function provideReduce(): array
+    {
+        return [
+            'empty' => [[], '>'],
+            'in iteration order' => [[1, 2, 3], '>123'],
+        ];
     }
 }

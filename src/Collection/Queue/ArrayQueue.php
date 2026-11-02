@@ -10,7 +10,9 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\Queue;
 
+use Closure;
 use Iterator;
+use Override;
 use Vivarium\Collection\Exception\CollectionIsEmpty;
 use Vivarium\Collection\Sequence\ArraySequence;
 use Vivarium\Equality\EqualsBuilder;
@@ -75,6 +77,47 @@ final class ArrayQueue implements Queue
     public function clear(): ArrayQueue
     {
         return new ArrayQueue();
+    }
+
+    /**
+     * @param Closure(T): bool $predicate
+     *
+     * @return ArrayQueue<T>
+     */
+    #[Override]
+    public function filter(Closure $predicate): ArrayQueue
+    {
+        $queue           = clone $this;
+        $queue->elements = $this->elements->filter($predicate);
+
+        return $queue;
+    }
+
+    /**
+     * @param Closure(T): U $mapper
+     *
+     * @return ArrayQueue<U>
+     *
+     * @template U
+     */
+    #[Override]
+    public function map(Closure $mapper): ArrayQueue
+    {
+        return new ArrayQueue(...$this->elements->map($mapper)->toArray());
+    }
+
+    /**
+     * @param Closure(R, T): R $reducer
+     * @param R                $initial
+     *
+     * @return R
+     *
+     * @template R
+     */
+    #[Override]
+    public function reduce(Closure $reducer, $initial)
+    {
+        return $this->elements->reduce($reducer, $initial);
     }
 
     /** @return array<int, T> */

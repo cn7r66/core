@@ -18,7 +18,9 @@ use Vivarium\Collection\Exception\CollectionIsEmpty;
 use Vivarium\Collection\Queue\PriorityQueue;
 use Vivarium\Comparator\Priority;
 
+use function count;
 use function iterator_to_array;
+use function strtoupper;
 
 use const PHP_INT_MAX;
 use const PHP_INT_MIN;
@@ -212,6 +214,74 @@ final class PriorityQueueTest extends TestCase
 
         static::assertSame($queue->hash(), (new PriorityQueue())->enqueue('b', 2)->enqueue('a', 1)->hash());
         static::assertNotSame($queue->hash(), (new PriorityQueue())->enqueue('a', 1)->enqueue('b', 3)->hash());
+    }
+
+    /**
+     * @param list<array{string, int}> $entries
+     * @param list<string>             $expected
+     */
+    #[DataProvider('provideFilter')]
+    public function testFilter(array $entries, array $expected): void
+    {
+        $queue    = $this->queueOf($entries);
+        $filtered = $queue->filter(static fn (string $element): bool => $element !== 'b');
+
+        static::assertSame($expected, $filtered->toArray());
+        static::assertCount(count($entries), $queue);
+        static::assertNotSame($queue, $filtered);
+    }
+
+    /** @return array<string, array{list<array{string, int}>, list<string>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [[['a', 5], ['b', 1], ['c', 3]], ['c', 'a']],
+            'none kept' => [[['b', 1], ['b', 2]], []],
+            'all kept' => [[['a', 5], ['c', 3]], ['c', 'a']],
+            'empty' => [[], []],
+        ];
+    }
+
+    /**
+     * @param list<array{string, int}> $entries
+     * @param list<string>             $expected
+     */
+    #[DataProvider('provideMap')]
+    public function testMap(array $entries, array $expected): void
+    {
+        static::assertSame($expected, $this->queueOf($entries)->map(strtoupper(...))->toArray());
+    }
+
+    /** @return array<string, array{list<array{string, int}>, list<string>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'elements' => [[['a', 5], ['b', 1], ['c', 3]], ['B', 'C', 'A']],
+            'empty' => [[], []],
+        ];
+    }
+
+    public function testFilterKeepsPriorities(): void
+    {
+        $queue    = $this->queueOf([['a', 5], ['b', 1], ['c', 3]]);
+        $filtered = $queue->filter(static fn (string $element): bool => $element !== 'b');
+
+        static::assertSame(['c', 'd', 'a'], $filtered->enqueue('d', 4)->toArray());
+    }
+
+    public function testMapKeepsPriorities(): void
+    {
+        $mapped = $this->queueOf([['a', 5], ['b', 1], ['c', 3]])->map(strtoupper(...));
+
+        static::assertSame(['B', 'C', 'X', 'A'], $mapped->enqueue('X', 4)->toArray());
+    }
+
+    public function testReduce(): void
+    {
+        $concat = static fn (string $carry, string $element): string => $carry . $element;
+
+        static::assertSame('>bca', $this->queueOf([['a', 5], ['b', 1], ['c', 3]])->reduce($concat, '>'));
+        static::assertSame('>', (new PriorityQueue())->reduce($concat, '>'));
     }
 
     /**

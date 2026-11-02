@@ -186,4 +186,72 @@ class ArrayQueueTest extends TestCase
         static::assertSame($queue1->hash(), $queue2->hash());
         static::assertNotSame($queue1->hash(), $queue3->hash());
     }
+
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideFilter')]
+    public function testFilter(array $elements, array $expected): void
+    {
+        $collection = ArrayQueue::fromArray($elements);
+        $filtered   = $collection->filter(static fn (int $element): bool => $element % 2 === 0);
+
+        static::assertSame($expected, $filtered->toArray());
+        static::assertSame($elements, $collection->toArray());
+        static::assertNotSame($collection, $filtered);
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [[1, 2, 3, 4], [2, 4]],
+            'none kept' => [[1, 3], []],
+            'all kept' => [[2, 4], [2, 4]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /**
+     * @param list<int>    $elements
+     * @param list<string> $expected
+     */
+    #[DataProvider('provideMap')]
+    public function testMap(array $elements, array $expected): void
+    {
+        $mapped = ArrayQueue::fromArray($elements)->map(static fn (int $element): string => (string) $element);
+
+        static::assertSame($expected, $mapped->toArray());
+    }
+
+    /** @return array<string, array{list<int>, list<string>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'elements' => [[1, 2, 3], ['1', '2', '3']],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @param list<int> $elements */
+    #[DataProvider('provideReduce')]
+    public function testReduce(array $elements, string $expected): void
+    {
+        $collection = ArrayQueue::fromArray($elements);
+
+        static::assertSame($expected, $collection->reduce(
+            static fn (string $carry, int $element): string => $carry . $element,
+            '>',
+        ));
+    }
+
+    /** @return array<string, array{list<int>, string}> */
+    public static function provideReduce(): array
+    {
+        return [
+            'empty' => [[], '>'],
+            'in iteration order' => [[1, 2, 3], '>123'],
+        ];
+    }
 }

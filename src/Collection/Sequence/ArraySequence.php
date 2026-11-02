@@ -11,7 +11,9 @@ declare(strict_types=1);
 namespace Vivarium\Collection\Sequence;
 
 use ArrayIterator;
+use Closure;
 use Iterator;
+use Override;
 use Vivarium\Collection\Exception\IndexOutOfBounds;
 use Vivarium\Collection\Util\LinearSearch;
 use Vivarium\Comparator\Comparator;
@@ -20,6 +22,8 @@ use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Equality\HashBuilder;
 
 use function array_filter;
+use function array_map;
+use function array_reduce;
 use function array_values;
 use function count;
 use function usort;
@@ -95,6 +99,47 @@ final class ArraySequence implements Sequence
     public function clear(): ArraySequence
     {
         return new ArraySequence();
+    }
+
+    /**
+     * @param Closure(T): bool $predicate
+     *
+     * @return ArraySequence<T>
+     */
+    #[Override]
+    public function filter(Closure $predicate): ArraySequence
+    {
+        $list           = clone $this;
+        $list->elements = array_values(array_filter($this->elements, $predicate));
+
+        return $list;
+    }
+
+    /**
+     * @param Closure(T): U $mapper
+     *
+     * @return ArraySequence<U>
+     *
+     * @template U
+     */
+    #[Override]
+    public function map(Closure $mapper): ArraySequence
+    {
+        return new ArraySequence(...array_map($mapper, $this->elements));
+    }
+
+    /**
+     * @param Closure(R, T): R $reducer
+     * @param R                $initial
+     *
+     * @return R
+     *
+     * @template R
+     */
+    #[Override]
+    public function reduce(Closure $reducer, $initial)
+    {
+        return array_reduce($this->elements, $reducer, $initial);
     }
 
     /** @return array<int, T> */

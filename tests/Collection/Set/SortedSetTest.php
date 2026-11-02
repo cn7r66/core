@@ -14,12 +14,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Vivarium\Collection\Set\HashSet;
 use Vivarium\Collection\Set\SortedSet;
 use Vivarium\Comparator\ByByte;
 use Vivarium\Comparator\ByNumber;
 use Vivarium\Comparator\Comparator;
 use Vivarium\Equality\Equal;
 use Vivarium\Equality\Equality;
+
+use function array_reverse;
+use function count;
 
 #[CoversClass(SortedSet::class)]
 class SortedSetTest extends TestCase
@@ -279,5 +283,77 @@ class SortedSetTest extends TestCase
         static::assertSame($set1->hash(), $set1->hash());
         static::assertSame($set1->hash(), $set2->hash());
         static::assertNotSame($set1->hash(), $set3->hash());
+    }
+
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideFilter')]
+    public function testFilter(array $elements, array $expected): void
+    {
+        $collection = SortedSet::fromArray(new ByNumber(), $elements);
+        $filtered   = $collection->filter(static fn (int|float $element): bool => $element > 1);
+
+        static::assertSame($expected, $filtered->toArray());
+        static::assertCount(count($elements), $collection);
+        static::assertNotSame($collection, $filtered);
+        static::assertSame([0, ...$expected], $filtered->add(0)->toArray());
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [[3, 1, 4, 2], [2, 3, 4]],
+            'none kept' => [[1, 0], []],
+            'all kept' => [[3, 2], [2, 3]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /**
+     * @param list<int>  $elements
+     * @param list<bool> $expected
+     */
+    #[DataProvider('provideMap')]
+    public function testMap(array $elements, array $expected): void
+    {
+        $mapped = SortedSet::fromArray(new ByNumber(), $elements)->map(
+            static fn (int|float $element): bool => $element > 1,
+        );
+
+        static::assertInstanceOf(HashSet::class, $mapped);
+        static::assertTrue(HashSet::fromArray($expected)->equals($mapped));
+    }
+
+    /** @return array<string, array{list<int>, list<bool>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'elements' => [[3, 1, 2], [false, true]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @param list<int> $elements */
+    #[DataProvider('provideReduce')]
+    public function testReduce(array $elements, string $expected): void
+    {
+        $collection = SortedSet::fromArray(new ByNumber(), array_reverse($elements));
+
+        static::assertSame($expected, $collection->reduce(
+            static fn (string $carry, int|float $element): string => $carry . $element,
+            '>',
+        ));
+    }
+
+    /** @return array<string, array{list<int>, string}> */
+    public static function provideReduce(): array
+    {
+        return [
+            'empty' => [[], '>'],
+            'in iteration order' => [[1, 2, 3], '>123'],
+        ];
     }
 }

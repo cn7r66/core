@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\Set;
 
+use Closure;
+use Override;
 use Vivarium\Collection\Collection;
 
 /**
@@ -20,6 +22,24 @@ interface Set extends Collection
 {
     /** @return self<T> */
     public function clear(): self;
+
+    /**
+     * @param Closure(T): bool $predicate
+     *
+     * @return self<T>
+     */
+    #[Override]
+    public function filter(Closure $predicate): self;
+
+    /**
+     * @param Closure(T): U $mapper
+     *
+     * @return self<U>
+     *
+     * @template U
+     */
+    #[Override]
+    public function map(Closure $mapper): self;
 
     /**
      * @param T $element
