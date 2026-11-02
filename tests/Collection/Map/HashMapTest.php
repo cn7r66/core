@@ -11,8 +11,10 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Map;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Collection\Exception\KeyNotFound;
 use Vivarium\Collection\Map\HashMap;
 use Vivarium\Collection\Map\Map;
@@ -24,6 +26,7 @@ use Vivarium\Test\Collection\Stub\KeyWithHashCollision;
 
 use function count;
 use function rand;
+use function sort;
 
 #[CoversClass(HashMap::class)]
 class HashMapTest extends TestCase
@@ -152,6 +155,39 @@ class HashMapTest extends TestCase
         static::assertCount(1, $map);
     }
 
+    /** @param list<string> $expected */
+    #[DataProvider('provideRemoveHashCollisionIteration')]
+    public function testRemoveHashCollisionIteration(int $removed, array $expected): void
+    {
+        $map = new HashMap(
+            new Pair(new KeyWithHashCollision(1), 'a'),
+            new Pair(new KeyWithHashCollision(2), 'b'),
+            new Pair(new KeyWithHashCollision(3), 'c'),
+            new Pair(new KeyWithHashCollision(99), 'z'),
+        );
+
+        $map = $map->remove(new KeyWithHashCollision($removed));
+
+        $iterated = [];
+        foreach ($map as $key => $value) {
+            static::assertSame($map->get($key), $value);
+            $iterated[] = $value;
+        }
+
+        sort($iterated);
+        static::assertSame($expected, $iterated);
+    }
+
+    /** @return array<string, array{int, list<string>}> */
+    public static function provideRemoveHashCollisionIteration(): array
+    {
+        return [
+            'first of the bucket' => [1, ['b', 'c', 'z']],
+            'middle of the bucket' => [2, ['a', 'c', 'z']],
+            'last of the bucket' => [3, ['a', 'b', 'z']],
+        ];
+    }
+
     public function testContainsValue(): void
     {
         $keys   = [1, 2, 3, 4];
@@ -234,6 +270,25 @@ class HashMapTest extends TestCase
             static::assertEquals($value, $iterator->current());
             $iterator->next();
         }
+    }
+
+    /** @param list<string> $values */
+    #[DataProvider('provideFromKeyValueMismatch')]
+    public function testFromKeyValueRejectsMismatchedCounts(array $values, string $message): void
+    {
+        static::expectException(AssertionFailed::class);
+        static::expectExceptionMessage($message);
+
+        HashMap::fromKeyValue([1, 2, 3], $values);
+    }
+
+    /** @return array<string, array{list<string>, string}> */
+    public static function provideFromKeyValueMismatch(): array
+    {
+        return [
+            'too few values' => [['a'], 'Expected 3 values, one per key. Got int 1.'],
+            'too many values' => [['a', 'b', 'c', 'd'], 'Expected 3 values, one per key. Got int 4.'],
+        ];
     }
 
     public function testFromKeyValue(): void

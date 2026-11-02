@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\Map;
 
+use Vivarium\Assertion\Comparison\IsEqualTo;
 use Vivarium\Collection\Exception\KeyNotFound;
 use Vivarium\Collection\Pair\Pair;
 use Vivarium\Collection\Util\KeyHash;
@@ -20,6 +21,7 @@ use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Equality\HashBuilder;
 
 use function array_map;
+use function array_values;
 use function count;
 
 /**
@@ -61,21 +63,20 @@ final class HashMap implements Map
      */
     public static function fromKeyValue(array $keys, array $values): HashMap
     {
-        $pairs = array_map(
+        (new IsEqualTo(count($keys)))
+            ->assert(count($values), 'Expected {compare} values, one per key. Got {value}.');
+
+        return new HashMap(...array_map(
             /**
              * @param K0 $key
              * @param V0 $value
              *
              * @return Pair<K0, V0>
              */
-            static function ($key, $value): Pair {
-                return new Pair($key, $value);
-            },
+            static fn ($key, $value): Pair => new Pair($key, $value),
             $keys,
             $values,
-        );
-
-        return new HashMap(...$pairs);
+        ));
     }
 
     /**
@@ -128,21 +129,23 @@ final class HashMap implements Map
      */
     public function remove($key): HashMap
     {
-        if (! $this->containsKey($key)) {
+        $hash   = KeyHash::hash($key);
+        $bucket = $this->pairs[$hash] ?? [];
+        $index  = $this->searchByKey()->search($bucket, $key);
+        if ($index < 0) {
             return $this;
         }
 
-        $map  = clone $this;
-        $hash = KeyHash::hash($key);
+        unset($bucket[$index]);
 
-        $index = $map->searchByKey()->search($map->pairs[$hash], $key);
-        if ($index >= 0) {
-            unset($map->pairs[$hash][$index]);
-        }
-
-        if (count($map->pairs[$hash]) === 0) {
+        $map = clone $this;
+        if ($bucket === []) {
             unset($map->pairs[$hash]);
+
+            return $map;
         }
+
+        $map->pairs[$hash] = array_values($bucket);
 
         return $map;
     }
@@ -260,44 +263,24 @@ final class HashMap implements Map
     /** @return LinearSearch<Pair<K, V>, Pair<K, V>> */
     private function searchByPair(): LinearSearch
     {
-        /*
-         * FIXME
-         * phpstan currently doesn't read dockblock above anonymous functions.
-         * It should be possible to pass the function directly to the constructor without this amount of annotations.
-         */
-
-        /** @var callable(Pair<K, V>, Pair<K, V>):bool $comparator */
-        $comparator =
+        return new LinearSearch(
             /**
              * @param Pair<K, V> $pair1
              * @param Pair<K, V> $pair2
              */
-            static function (Pair $pair1, Pair $pair2): bool {
-                return Equal::areEquals($pair1->getKey(), $pair2->getKey());
-            };
-
-        return new LinearSearch($comparator);
+            static fn (Pair $pair1, Pair $pair2): bool => Equal::areEquals($pair1->getKey(), $pair2->getKey()),
+        );
     }
 
     /** @return LinearSearch<Pair<K, V>, K> */
     private function searchByKey(): LinearSearch
     {
-        /*
-         * FIXME
-         * phpstan currently doesn't read dockblock above anonymous functions.
-         * It should be possible to pass the function directly to the constructor without this amount of annotations.
-         */
-
-        /** @var callable(Pair<K, V>, K):bool $comparator */
-        $comparator =
+        return new LinearSearch(
             /**
              * @param Pair<K, V> $pair
              * @param K          $key
              */
-            static function (Pair $pair, $key): bool {
-                return Equal::areEquals($pair->getKey(), $key);
-            };
-
-        return new LinearSearch($comparator);
+            static fn (Pair $pair, $key): bool => Equal::areEquals($pair->getKey(), $key),
+        );
     }
 }

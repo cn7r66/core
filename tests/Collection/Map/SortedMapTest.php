@@ -14,6 +14,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Collection\Exception\KeyNotFound;
 use Vivarium\Collection\Map\Map;
 use Vivarium\Collection\Map\SortedMap;
@@ -125,6 +126,25 @@ class SortedMapTest extends TestCase
 
         static::assertFalse($map->containsKey(2));
         static::assertNotSame($map, $map->remove(1));
+    }
+
+    /** @param list<string> $values */
+    #[DataProvider('provideFromKeyValueMismatch')]
+    public function testFromKeyValueRejectsMismatchedCounts(array $values, string $message): void
+    {
+        static::expectException(AssertionFailed::class);
+        static::expectExceptionMessage($message);
+
+        SortedMap::fromKeyValue(new ByNumber(), [1, 2, 3], $values);
+    }
+
+    /** @return array<string, array{list<string>, string}> */
+    public static function provideFromKeyValueMismatch(): array
+    {
+        return [
+            'too few values' => [['a'], 'Expected 3 values, one per key. Got int 1.'],
+            'too many values' => [['a', 'b', 'c', 'd'], 'Expected 3 values, one per key. Got int 4.'],
+        ];
     }
 
     #[DataProvider('provideRemoveMissing')]

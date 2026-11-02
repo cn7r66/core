@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\Map;
 
+use Vivarium\Assertion\Comparison\IsEqualTo;
 use Vivarium\Collection\Exception\KeyNotFound;
 use Vivarium\Collection\Pair\Pair;
 use Vivarium\Collection\Util\BinarySearch;
@@ -62,6 +63,9 @@ class SortedMap implements Map
      */
     public static function fromKeyValue(Comparator $comparator, array $keys, array $values): SortedMap
     {
+        (new IsEqualTo(count($keys)))
+            ->assert(count($values), 'Expected {compare} values, one per key. Got {value}.');
+
         return new SortedMap($comparator, ...array_map(
             /**
              * @param K0 $key
@@ -69,9 +73,7 @@ class SortedMap implements Map
              *
              * @return Pair<K0, V0>
              */
-            static function ($key, $value): Pair {
-                return new Pair($key, $value);
-            },
+            static fn ($key, $value): Pair => new Pair($key, $value),
             $keys,
             $values,
         ));
@@ -230,42 +232,24 @@ class SortedMap implements Map
     /** @return SearchAlgorithm<Pair<K, V>, Pair<K, V>> */
     private function searchByPair(): SearchAlgorithm
     {
-        //FIXME Same as HashMap.php
-
-        /** @var callable(Pair<K,V>, Pair<K,V>):int $comparator */
-        $comparator =
+        return new BinarySearch(
             /**
              * @param Pair<K, V> $pair1
              * @param Pair<K, V> $pair2
              */
-            function (Pair $pair1, Pair $pair2): int {
-                return $this->comparator->compare(
-                    $pair1->getKey(),
-                    $pair2->getKey(),
-                );
-            };
-
-        return new BinarySearch($comparator);
+            fn (Pair $pair1, Pair $pair2): int => $this->comparator->compare($pair1->getKey(), $pair2->getKey()),
+        );
     }
 
     /** @return SearchAlgorithm<Pair<K, V>, K> */
     private function searchByKey(): SearchAlgorithm
     {
-        //FIXME Same as HashMap.php
-
-        /** @var callable(Pair<K, V>, K):int $comparator */
-        $comparator =
+        return new BinarySearch(
             /**
              * @param Pair<K, V> $pair
              * @param K          $key
              */
-            function (Pair $pair, $key): int {
-                return $this->comparator->compare(
-                    $pair->getKey(),
-                    $key,
-                );
-            };
-
-        return new BinarySearch($comparator);
+            fn (Pair $pair, $key): int => $this->comparator->compare($pair->getKey(), $key),
+        );
     }
 }
