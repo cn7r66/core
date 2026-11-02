@@ -13,9 +13,8 @@ namespace Vivarium\Collection\Sequence;
 use ArrayIterator;
 use Iterator;
 use Vivarium\Collection\Exception\IndexOutOfBounds;
-use Vivarium\Collection\Util\Vector;
+use Vivarium\Collection\Util\LinearSearch;
 use Vivarium\Comparator\Comparator;
-use Vivarium\Equality\Equal;
 use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Equality\HashBuilder;
 
@@ -145,17 +144,7 @@ final class ArraySequence implements Sequence
     /** @param T $element */
     public function search($element): int
     {
-        return Vector::linearSearch(
-            $this->elements,
-            $element,
-            /**
-             * @param T $current
-             * @param T $element
-             */
-            static function ($current, $element): bool {
-                return Equal::areEquals($current, $element);
-            },
-        );
+        return (new LinearSearch())->search($this->elements, $element);
     }
 
     /**

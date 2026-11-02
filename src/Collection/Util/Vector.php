@@ -12,7 +12,6 @@ namespace Vivarium\Collection\Util;
 
 use Vivarium\Assertion\Numeric\IsInClosedRange;
 
-use function abs;
 use function array_merge;
 use function array_slice;
 use function count;
@@ -20,48 +19,32 @@ use function count;
 final class Vector
 {
     /**
+     * Replaces the element equal to $element, or inserts $element where $search reports it
+     * belongs.
+     *
      * @param array<int, T>         $array
      * @param T                     $element
-     * @param SearchAlgorithm<T, T> $algo
+     * @param SearchAlgorithm<T, T> $search
      *
      * @return array<int, T>
      *
      * @template T
      */
-    public static function putInPlace(array $array, $element, SearchAlgorithm $algo): array
+    public static function put(array $array, $element, SearchAlgorithm $search): array
     {
-        $index = $algo->search($array, $element);
-
+        $index = $search->search($array, $element);
         if ($index >= 0) {
             $array[$index] = $element;
 
             return $array;
         }
 
-        $index = abs($index + 1);
-
-        return static::putAtIndex($array, $element, $index);
+        return self::insertAtIndex($array, $element, -($index + 1));
     }
 
     /**
-     * @param array<int, T>         $array
-     * @param T                     $element
-     * @param SearchAlgorithm<T, T> $algo
+     * Inserts $element at $index, shifting the following elements; nothing is replaced.
      *
-     * @return array<int, T>
-     *
-     * @template T
-     */
-    public static function putAtPlace(array $array, $element, SearchAlgorithm $algo): array
-    {
-        $index = $algo->search($array, $element);
-
-        $index = abs($index + 1);
-
-        return static::putAtIndex($array, $element, $index);
-    }
-
-    /**
      * @param array<int, T> $array
      * @param T             $element
      *
@@ -69,68 +52,11 @@ final class Vector
      *
      * @template T
      */
-    public static function putAtIndex(array $array, $element, int $index): array
+    public static function insertAtIndex(array $array, $element, int $index): array
     {
         (new IsInClosedRange(0, count($array)))
             ->assert($index);
 
-        $leftSlice  = array_slice($array, 0, $index);
-        $rightSlice = array_slice($array, $index, count($array));
-
-        return array_merge($leftSlice, [$element], $rightSlice);
-    }
-
-    /**
-     * @param array<int, T>            $array
-     * @param T                        $element
-     * @param callable(T, T):bool|null $equals
-     *
-     * @template T
-     */
-    public static function linearSearch(array $array, $element, callable|null $equals = null): int
-    {
-        return (new LinearSearch($equals))
-            ->search($array, $element);
-    }
-
-    /**
-     * @param array<int, T>            $array
-     * @param T                        $element
-     * @param callable(T, T):bool|null $equals
-     * @phpstan-param callable(T, T):bool|null $equals
-     *
-     * @template T
-     */
-    public static function linearContains(array $array, $element, callable|null $equals = null): bool
-    {
-        return static::linearSearch($array, $element, $equals) >= 0;
-    }
-
-    /**
-     * @param array<int, T>      $array
-     * @param V                  $element
-     * @param callable(T, V):int $equals
-     *
-     * @template T
-     * @template V
-     */
-    public static function binarySearch(array $array, $element, callable $equals): int
-    {
-        return (new BinarySearch($equals))
-            ->search($array, $element);
-    }
-
-    /**
-     * @param array<int, T>      $array
-     * @param V                  $element
-     * @param callable(T, V):int $equals
-     * @phpstan-param callable(T, V):int $equals
-     *
-     * @template T
-     * @template V
-     */
-    public static function binaryContains(array $array, $element, callable $equals): bool
-    {
-        return static::binarySearch($array, $element, $equals) >= 0;
+        return array_merge(array_slice($array, 0, $index), [$element], array_slice($array, $index));
     }
 }

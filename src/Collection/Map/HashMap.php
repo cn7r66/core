@@ -42,7 +42,7 @@ final class HashMap implements Map
                 $this->pairs[$hash] = [];
             }
 
-            $this->pairs[$hash] = Vector::putInPlace(
+            $this->pairs[$hash] = Vector::put(
                 $this->pairs[$hash],
                 $pair,
                 $this->searchByPair(),
@@ -93,7 +93,7 @@ final class HashMap implements Map
             $map->pairs[$hash] = [];
         }
 
-        $map->pairs[$hash] = Vector::putInPlace(
+        $map->pairs[$hash] = Vector::put(
             $map->pairs[$hash],
             new Pair($key, $value),
             $this->searchByPair(),

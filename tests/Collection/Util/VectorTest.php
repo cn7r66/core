@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Util;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Collection\Util\BinarySearch;
@@ -20,83 +21,66 @@ use Vivarium\Comparator\ByNumber;
 #[CoversClass(Vector::class)]
 final class VectorTest extends TestCase
 {
-    public function testPutInPlace(): void
+    /**
+     * @param list<int|float> $array
+     * @param list<int|float> $expected
+     */
+    #[DataProvider('providePut')]
+    public function testPut(array $array, int|float $element, array $expected): void
     {
-        $binary = new BinarySearch((new ByNumber())->compare(...));
+        $search = new BinarySearch((new ByNumber())->compare(...));
 
-        $arr = [1, 2, 3, 4, 5];
-
-        static::assertSame([1, 2, 3, 4, 5, 7], Vector::putInPlace($arr, 7, $binary));
-        static::assertSame([0, 1, 2, 3, 4, 5], Vector::putInPlace($arr, 0, $binary));
-        static::assertSame([1, 2, 3, 4, 5], Vector::putInPlace($arr, 1, $binary));
-        static::assertSame([1, 2, 3, 4, 5], Vector::putInPlace($arr, 3, $binary));
+        static::assertSame($expected, Vector::put($array, $element, $search));
     }
 
-    public function testPutAtPlace(): void
+    /** @return array<string, array{list<int|float>, int|float, list<int|float>}> */
+    public static function providePut(): array
     {
-        $binary = new BinarySearch((new ByNumber())->compare(...));
-
-        $arr = [1, 2, 3, 4, 5];
-
-        static::assertSame([1, 2, 3, 4, 5, 7], Vector::putAtPlace($arr, 7, $binary));
-        static::assertSame([1, 1, 2, 3, 4, 5], Vector::putAtPlace($arr, 1, $binary));
-        static::assertSame([1, 2, 3, 3, 4, 5], Vector::putAtPlace($arr, 3, $binary));
-        static::assertSame([1, 2, 3, 4, 5, 5], Vector::putAtPlace($arr, 5, $binary));
+        return [
+            'append' => [[1, 2, 4, 5], 7, [1, 2, 4, 5, 7]],
+            'prepend' => [[1, 2, 4, 5], 0, [0, 1, 2, 4, 5]],
+            'insert inside' => [[1, 2, 4, 5], 3, [1, 2, 3, 4, 5]],
+            'into empty' => [[], 3, [3]],
+            'replace equal' => [[1, 2, 4, 5], 2.0, [1, 2.0, 4, 5]],
+        ];
     }
 
-    public function testPutAtIndex(): void
+    /**
+     * @param list<int> $array
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideInsertAtIndex')]
+    public function testInsertAtIndex(array $array, int $element, int $index, array $expected): void
+    {
+        static::assertSame($expected, Vector::insertAtIndex($array, $element, $index));
+    }
+
+    /** @return array<string, array{list<int>, int, int, list<int>}> */
+    public static function provideInsertAtIndex(): array
+    {
+        return [
+            'inside' => [[3, 6, 1, 2, 5], 7, 2, [3, 6, 7, 1, 2, 5]],
+            'first' => [[3, 6, 1, 2, 5], 1, 0, [1, 3, 6, 1, 2, 5]],
+            'append at count' => [[3, 6, 1, 2, 5], 8, 5, [3, 6, 1, 2, 5, 8]],
+            'equal element kept' => [[3, 6, 1, 2, 5], 6, 1, [3, 6, 6, 1, 2, 5]],
+        ];
+    }
+
+    #[DataProvider('provideInsertAtIndexOutOfRange')]
+    public function testInsertAtIndexRejectsOutOfRange(int $index, string $message): void
     {
         static::expectException(AssertionFailed::class);
-        static::expectExceptionMessage('Expected value to be in [0, 5]. Got int 6.');
+        static::expectExceptionMessage($message);
 
-        $arr = [3, 6, 1, 2, 5];
-
-        static::assertSame([3, 6, 7, 1, 2, 5], Vector::putAtIndex($arr, 7, 2));
-        static::assertSame([1, 3, 6, 1, 2, 5], Vector::putAtIndex($arr, 1, 0));
-        static::assertSame([3, 6, 1, 2, 5, 8], Vector::putAtIndex($arr, 8, 5));
-
-        Vector::putAtIndex($arr, 8, 6);
+        Vector::insertAtIndex([3, 6, 1, 2, 5], 8, $index);
     }
 
-    public function testLinearSearch(): void
+    /** @return array<string, array{int, string}> */
+    public static function provideInsertAtIndexOutOfRange(): array
     {
-        $arr = [1, 2, 4, 5, 7, 8];
-
-        static::assertSame(0, Vector::linearSearch($arr, 1));
-        static::assertSame(5, Vector::linearSearch($arr, 8));
-        static::assertSame(2, Vector::linearSearch($arr, 4));
-        static::assertSame(-7, Vector::linearSearch($arr, 10));
-    }
-
-    public function testLinearContains(): void
-    {
-        $arr = [1, 2, 4, 5, 7, 8];
-
-        static::assertTrue(Vector::linearContains($arr, 1));
-        static::assertTrue(Vector::linearContains($arr, 8));
-        static::assertTrue(Vector::linearContains($arr, 4));
-        static::assertFalse(Vector::linearContains($arr, 10));
-    }
-
-    public function testBinarySearch(): void
-    {
-        $comparator = (new ByNumber())->compare(...);
-        $arr        = [1, 2, 4, 5, 7, 8];
-
-        static::assertSame(0, Vector::binarySearch($arr, 1, $comparator));
-        static::assertSame(5, Vector::binarySearch($arr, 8, $comparator));
-        static::assertSame(2, Vector::binarySearch($arr, 4, $comparator));
-        static::assertSame(-3, Vector::binarySearch($arr, 3, $comparator));
-    }
-
-    public function testBinaryContains(): void
-    {
-        $comparator = (new ByNumber())->compare(...);
-        $arr        = [1, 2, 4, 5, 7, 8];
-
-        static::assertTrue(Vector::binaryContains($arr, 1, $comparator));
-        static::assertTrue(Vector::binaryContains($arr, 8, $comparator));
-        static::assertTrue(Vector::binaryContains($arr, 4, $comparator));
-        static::assertFalse(Vector::binaryContains($arr, 10, $comparator));
+        return [
+            'past count' => [6, 'Expected value to be in [0, 5]. Got int 6.'],
+            'negative' => [-1, 'Expected value to be in [0, 5]. Got int -1.'],
+        ];
     }
 }

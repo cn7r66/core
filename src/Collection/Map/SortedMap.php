@@ -42,7 +42,7 @@ class SortedMap implements Map
         $this->pairs = [];
 
         foreach ($pairs as $pair) {
-            $this->pairs = Vector::putInPlace(
+            $this->pairs = Vector::put(
                 $this->pairs,
                 $pair,
                 $this->searchByPair(),
@@ -86,7 +86,7 @@ class SortedMap implements Map
     public function put($key, $value): SortedMap
     {
         $map        = clone $this;
-        $map->pairs = Vector::putInPlace(
+        $map->pairs = Vector::put(
             $this->pairs,
             new Pair($key, $value),
             $this->searchByPair(),
