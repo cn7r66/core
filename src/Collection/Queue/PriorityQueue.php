@@ -113,7 +113,7 @@ final class PriorityQueue implements Queue
     }
 
     /** @return PriorityQueue<T> */
-    public function dequeue(): Queue
+    public function dequeue(): PriorityQueue
     {
         $priorityQueue        = clone $this;
         $priorityQueue->queue = $priorityQueue->queue->dequeue();

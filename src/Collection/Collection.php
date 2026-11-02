@@ -24,9 +24,9 @@ interface Collection extends Countable, IteratorAggregate, Equality
     /**
      * @param T $element
      *
-     * @return Collection<T>
+     * @return self<T>
      */
-    public function add($element): Collection;
+    public function add($element): self;
 
     /**
      * @param T $element

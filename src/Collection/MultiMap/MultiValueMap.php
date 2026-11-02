@@ -201,8 +201,8 @@ final class MultiValueMap implements MultiMap
         return $this->map->isEmpty();
     }
 
-    /** @return MultiMap<K, V> */
-    public function clear(): MultiMap
+    /** @return MultiValueMap<K, V> */
+    public function clear(): MultiValueMap
     {
         return new MultiValueMap($this->factory);
     }

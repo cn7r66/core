@@ -21,6 +21,10 @@ use function array_fill;
 use function count;
 
 /**
+ * Elements are found and ordered by the comparator, while equals() and hash() compare elements
+ * strictly (Equality). The two agree only when the comparator is consistent with Equality: with
+ * ByNumber over mixed int and float, 1 and 1.0 are one element but not equal.
+ *
  * @template T
  * @template-implements Set<T>
  */

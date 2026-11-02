@@ -18,7 +18,7 @@ use Vivarium\Collection\Pair\Pair;
  * @template T
  * @template-implements Iterator<int, T>
  */
-class SetIterator implements Iterator
+final class SetIterator implements Iterator
 {
     /** @var Iterator<int, Pair<T, int>> */
     private Iterator $iterator;

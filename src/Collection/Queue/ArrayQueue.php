@@ -99,7 +99,7 @@ final class ArrayQueue implements Queue
      *
      * @return ArrayQueue<T>
      */
-    public function enqueue($element): Queue
+    public function enqueue($element): ArrayQueue
     {
         $queue           = clone $this;
         $queue->elements = $queue->elements->add($element);
@@ -108,7 +108,7 @@ final class ArrayQueue implements Queue
     }
 
     /** @return ArrayQueue<T> */
-    public function dequeue(): Queue
+    public function dequeue(): ArrayQueue
     {
         if ($this->isEmpty()) {
             throw new CollectionIsEmpty('dequeue', $this);

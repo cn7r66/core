@@ -25,11 +25,15 @@ use function array_values;
 use function count;
 
 /**
+ * Keys are found and ordered by the comparator, while equals() and hash() compare keys strictly
+ * (Equality). The two agree only when the comparator is consistent with Equality: with ByNumber
+ * over mixed int and float, 1 and 1.0 are one key but not equal.
+ *
  * @template K
  * @template V
  * @template-implements Map<K, V>
  */
-class SortedMap implements Map
+final class SortedMap implements Map
 {
     /** @var array<int, Pair<K, V>> */
     private array $pairs;
