@@ -29,7 +29,6 @@ use function explode;
 use function get_debug_type;
 use function in_array;
 use function is_object;
-use function sprintf;
 use function str_contains;
 use function str_ends_with;
 use function str_starts_with;
@@ -48,7 +47,7 @@ final class Types
 
     public static function fromString(string $type): Type
     {
-        return self::parse($type, null, null);
+        return self::parse($type, null, null, $type);
     }
 
     public static function ofParameter(ReflectionParameter $parameter): Type
@@ -87,7 +86,7 @@ final class Types
 
         $type = get_debug_type($value);
         if (str_starts_with($type, 'resource')) {
-            throw new NotAType($type, 'resources have no type');
+            throw new NotAType($value, 'resources have no type');
         }
 
         return new Primitive($type);
@@ -151,50 +150,49 @@ final class Types
             return new Primitive(Primitive::MIXED);
         }
 
-        return self::parse((string) $type, $scope, $called);
+        $source = (string) $type;
+
+        return self::parse($source, $scope, $called, $source);
     }
 
     /**
      * @param ReflectionClass<object>|null $scope  the class `self` and `parent` refer to
      * @param string|null                  $called the class `static` refers to
+     * @param string                       $source the whole type being parsed, reported on failure
      */
-    private static function parse(string $type, ReflectionClass|null $scope, string|null $called): Type
+    private static function parse(string $type, ReflectionClass|null $scope, string|null $called, string $source): Type
     {
-        try {
-            $part = trim($type);
-            if ($part === '') {
-                throw new NotAType($type, 'empty type');
-            }
-
-            if (str_starts_with($part, '?')) {
-                return new Union(self::parse(substr($part, 1), $scope, $called), new Primitive(Primitive::NULL));
-            }
-
-            $parse = static fn (string $member): Type => self::parse($member, $scope, $called);
-            if (str_contains($part, '|')) {
-                return new Union(...array_map($parse, explode('|', $part)));
-            }
-
-            if (str_starts_with($part, '(') && str_ends_with($part, ')')) {
-                $part = substr($part, 1, -1);
-            }
-
-            if (str_contains($part, '&')) {
-                return new Intersection(...array_map($parse, explode('&', $part)));
-            }
-
-            return self::name($part, $scope, $called);
-        } catch (NotAType $e) {
-            throw new NotAType($type, $e->getReason());
+        $part = trim($type);
+        if ($part === '') {
+            throw new NotAType($source, 'it has an empty part');
         }
+
+        if (str_starts_with($part, '?')) {
+            return new Union(self::parse(substr($part, 1), $scope, $called, $source), new Primitive(Primitive::NULL));
+        }
+
+        $parse = static fn (string $member): Type => self::parse($member, $scope, $called, $source);
+        if (str_contains($part, '|')) {
+            return new Union(...array_map($parse, explode('|', $part)));
+        }
+
+        if (str_starts_with($part, '(') && str_ends_with($part, ')')) {
+            $part = substr($part, 1, -1);
+        }
+
+        if (str_contains($part, '&')) {
+            return new Intersection(...array_map($parse, explode('&', $part)));
+        }
+
+        return self::name($part, $scope, $called, $source);
     }
 
     /** @param ReflectionClass<object>|null $scope */
-    private static function name(string $name, ReflectionClass|null $scope, string|null $called): Type
+    private static function name(string $name, ReflectionClass|null $scope, string|null $called, string $source): Type
     {
         $keyword = strtolower($name);
         if (in_array($keyword, self::CONTEXTUAL, true)) {
-            return self::contextual($keyword, $scope, $called);
+            return self::contextual($keyword, $scope, $called, $source);
         }
 
         if ($keyword === 'iterable') {
@@ -209,14 +207,18 @@ final class Types
     }
 
     /** @param ReflectionClass<object>|null $scope */
-    private static function contextual(string $keyword, ReflectionClass|null $scope, string|null $called): Clazz
-    {
+    private static function contextual(
+        string $keyword,
+        ReflectionClass|null $scope,
+        string|null $called,
+        string $source,
+    ): Clazz {
         if ($keyword === 'static' && $called !== null) {
             return new Clazz($called);
         }
 
         if ($keyword === 'static' || $scope === null) {
-            throw new NotAType($keyword, sprintf('%s cannot be resolved without a class', $keyword));
+            throw new NotAType($source, '{keyword} cannot be resolved without a class', keyword: $keyword);
         }
 
         if ($keyword === 'self') {
@@ -225,7 +227,7 @@ final class Types
 
         $parent = $scope->getParentClass();
         if ($parent === false) {
-            throw new NotAType($keyword, sprintf('%s has no parent class', $scope->getName()));
+            throw new NotAType($source, '{class} has no parent class', class: $scope->getName());
         }
 
         return new Clazz($parent->getName());

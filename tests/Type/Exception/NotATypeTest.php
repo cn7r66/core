@@ -14,47 +14,70 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Vivarium\Failure\Failed;
 use Vivarium\Type\Exception\InvalidType;
 use Vivarium\Type\Exception\NotAType;
+
+use function fclose;
+use function fopen;
 
 #[CoversClass(NotAType::class)]
 final class NotATypeTest extends TestCase
 {
     public function testConstructor(): void
     {
-        $exception = new NotAType('int|', 'empty type');
+        $exception = new NotAType('int|', 'it has an empty part');
 
         self::assertInstanceOf(InvalidType::class, $exception);
+        self::assertInstanceOf(Failed::class, $exception);
         self::assertInstanceOf(InvalidArgumentException::class, $exception);
     }
 
-    public function testGetType(): void
-    {
-        self::assertSame('int|', (new NotAType('int|', 'empty type'))->getType());
-    }
-
-    public function testGetReason(): void
-    {
-        self::assertSame('empty type', (new NotAType('int|', 'empty type'))->getReason());
-    }
-
+    /** @param array<string, string> $parameters */
     #[DataProvider('provideMessages')]
-    public function testGetMessage(string $type, string $reason, string $message): void
+    public function testGetMessage(string $type, string $reason, array $parameters, string $message): void
     {
-        self::assertSame($message, (new NotAType($type, $reason))->getMessage());
+        $exception = new NotAType($type, $reason, ...$parameters);
+
+        self::assertSame($message, $exception->getMessage());
+        self::assertSame($message, $exception->getFailure()->format());
     }
 
-    /** @return array<string, array{string, string, string}> */
+    /** @return array<string, array{string, string, array<string, string>, string}> */
     public static function provideMessages(): array
     {
         return [
-            'syntax' => ['int|', 'empty type', 'Expected "int|" to be a type: empty type.'],
-            'contextual keyword' => [
-                'self',
-                'self cannot be resolved without a class',
-                'Expected "self" to be a type: self cannot be resolved without a class.',
+            'syntax' => [
+                'int|',
+                'it has an empty part',
+                [],
+                'Expected a valid type: it has an empty part. Got string "int|".',
             ],
-            'empty input' => ['', 'empty type', 'Expected "" to be a type: empty type.'],
+            'reason parameter' => [
+                '?self',
+                '{keyword} cannot be resolved without a class',
+                ['keyword' => 'self'],
+                'Expected a valid type: "self" cannot be resolved without a class. Got string "?self".',
+            ],
+            'empty input' => [
+                '',
+                'it has an empty part',
+                [],
+                'Expected a valid type: it has an empty part. Got string "".',
+            ],
         ];
+    }
+
+    public function testGetMessageOfResource(): void
+    {
+        $resource = fopen('php://memory', 'r');
+        self::assertNotFalse($resource);
+
+        self::assertSame(
+            'Expected a valid type: resources have no type. Got resource (stream).',
+            (new NotAType($resource, 'resources have no type'))->getMessage(),
+        );
+
+        fclose($resource);
     }
 }

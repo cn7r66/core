@@ -44,7 +44,6 @@ final class ClazzTest extends TestCase
         try {
             new Clazz($input);
         } catch (NotAClass $e) {
-            self::assertSame($input, $e->getClass());
             self::assertSame($message, $e->getMessage());
             self::assertInstanceOf(InvalidType::class, $e);
             self::assertInstanceOf(InvalidArgumentException::class, $e);
@@ -122,18 +121,18 @@ final class ClazzTest extends TestCase
         return [
             'trait' => [
                 $trait,
-                'Expected "' . $trait . '" to be a class, interface or enum. Got a trait.',
+                'Expected a class, interface or enum, not a trait. Got string "' . $trait . '".',
             ],
             'trait with leading backslash' => [
                 '\\' . $trait,
-                'Expected "\\' . $trait . '" to be a class, interface or enum. Got a trait.',
+                'Expected a class, interface or enum, not a trait. Got string "\\' . $trait . '".',
             ],
             'unknown class' => [
                 $unknown,
-                'Expected "' . $unknown . '" to be an existing class, interface or enum.',
+                'Expected an existing class, interface or enum. Got string "' . $unknown . '".',
             ],
-            'int keyword' => ['int', 'Expected "int" to be an existing class, interface or enum.'],
-            'empty string' => ['', 'Expected "" to be an existing class, interface or enum.'],
+            'int keyword' => ['int', 'Expected an existing class, interface or enum. Got string "int".'],
+            'empty string' => ['', 'Expected an existing class, interface or enum. Got string "".'],
         ];
     }
 

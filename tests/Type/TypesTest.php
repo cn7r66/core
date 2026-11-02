@@ -70,16 +70,14 @@ final class TypesTest extends TestCase
     }
 
     #[DataProvider('provideSyntaxErrors')]
-    public function testFromStringException(string $input, string $reason): void
+    public function testFromStringException(string $input, string $message): void
     {
         try {
             Types::fromString($input);
         } catch (NotAType $e) {
             self::assertInstanceOf(InvalidType::class, $e);
             self::assertInstanceOf(InvalidArgumentException::class, $e);
-            self::assertSame($input, $e->getType());
-            self::assertSame($reason, $e->getReason());
-            self::assertSame('Expected "' . $input . '" to be a type: ' . $reason . '.', $e->getMessage());
+            self::assertSame($message, $e->getMessage());
 
             return;
         }
@@ -110,13 +108,12 @@ final class TypesTest extends TestCase
     }
 
     #[DataProvider('provideUnresolvableParameters')]
-    public function testOfParameterException(ReflectionParameter $parameter, string $type, string $reason): void
+    public function testOfParameterException(ReflectionParameter $parameter, string $message): void
     {
         try {
             Types::ofParameter($parameter);
         } catch (NotAType $e) {
-            self::assertSame($type, $e->getType());
-            self::assertSame($reason, $e->getReason());
+            self::assertSame($message, $e->getMessage());
 
             return;
         }
@@ -147,7 +144,10 @@ final class TypesTest extends TestCase
         try {
             Types::ofReturn(new ReflectionFunction($closure), StubReflectionChild::class);
         } catch (NotAType $e) {
-            self::assertSame('self cannot be resolved without a class', $e->getReason());
+            self::assertSame(
+                'Expected a valid type: "self" cannot be resolved without a class. Got string "self".',
+                $e->getMessage(),
+            );
 
             return;
         }
@@ -194,8 +194,10 @@ final class TypesTest extends TestCase
         try {
             Types::of($resource);
         } catch (NotAType $e) {
-            self::assertSame('resource (stream)', $e->getType());
-            self::assertSame('resources have no type', $e->getReason());
+            self::assertSame(
+                'Expected a valid type: resources have no type. Got resource (stream).',
+                $e->getMessage(),
+            );
 
             return;
         } finally {
@@ -296,14 +298,29 @@ final class TypesTest extends TestCase
     public static function provideSyntaxErrors(): array
     {
         return [
-            'empty' => ['', 'empty type'],
-            'trailing union bar' => ['int|', 'empty type'],
-            'leading union bar' => ['|int', 'empty type'],
-            'trailing ampersand' => ['Countable&', 'empty type'],
-            'self' => ['self', 'self cannot be resolved without a class'],
-            'uppercase self' => ['SELF', 'self cannot be resolved without a class'],
-            'parent' => ['parent', 'parent cannot be resolved without a class'],
-            'static' => ['static', 'static cannot be resolved without a class'],
+            'empty' => ['', 'Expected a valid type: it has an empty part. Got string "".'],
+            'trailing union bar' => ['int|', 'Expected a valid type: it has an empty part. Got string "int|".'],
+            'leading union bar' => ['|int', 'Expected a valid type: it has an empty part. Got string "|int".'],
+            'trailing ampersand' => [
+                'Countable&',
+                'Expected a valid type: it has an empty part. Got string "Countable&".',
+            ],
+            'self' => [
+                'self',
+                'Expected a valid type: "self" cannot be resolved without a class. Got string "self".',
+            ],
+            'uppercase self' => [
+                'SELF',
+                'Expected a valid type: "self" cannot be resolved without a class. Got string "SELF".',
+            ],
+            'parent' => [
+                'parent',
+                'Expected a valid type: "parent" cannot be resolved without a class. Got string "parent".',
+            ],
+            'static' => [
+                'static',
+                'Expected a valid type: "static" cannot be resolved without a class. Got string "static".',
+            ],
         ];
     }
 
@@ -311,28 +328,28 @@ final class TypesTest extends TestCase
     public static function provideNodeErrors(): array
     {
         return [
-            'duplicate member' => ['int|int', NotAUnion::class, 'duplicate type int'],
+            'duplicate member' => ['int|int', NotAUnion::class, 'duplicate type "int"'],
             'mixed in union' => ['mixed|int', NotAUnion::class, ''],
             'unknown class' => ['Nope', NotAClass::class, ''],
-            'unclosed group' => ['(Countable&Traversable', NotAClass::class, 'Expected "(Countable"'],
-            'nested group' => ['((Countable&Traversable))|int', NotAClass::class, 'Expected "(Countable"'],
-            'union inside a group' => ['(Countable|Traversable)&int', NotAClass::class, 'Expected "(Countable"'],
-            'leading digit' => ['1abc', NotAClass::class, 'Expected "1abc"'],
-            'two names' => ['int int', NotAClass::class, 'Expected "int int"'],
-            'generic' => ['Countable<int>', NotAClass::class, 'Expected "Countable<int>"'],
-            'qualified keyword' => ['\int', NotAClass::class, 'Expected "\int"'],
-            'nullable union with null' => ['?int|null', NotAUnion::class, 'duplicate type null'],
-            'iterable with array' => ['iterable|array', NotAUnion::class, 'duplicate type array'],
+            'unclosed group' => ['(Countable&Traversable', NotAClass::class, 'Got string "(Countable"'],
+            'nested group' => ['((Countable&Traversable))|int', NotAClass::class, 'Got string "(Countable"'],
+            'union inside a group' => ['(Countable|Traversable)&int', NotAClass::class, 'Got string "(Countable"'],
+            'leading digit' => ['1abc', NotAClass::class, 'Got string "1abc"'],
+            'two names' => ['int int', NotAClass::class, 'Got string "int int"'],
+            'generic' => ['Countable<int>', NotAClass::class, 'Got string "Countable<int>"'],
+            'qualified keyword' => ['\int', NotAClass::class, 'Got string "\int"'],
+            'nullable union with null' => ['?int|null', NotAUnion::class, 'duplicate type "null"'],
+            'iterable with array' => ['iterable|array', NotAUnion::class, 'duplicate type "array"'],
             'primitive in intersection' => [
                 'int&string',
                 NotAnIntersection::class,
-                'int cannot be part of an intersection type',
+                '"int" cannot be part of an intersection',
             ],
             'iterable in intersection' => [
                 'iterable&Countable',
                 NotAnIntersection::class,
-                'Expected "(Traversable|array)&Countable" to be a valid intersection: '
-                    . 'Traversable|array cannot be part of an intersection type.',
+                'Expected a valid intersection: "Traversable|array" cannot be part of an intersection.'
+                    . ' Got string "(Traversable|array)&Countable".',
             ],
         ];
     }
@@ -367,7 +384,7 @@ final class TypesTest extends TestCase
         ];
     }
 
-    /** @return array<string, array{ReflectionParameter, string, string}> */
+    /** @return array<string, array{ReflectionParameter, string}> */
     public static function provideUnresolvableParameters(): array
     {
         $closure = Closure::bind(static function (self $x): void {
@@ -379,13 +396,12 @@ final class TypesTest extends TestCase
         return [
             'self in a closure without scope' => [
                 (new ReflectionFunction($closure))->getParameters()[0],
-                'self',
-                'self cannot be resolved without a class',
+                'Expected a valid type: "self" cannot be resolved without a class. Got string "self".',
             ],
             'parent in a class without parent' => [
                 (new ReflectionFunction($orphan))->getParameters()[0],
-                '?parent',
-                StubReflectionTraitUser::class . ' has no parent class',
+                'Expected a valid type: "' . StubReflectionTraitUser::class . '" has no parent class.'
+                    . ' Got string "?parent".',
             ],
         ];
     }
@@ -486,11 +502,11 @@ final class TypesTest extends TestCase
         return [
             'void with int' => [
                 [new Primitive('void'), new Primitive('int')],
-                'void can only be used as a standalone type',
+                '"void" can only be used as a standalone type',
             ],
             'mixed with void' => [
                 [new Primitive('mixed'), new Primitive('void')],
-                'mixed can only be used as a standalone type',
+                '"mixed" can only be used as a standalone type',
             ],
         ];
     }
@@ -521,7 +537,7 @@ final class TypesTest extends TestCase
         return [
             'primitive member' => [
                 [new Clazz(Countable::class), new Primitive('int')],
-                'Expected "Countable&int" to be a valid intersection: int cannot be part of an intersection type.',
+                'Expected a valid intersection: "int" cannot be part of an intersection. Got string "Countable&int".',
             ],
         ];
     }

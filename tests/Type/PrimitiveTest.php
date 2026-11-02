@@ -36,7 +36,7 @@ final class PrimitiveTest extends TestCase
         try {
             new Primitive($input);
         } catch (NotAPrimitive $e) {
-            self::assertSame($input, $e->getType());
+            self::assertSame('Expected a primitive type. Got string "' . $input . '".', $e->getMessage());
             self::assertInstanceOf(InvalidType::class, $e);
             self::assertInstanceOf(InvalidArgumentException::class, $e);
 

@@ -23,7 +23,6 @@ use function array_unique;
 use function array_values;
 use function count;
 use function implode;
-use function sprintf;
 use function strcmp;
 use function usort;
 
@@ -129,7 +128,8 @@ final class Intersection implements Type
             if (! $member instanceof Clazz) {
                 throw new NotAnIntersection(
                     $members,
-                    sprintf('%s cannot be part of an intersection type', (string) $member),
+                    '{member} cannot be part of an intersection',
+                    member: (string) $member,
                 );
             }
 
@@ -153,7 +153,7 @@ final class Intersection implements Type
         $names      = array_map(static fn (Clazz $member): string => (string) $member, $members);
         $duplicates = array_values(array_diff_assoc($names, array_unique($names)));
         if ($duplicates !== []) {
-            throw new NotAnIntersection($members, sprintf('duplicate type %s', $duplicates[0]));
+            throw new NotAnIntersection($members, 'duplicate type {member}', member: $duplicates[0]);
         }
     }
 }

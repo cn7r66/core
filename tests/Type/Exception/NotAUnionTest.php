@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Traversable;
+use Vivarium\Failure\Failed;
 use Vivarium\Type\Clazz;
 use Vivarium\Type\Exception\InvalidType;
 use Vivarium\Type\Exception\NotAUnion;
@@ -31,31 +32,24 @@ final class NotAUnionTest extends TestCase
         $exception = new NotAUnion([new Primitive('int')], 'a union needs at least two members');
 
         self::assertInstanceOf(InvalidType::class, $exception);
+        self::assertInstanceOf(Failed::class, $exception);
         self::assertInstanceOf(InvalidArgumentException::class, $exception);
     }
 
-    public function testGetMembers(): void
-    {
-        $members = [new Primitive('int'), new Primitive('int')];
-
-        self::assertSame($members, (new NotAUnion($members, 'duplicate type int'))->getMembers());
-    }
-
-    public function testGetReason(): void
-    {
-        $exception = new NotAUnion([new Primitive('int'), new Primitive('int')], 'duplicate type int');
-
-        self::assertSame('duplicate type int', $exception->getReason());
-    }
-
-    /** @param list<Type> $members */
+    /**
+     * @param list<Type>            $members
+     * @param array<string, string> $parameters
+     */
     #[DataProvider('provideMessages')]
-    public function testGetMessage(array $members, string $reason, string $message): void
+    public function testGetMessage(array $members, string $reason, array $parameters, string $message): void
     {
-        self::assertSame($message, (new NotAUnion($members, $reason))->getMessage());
+        $exception = new NotAUnion($members, $reason, ...$parameters);
+
+        self::assertSame($message, $exception->getMessage());
+        self::assertSame($message, $exception->getFailure()->format());
     }
 
-    /** @return array<string, array{list<Type>, string, string}> */
+    /** @return array<string, array{list<Type>, string, array<string, string>, string}> */
     public static function provideMessages(): array
     {
         $intersection = new Intersection(new Clazz(Countable::class), new Clazz(Traversable::class));
@@ -63,19 +57,22 @@ final class NotAUnionTest extends TestCase
         return [
             'members in given order' => [
                 [new Primitive('string'), new Primitive('int'), new Primitive('string')],
-                'duplicate type string',
-                'Expected "string|int|string" to be a valid union: duplicate type string.',
+                'duplicate type {member}',
+                ['member' => 'string'],
+                'Expected a valid union: duplicate type "string". Got string "string|int|string".',
             ],
             'intersection parenthesized' => [
                 [$intersection, new Clazz(Countable::class)],
-                '(Countable&Traversable) is more restrictive than Countable',
-                'Expected "(Countable&Traversable)|Countable" to be a valid union:'
-                    . ' (Countable&Traversable) is more restrictive than Countable.',
+                '{intersection} is more restrictive than {other}',
+                ['intersection' => '(Countable&Traversable)', 'other' => 'Countable'],
+                'Expected a valid union: "(Countable&Traversable)" is more restrictive than "Countable".'
+                    . ' Got string "(Countable&Traversable)|Countable".',
             ],
             'no members' => [
                 [],
                 'a union needs at least two members',
-                'Expected "" to be a valid union: a union needs at least two members.',
+                [],
+                'Expected a valid union: a union needs at least two members. Got string "".',
             ],
         ];
     }

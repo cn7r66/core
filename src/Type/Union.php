@@ -25,7 +25,6 @@ use function array_values;
 use function count;
 use function implode;
 use function in_array;
-use function sprintf;
 use function strcmp;
 use function usort;
 
@@ -145,7 +144,7 @@ final class Union implements Type
             }
 
             if (! $member instanceof Primitive && ! $member instanceof Clazz && ! $member instanceof Intersection) {
-                throw new NotAUnion($members, sprintf('%s cannot be part of a union type', (string) $member));
+                throw new NotAUnion($members, '{member} cannot be part of a union', member: (string) $member);
             }
 
             $unionable[] = $member;
@@ -170,7 +169,7 @@ final class Union implements Type
     {
         $duplicates = array_values(array_diff_assoc($names, array_unique($names)));
         if ($duplicates !== []) {
-            throw new NotAUnion($members, sprintf('duplicate type %s', $duplicates[0]));
+            throw new NotAUnion($members, 'duplicate type {member}', member: $duplicates[0]);
         }
     }
 
@@ -182,7 +181,7 @@ final class Union implements Type
     {
         $standalone = array_values(array_intersect(self::STANDALONE, $names));
         if ($standalone !== []) {
-            throw new NotAUnion($members, sprintf('%s can only be used as a standalone type', $standalone[0]));
+            throw new NotAUnion($members, '{member} can only be used as a standalone type', member: $standalone[0]);
         }
     }
 
@@ -198,7 +197,7 @@ final class Union implements Type
 
         $redundant = array_values(array_intersect([Primitive::TRUE, Primitive::FALSE], $names));
         if ($redundant !== []) {
-            throw new NotAUnion($members, sprintf('%s is redundant with bool', $redundant[0]));
+            throw new NotAUnion($members, '{member} is redundant with bool', member: $redundant[0]);
         }
     }
 
@@ -209,7 +208,7 @@ final class Union implements Type
     private function assertNotBothTrueAndFalse(array $members, array $names): void
     {
         if (in_array(Primitive::TRUE, $names, true) && in_array(Primitive::FALSE, $names, true)) {
-            throw new NotAUnion($members, 'contains both true and false, bool must be used instead');
+            throw new NotAUnion($members, 'true and false must be written as bool');
         }
     }
 
@@ -224,7 +223,7 @@ final class Union implements Type
         }
 
         if (array_any($members, static fn (Type $member): bool => ! $member instanceof Primitive)) {
-            throw new NotAUnion($members, 'contains both object and a class type');
+            throw new NotAUnion($members, 'object makes the class types redundant');
         }
     }
 
@@ -242,11 +241,12 @@ final class Union implements Type
                 }
 
                 if ($intersection->isRedundantWith($other)) {
-                    throw new NotAUnion($members, sprintf(
-                        '%s is more restrictive than %s',
-                        self::format($intersection),
-                        self::format($other),
-                    ));
+                    throw new NotAUnion(
+                        $members,
+                        '{intersection} is more restrictive than {other}',
+                        intersection: self::format($intersection),
+                        other: self::format($other),
+                    );
                 }
             }
         }

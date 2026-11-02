@@ -11,24 +11,30 @@ declare(strict_types=1);
 namespace Vivarium\Type\Exception;
 
 use InvalidArgumentException;
+use Override;
+use Vivarium\Failure\Failure;
 
-use function sprintf;
 use function trait_exists;
 
 final class NotAClass extends InvalidArgumentException implements InvalidType
 {
-    public function __construct(private string $class)
+    private Failure $failure;
+
+    public function __construct(string $class)
     {
-        parent::__construct(sprintf(
+        $this->failure = new Failure(
             trait_exists($class) ?
-                'Expected "%s" to be a class, interface or enum. Got a trait.' :
-                'Expected "%s" to be an existing class, interface or enum.',
+                'Expected a class, interface or enum, not a trait. Got {value}.' :
+                'Expected an existing class, interface or enum. Got {value}.',
             $class,
-        ));
+        );
+
+        parent::__construct($this->failure->format());
     }
 
-    public function getClass(): string
+    #[Override]
+    public function getFailure(): Failure
     {
-        return $this->class;
+        return $this->failure;
     }
 }

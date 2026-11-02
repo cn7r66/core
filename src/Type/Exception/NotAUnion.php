@@ -11,31 +11,33 @@ declare(strict_types=1);
 namespace Vivarium\Type\Exception;
 
 use InvalidArgumentException;
+use Override;
+use Vivarium\Failure\Failure;
 use Vivarium\Type\Type;
 use Vivarium\Type\Union;
 
-use function sprintf;
-
 final class NotAUnion extends InvalidArgumentException implements InvalidType
 {
-    /** @param list<Type> $members */
-    public function __construct(private array $members, private string $reason)
+    private Failure $failure;
+
+    /**
+     * @param list<Type> $members
+     * @param string     $reason  a template fragment, filled from $parameters
+     */
+    public function __construct(array $members, string $reason, mixed ...$parameters)
     {
-        parent::__construct(sprintf(
-            'Expected "%s" to be a valid union: %s.',
+        $this->failure = new Failure(
+            'Expected a valid union: ' . $reason . '. Got {value}.',
             Union::format(...$members),
-            $reason,
-        ));
+            ...$parameters,
+        );
+
+        parent::__construct($this->failure->format());
     }
 
-    /** @return list<Type> */
-    public function getMembers(): array
+    #[Override]
+    public function getFailure(): Failure
     {
-        return $this->members;
-    }
-
-    public function getReason(): string
-    {
-        return $this->reason;
+        return $this->failure;
     }
 }

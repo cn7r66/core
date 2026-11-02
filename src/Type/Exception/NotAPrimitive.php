@@ -11,18 +11,23 @@ declare(strict_types=1);
 namespace Vivarium\Type\Exception;
 
 use InvalidArgumentException;
-
-use function sprintf;
+use Override;
+use Vivarium\Failure\Failure;
 
 final class NotAPrimitive extends InvalidArgumentException implements InvalidType
 {
-    public function __construct(private string $type)
+    private Failure $failure;
+
+    public function __construct(string $type)
     {
-        parent::__construct(sprintf('Expected "%s" to be a primitive type.', $type));
+        $this->failure = new Failure('Expected a primitive type. Got {value}.', $type);
+
+        parent::__construct($this->failure->format());
     }
 
-    public function getType(): string
+    #[Override]
+    public function getFailure(): Failure
     {
-        return $this->type;
+        return $this->failure;
     }
 }

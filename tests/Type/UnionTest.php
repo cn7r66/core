@@ -36,13 +36,12 @@ final class UnionTest extends TestCase
 {
     /** @param list<Type> $members */
     #[DataProvider('provideInvalidMembers')]
-    public function testConstructorException(array $members, string $reason, string $message): void
+    public function testConstructorException(array $members, string $template, string $message): void
     {
         try {
             new Union(...$members);
         } catch (NotAUnion $e) {
-            self::assertSame($members, $e->getMembers());
-            self::assertSame($reason, $e->getReason());
+            self::assertSame($template, $e->getFailure()->getTemplate());
             self::assertSame($message, $e->getMessage());
             self::assertInstanceOf(InvalidType::class, $e);
             self::assertInstanceOf(InvalidArgumentException::class, $e);
@@ -110,9 +109,10 @@ final class UnionTest extends TestCase
         try {
             new Union(new Union($int, $null), $int);
         } catch (NotAUnion $e) {
-            $hash = static fn (Type $member): string => $member->hash();
-            self::assertSame(array_map($hash, [$int, $null, $int]), array_map($hash, $e->getMembers()));
-            self::assertSame('duplicate type int', $e->getReason());
+            self::assertSame(
+                'Expected a valid union: duplicate type "int". Got string "int|null|int".',
+                $e->getMessage(),
+            );
 
             return;
         }
@@ -133,91 +133,90 @@ final class UnionTest extends TestCase
         return [
             'foreign type' => [
                 [new StubType(), new Primitive('int')],
-                'Stub cannot be part of a union type',
-                'Expected "Stub|int" to be a valid union: Stub cannot be part of a union type.',
+                'Expected a valid union: {member} cannot be part of a union. Got {value}.',
+                'Expected a valid union: "Stub" cannot be part of a union. Got string "Stub|int".',
             ],
             'no members' => [
                 [],
-                'a union needs at least two members',
-                'Expected "" to be a valid union: a union needs at least two members.',
+                'Expected a valid union: a union needs at least two members. Got {value}.',
+                'Expected a valid union: a union needs at least two members. Got string "".',
             ],
             'single member' => [
                 [new Primitive('int')],
-                'a union needs at least two members',
-                'Expected "int" to be a valid union: a union needs at least two members.',
+                'Expected a valid union: a union needs at least two members. Got {value}.',
+                'Expected a valid union: a union needs at least two members. Got string "int".',
             ],
             'duplicate int' => [
                 [new Primitive('int'), new Primitive('int')],
-                'duplicate type int',
-                'Expected "int|int" to be a valid union: duplicate type int.',
+                'Expected a valid union: duplicate type {member}. Got {value}.',
+                'Expected a valid union: duplicate type "int". Got string "int|int".',
             ],
             'duplicate null' => [
                 [new Primitive('null'), new Primitive('null')],
-                'duplicate type null',
-                'Expected "null|null" to be a valid union: duplicate type null.',
+                'Expected a valid union: duplicate type {member}. Got {value}.',
+                'Expected a valid union: duplicate type "null". Got string "null|null".',
             ],
             'duplicate intersection in different order' => [
                 [
                     new Intersection(new Clazz(Countable::class), new Clazz(Traversable::class)),
                     new Intersection(new Clazz(Traversable::class), new Clazz(Countable::class)),
                 ],
-                'duplicate type (Countable&Traversable)',
-                'Expected "(Countable&Traversable)|(Countable&Traversable)" to be a valid union:'
-                    . ' duplicate type (Countable&Traversable).',
+                'Expected a valid union: duplicate type {member}. Got {value}.',
+                'Expected a valid union: duplicate type "(Countable&Traversable)".'
+                    . ' Got string "(Countable&Traversable)|(Countable&Traversable)".',
             ],
             'mixed with int' => [
                 [new Primitive('mixed'), new Primitive('int')],
-                'mixed can only be used as a standalone type',
-                'Expected "mixed|int" to be a valid union: mixed can only be used as a standalone type.',
+                'Expected a valid union: {member} can only be used as a standalone type. Got {value}.',
+                'Expected a valid union: "mixed" can only be used as a standalone type. Got string "mixed|int".',
             ],
             'never with int' => [
                 [new Primitive('never'), new Primitive('int')],
-                'never can only be used as a standalone type',
-                'Expected "never|int" to be a valid union: never can only be used as a standalone type.',
+                'Expected a valid union: {member} can only be used as a standalone type. Got {value}.',
+                'Expected a valid union: "never" can only be used as a standalone type. Got string "never|int".',
             ],
             'void with int' => [
                 [new Primitive('void'), new Primitive('int')],
-                'void can only be used as a standalone type',
-                'Expected "void|int" to be a valid union: void can only be used as a standalone type.',
+                'Expected a valid union: {member} can only be used as a standalone type. Got {value}.',
+                'Expected a valid union: "void" can only be used as a standalone type. Got string "void|int".',
             ],
             'bool with false' => [
                 [new Primitive('bool'), new Primitive('false')],
-                'false is redundant with bool',
-                'Expected "bool|false" to be a valid union: false is redundant with bool.',
+                'Expected a valid union: {member} is redundant with bool. Got {value}.',
+                'Expected a valid union: "false" is redundant with bool. Got string "bool|false".',
             ],
             'bool with true' => [
                 [new Primitive('bool'), new Primitive('true')],
-                'true is redundant with bool',
-                'Expected "bool|true" to be a valid union: true is redundant with bool.',
+                'Expected a valid union: {member} is redundant with bool. Got {value}.',
+                'Expected a valid union: "true" is redundant with bool. Got string "bool|true".',
             ],
             'true with false' => [
                 [new Primitive('true'), new Primitive('false')],
-                'contains both true and false, bool must be used instead',
-                'Expected "true|false" to be a valid union:'
-                    . ' contains both true and false, bool must be used instead.',
+                'Expected a valid union: true and false must be written as bool. Got {value}.',
+                'Expected a valid union: true and false must be written as bool. Got string "true|false".',
             ],
             'object with class' => [
                 [new Primitive('object'), new Clazz(Countable::class)],
-                'contains both object and a class type',
-                'Expected "object|Countable" to be a valid union: contains both object and a class type.',
+                'Expected a valid union: object makes the class types redundant. Got {value}.',
+                'Expected a valid union: object makes the class types redundant. Got string "object|Countable".',
             ],
             'object with intersection' => [
                 [
                     new Primitive('object'),
                     new Intersection(new Clazz(Countable::class), new Clazz(Traversable::class)),
                 ],
-                'contains both object and a class type',
-                'Expected "object|(Countable&Traversable)" to be a valid union:'
-                    . ' contains both object and a class type.',
+                'Expected a valid union: object makes the class types redundant. Got {value}.',
+                'Expected a valid union: object makes the class types redundant.'
+                    . ' Got string "object|(Countable&Traversable)".',
             ],
             'intersection with one of its members' => [
                 [
                     new Intersection(new Clazz(Countable::class), new Clazz(Traversable::class)),
                     new Clazz(Countable::class),
                 ],
-                '(Countable&Traversable) is more restrictive than Countable',
-                'Expected "(Countable&Traversable)|Countable" to be a valid union:'
-                    . ' (Countable&Traversable) is more restrictive than Countable.',
+                'Expected a valid union: {intersection} is more restrictive than {other}. Got {value}.',
+                'Expected a valid union: "(Countable&Traversable)" is more restrictive than "Countable".'
+                    . ' Got string "(Countable&Traversable)|Countable".',
             ],
             'intersection with a wider intersection' => [
                 [
@@ -228,9 +227,10 @@ final class UnionTest extends TestCase
                         new Clazz(ArrayAccess::class),
                     ),
                 ],
-                '(ArrayAccess&Countable&Traversable) is more restrictive than (Countable&Traversable)',
-                'Expected "(Countable&Traversable)|(ArrayAccess&Countable&Traversable)" to be a valid union:'
-                    . ' (ArrayAccess&Countable&Traversable) is more restrictive than (Countable&Traversable).',
+                'Expected a valid union: {intersection} is more restrictive than {other}. Got {value}.',
+                'Expected a valid union: "(ArrayAccess&Countable&Traversable)" is more restrictive than'
+                    . ' "(Countable&Traversable)".'
+                    . ' Got string(59) "(Countable&Traversable)|(ArrayAccess&Countable&Tra"….',
             ],
         ];
     }

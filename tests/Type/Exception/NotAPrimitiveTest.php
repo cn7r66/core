@@ -14,6 +14,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Vivarium\Failure\Failed;
 use Vivarium\Type\Exception\InvalidType;
 use Vivarium\Type\Exception\NotAPrimitive;
 
@@ -25,27 +26,26 @@ final class NotAPrimitiveTest extends TestCase
         $exception = new NotAPrimitive('integer');
 
         self::assertInstanceOf(InvalidType::class, $exception);
+        self::assertInstanceOf(Failed::class, $exception);
         self::assertInstanceOf(InvalidArgumentException::class, $exception);
-    }
-
-    public function testGetType(): void
-    {
-        self::assertSame('integer', (new NotAPrimitive('integer'))->getType());
     }
 
     #[DataProvider('provideMessages')]
     public function testGetMessage(string $type, string $message): void
     {
-        self::assertSame($message, (new NotAPrimitive($type))->getMessage());
+        $exception = new NotAPrimitive($type);
+
+        self::assertSame($message, $exception->getMessage());
+        self::assertSame($message, $exception->getFailure()->format());
     }
 
     /** @return array<string, array{string, string}> */
     public static function provideMessages(): array
     {
         return [
-            'alias' => ['integer', 'Expected "integer" to be a primitive type.'],
-            'class name' => ['Countable', 'Expected "Countable" to be a primitive type.'],
-            'empty' => ['', 'Expected "" to be a primitive type.'],
+            'alias' => ['integer', 'Expected a primitive type. Got string "integer".'],
+            'class name' => ['Countable', 'Expected a primitive type. Got string "Countable".'],
+            'empty' => ['', 'Expected a primitive type. Got string "".'],
         ];
     }
 }

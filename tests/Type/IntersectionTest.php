@@ -117,19 +117,21 @@ final class IntersectionTest extends TestCase
         return [
             'no members' => [
                 [],
-                'Expected "" to be a valid intersection: an intersection needs at least two members.',
+                'Expected a valid intersection: an intersection needs at least two members. Got string "".',
             ],
             'single member' => [
                 [Countable::class],
-                'Expected "Countable" to be a valid intersection: an intersection needs at least two members.',
+                'Expected a valid intersection: an intersection needs at least two members.'
+                    . ' Got string "Countable".',
             ],
             'duplicate member' => [
                 [Countable::class, Countable::class],
-                'Expected "Countable&Countable" to be a valid intersection: duplicate type Countable.',
+                'Expected a valid intersection: duplicate type "Countable". Got string "Countable&Countable".',
             ],
             'duplicate among others' => [
                 [Countable::class, Traversable::class, Countable::class],
-                'Expected "Countable&Traversable&Countable" to be a valid intersection: duplicate type Countable.',
+                'Expected a valid intersection: duplicate type "Countable".'
+                    . ' Got string "Countable&Traversable&Countable".',
             ],
         ];
     }
@@ -140,16 +142,16 @@ final class IntersectionTest extends TestCase
         return [
             'primitive' => [
                 new Primitive('int'),
-                'Expected "Countable&int" to be a valid intersection: int cannot be part of an intersection type.',
+                'Expected a valid intersection: "int" cannot be part of an intersection. Got string "Countable&int".',
             ],
             'union' => [
                 new Union(new Clazz(Traversable::class), new Primitive('array')),
-                'Expected "Countable&(Traversable|array)" to be a valid intersection:'
-                    . ' Traversable|array cannot be part of an intersection type.',
+                'Expected a valid intersection: "Traversable|array" cannot be part of an intersection.'
+                    . ' Got string "Countable&(Traversable|array)".',
             ],
             'foreign type' => [
                 new StubType(),
-                'Expected "Countable&Stub" to be a valid intersection: Stub cannot be part of an intersection type.',
+                'Expected a valid intersection: "Stub" cannot be part of an intersection. Got string "Countable&Stub".',
             ],
         ];
     }

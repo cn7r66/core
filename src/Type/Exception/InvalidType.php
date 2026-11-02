@@ -10,8 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Type\Exception;
 
-use Throwable;
+use Vivarium\Failure\Failed;
 
-interface InvalidType extends Throwable
+interface InvalidType extends Failed
 {
 }

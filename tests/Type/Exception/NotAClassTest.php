@@ -14,6 +14,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Vivarium\Failure\Failed;
 use Vivarium\Test\Type\Stub\StubReflectionShared;
 use Vivarium\Type\Exception\InvalidType;
 use Vivarium\Type\Exception\NotAClass;
@@ -26,30 +27,30 @@ final class NotAClassTest extends TestCase
         $exception = new NotAClass('Nope');
 
         self::assertInstanceOf(InvalidType::class, $exception);
+        self::assertInstanceOf(Failed::class, $exception);
         self::assertInstanceOf(InvalidArgumentException::class, $exception);
-    }
-
-    public function testGetClass(): void
-    {
-        self::assertSame('Nope', (new NotAClass('Nope'))->getClass());
     }
 
     #[DataProvider('provideMessages')]
     public function testGetMessage(string $class, string $message): void
     {
-        self::assertSame($message, (new NotAClass($class))->getMessage());
+        $exception = new NotAClass($class);
+
+        self::assertSame($message, $exception->getMessage());
+        self::assertSame($message, $exception->getFailure()->format());
     }
 
     /** @return array<string, array{string, string}> */
     public static function provideMessages(): array
     {
         return [
-            'missing class' => ['Nope', 'Expected "Nope" to be an existing class, interface or enum.'],
+            'missing class' => ['Nope', 'Expected an existing class, interface or enum. Got string "Nope".'],
             'trait' => [
                 StubReflectionShared::class,
-                'Expected "' . StubReflectionShared::class . '" to be a class, interface or enum. Got a trait.',
+                'Expected a class, interface or enum, not a trait. Got string "'
+                    . StubReflectionShared::class . '".',
             ],
-            'empty' => ['', 'Expected "" to be an existing class, interface or enum.'],
+            'empty' => ['', 'Expected an existing class, interface or enum. Got string "".'],
         ];
     }
 }
