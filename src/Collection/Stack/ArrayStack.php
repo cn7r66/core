@@ -17,7 +17,6 @@ use Vivarium\Collection\Sequence\ArraySequence;
 use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Equality\HashBuilder;
 
-use function abs;
 use function array_reverse;
 use function count;
 
@@ -91,11 +90,13 @@ final class ArrayStack implements Stack
      */
     public function remove($element): ArrayStack
     {
-        $stack = clone $this;
-        $index = $this->count() - abs($this->elements->search($element));
-        for ($i = 0; $i < $index; $i++) {
-            $stack = $stack->pop();
+        $elements = $this->elements->remove($element);
+        if ($elements === $this->elements) {
+            return $this;
         }
+
+        $stack           = clone $this;
+        $stack->elements = $elements;
 
         return $stack;
     }

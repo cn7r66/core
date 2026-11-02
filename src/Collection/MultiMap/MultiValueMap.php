@@ -95,12 +95,14 @@ final class MultiValueMap implements MultiMap
             return $this;
         }
 
+        $values    = $this->get($key);
+        $remaining = $values->remove($value);
+        if ($remaining === $values) {
+            return $this;
+        }
+
         $multimap      = clone $this;
-        $multimap->map = $multimap->map->put(
-            $key,
-            $multimap->get($key)
-                     ->remove($value),
-        );
+        $multimap->map = $multimap->map->put($key, $remaining);
 
         return $multimap;
     }

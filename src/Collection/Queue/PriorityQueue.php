@@ -67,8 +67,13 @@ final class PriorityQueue implements Queue
      */
     public function remove($element): PriorityQueue
     {
+        $queue = $this->queue->remove($element);
+        if ($queue === $this->queue) {
+            return $this;
+        }
+
         $priority        = clone $this;
-        $priority->queue = $priority->queue->remove($element);
+        $priority->queue = $queue;
 
         return $priority;
     }

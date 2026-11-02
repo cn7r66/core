@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Queue;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Exception\CollectionIsEmpty;
@@ -67,29 +68,36 @@ class ArrayQueueTest extends TestCase
         static::assertNotSame($queue, $queue->dequeue());
     }
 
-    public function testRemove(): void
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideRemove')]
+    public function testRemove(array $elements, int $element, array $expected): void
     {
-        /** @var array<int, int> $elements */
-        $elements = [1, 2, 3, 4, 5, 6];
-        $expected = [2, 3, 4, 5, 6];
+        $collection = ArrayQueue::fromArray($elements);
+        $removed    = $collection->remove($element);
 
-        $queue = ArrayQueue::fromArray($elements);
-        $queue = $queue->remove(1);
-
-        static::assertEquals($expected, $queue->toArray());
-        static::assertNotSame($queue, $queue->remove(0));
+        static::assertSame($expected, $removed->toArray());
+        static::assertFalse($removed->contains($element));
+        static::assertNotSame($collection, $removed);
     }
 
-    public function testRemoveMultiple(): void
+    /** @return array<string, array{list<int>, int, list<int>}> */
+    public static function provideRemove(): array
     {
-        $elements = [1, 2, 3, 4, 5, 6];
-        $expected = [5, 6];
+        return [
+            'head' => [[1, 2, 3, 4], 1, [2, 3, 4]],
+            'inside, neighbours kept' => [[1, 2, 3, 4, 5, 6], 4, [1, 2, 3, 5, 6]],
+            'every occurrence' => [[1, 2, 1, 3, 1], 1, [2, 3]],
+        ];
+    }
 
-        $queue = ArrayQueue::fromArray($elements);
-        $queue = $queue->remove(4);
-        $queue = $queue->remove(2);
+    public function testRemoveMissing(): void
+    {
+        $collection = ArrayQueue::fromArray([1, 2, 3]);
 
-        static::assertEquals($expected, $queue->toArray());
+        static::assertSame($collection, $collection->remove(4));
     }
 
     public function testDequeueOnEmpty(): void

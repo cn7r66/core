@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Sequence;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use stdClass;
@@ -37,21 +38,36 @@ class ArraySequenceTest extends TestCase
         static::assertNotSame($list, $list->add(1));
     }
 
-    public function testRemove(): void
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideRemove')]
+    public function testRemove(array $elements, int $element, array $expected): void
     {
-        /** @var ArraySequence<int> $list */
-        $list = new ArraySequence(1, 5, 0, -1);
-        $list = $list->add(42);
-        $list = $list->add(23);
+        $collection = ArraySequence::fromArray($elements);
+        $removed    = $collection->remove($element);
 
-        $list = $list->remove(1);
-        $list = $list->remove(0);
+        static::assertSame($expected, $removed->toArray());
+        static::assertFalse($removed->contains($element));
+        static::assertNotSame($collection, $removed);
+    }
 
-        $expected = new ArraySequence(5, -1, 42, 23);
+    /** @return array<string, array{list<int>, int, list<int>}> */
+    public static function provideRemove(): array
+    {
+        return [
+            'single' => [[1, 5, 0, -1], 0, [1, 5, -1]],
+            'every occurrence' => [[1, 2, 1, 3, 1], 1, [2, 3]],
+            'only element' => [[7], 7, []],
+        ];
+    }
 
-        static::assertCount(4, $list);
-        static::assertEquals($expected->toArray(), $list->toArray());
-        static::assertNotSame($list, $list->remove(0));
+    public function testRemoveMissing(): void
+    {
+        $collection = ArraySequence::fromArray([1, 2, 3]);
+
+        static::assertSame($collection, $collection->remove(4));
     }
 
     public function testContains(): void

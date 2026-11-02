@@ -117,15 +117,13 @@ class SortedMap implements Map
      */
     public function remove($key): SortedMap
     {
-        $map   = clone $this;
-        $index = $this->searchByKey()
-                      ->search(
-                          $this->pairs,
-                          $key,
-                      );
+        $index = $this->searchByKey()->search($this->pairs, $key);
+        if ($index < 0) {
+            return $this;
+        }
 
+        $map = clone $this;
         unset($map->pairs[$index]);
-
         $map->pairs = array_values($map->pairs);
 
         return $map;

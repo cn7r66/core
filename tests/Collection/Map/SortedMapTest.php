@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Map;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Exception\KeyNotFound;
@@ -124,6 +125,24 @@ class SortedMapTest extends TestCase
 
         static::assertFalse($map->containsKey(2));
         static::assertNotSame($map, $map->remove(1));
+    }
+
+    #[DataProvider('provideRemoveMissing')]
+    public function testRemoveMissing(int $key): void
+    {
+        $map = SortedMap::fromKeyValue(new ByNumber(), [2, 4, 6], ['a', 'b', 'c']);
+
+        static::assertSame($map, $map->remove($key));
+    }
+
+    /** @return array<string, array{int}> */
+    public static function provideRemoveMissing(): array
+    {
+        return [
+            'before every key' => [1],
+            'between keys' => [3],
+            'after every key' => [7],
+        ];
     }
 
     public function testRemoveOnFirstElement(): void

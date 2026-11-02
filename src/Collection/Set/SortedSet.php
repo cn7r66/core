@@ -81,8 +81,13 @@ final class SortedSet implements Set
      */
     public function remove($element): SortedSet
     {
+        $map = $this->map->remove($element);
+        if ($map === $this->map) {
+            return $this;
+        }
+
         $set      = clone $this;
-        $set->map = $set->map->remove($element);
+        $set->map = $map;
 
         return $set;
     }

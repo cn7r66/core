@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Queue;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Queue\PriorityQueue;
@@ -85,17 +86,35 @@ class PriorityQueueTest extends TestCase
         static::assertFalse($queue->contains(42));
     }
 
-    public function testRemove(): void
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideRemove')]
+    public function testRemove(array $elements, int $element, array $expected): void
     {
-        /** @var int[] $elements */
-        $elements = [3, 4, 5, 1, 2, 6];
-        $expected = [2, 3, 4, 5, 6];
+        $collection = PriorityQueue::fromArray(new ByNumber(), $elements);
+        $removed    = $collection->remove($element);
 
-        $queue = PriorityQueue::fromArray(new ByNumber(), $elements);
-        $queue = $queue->remove(1);
+        static::assertSame($expected, $removed->toArray());
+        static::assertFalse($removed->contains($element));
+        static::assertNotSame($collection, $removed);
+    }
 
-        static::assertEquals($expected, $queue->toArray());
-        static::assertNotSame($queue, $queue->remove(0));
+    /** @return array<string, array{list<int>, int, list<int>}> */
+    public static function provideRemove(): array
+    {
+        return [
+            'first in order' => [[3, 4, 5, 1, 2, 6], 1, [2, 3, 4, 5, 6]],
+            'every occurrence' => [[3, 1, 2, 1], 1, [2, 3]],
+        ];
+    }
+
+    public function testRemoveMissing(): void
+    {
+        $collection = PriorityQueue::fromArray(new ByNumber(), [1, 2, 3]);
+
+        static::assertSame($collection, $collection->remove(4));
     }
 
     public function testClear(): void

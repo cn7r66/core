@@ -60,13 +60,13 @@ final class ArrayQueue implements Queue
      */
     public function remove($element): ArrayQueue
     {
-        $queue  = clone $this;
-        $remove = $queue->elements->search($element);
-        if ($remove >= 0) {
-            for ($i = 0; $i < $remove + 1; $i++) {
-                $queue = $queue->dequeue();
-            }
+        $elements = $this->elements->remove($element);
+        if ($elements === $this->elements) {
+            return $this;
         }
+
+        $queue           = clone $this;
+        $queue->elements = $elements;
 
         return $queue;
     }

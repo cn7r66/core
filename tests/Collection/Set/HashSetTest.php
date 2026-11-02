@@ -11,13 +11,12 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Set;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Set\HashSet;
 use Vivarium\Equality\Equal;
 use Vivarium\Equality\Equality;
-
-use function count;
 
 #[CoversClass(HashSet::class)]
 class HashSetTest extends TestCase
@@ -46,18 +45,35 @@ class HashSetTest extends TestCase
         static::assertNotSame($set, $set->add(42));
     }
 
-    public function testRemove(): void
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideRemove')]
+    public function testRemove(array $elements, int $element, array $expected): void
     {
-        $elements = [1, 2, 3, 4, 5];
+        $collection = HashSet::fromArray($elements);
+        $removed    = $collection->remove($element);
 
-        $set = HashSet::fromArray($elements);
-        $set = $set->remove(3);
+        static::assertSame($expected, $removed->toArray());
+        static::assertFalse($removed->contains($element));
+        static::assertNotSame($collection, $removed);
+    }
 
-        $expected = [1, 2, 4, 5];
+    /** @return array<string, array{list<int>, int, list<int>}> */
+    public static function provideRemove(): array
+    {
+        return [
+            'inside' => [[1, 2, 3, 4, 5], 3, [1, 2, 4, 5]],
+            'only element' => [[7], 7, []],
+        ];
+    }
 
-        static::assertCount(count($expected), $set);
-        static::assertEquals($expected, $set->toArray());
-        static::assertNotSame($set, $set->remove(2));
+    public function testRemoveMissing(): void
+    {
+        $collection = HashSet::fromArray([1, 2, 3]);
+
+        static::assertSame($collection, $collection->remove(4));
     }
 
     public function testContains(): void

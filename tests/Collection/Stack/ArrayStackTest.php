@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Stack;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Exception\CollectionIsEmpty;
@@ -66,19 +67,36 @@ class ArrayStackTest extends TestCase
         static::assertNotSame($stack, $stack->pop());
     }
 
-    public function testRemove(): void
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideRemove')]
+    public function testRemove(array $elements, int $element, array $expected): void
     {
-        $elements = [1, 2, 3, 4, 5, 6];
-        $expected = [1];
+        $collection = ArrayStack::fromArray($elements);
+        $removed    = $collection->remove($element);
 
-        $stack = ArrayStack::fromArray($elements);
-        $stack = $stack->remove(4);
-        $stack = $stack->remove(2);
+        static::assertSame($expected, $removed->toArray());
+        static::assertFalse($removed->contains($element));
+        static::assertNotSame($collection, $removed);
+    }
 
-        static::assertEquals($expected, $stack->toArray());
+    /** @return array<string, array{list<int>, int, list<int>}> */
+    public static function provideRemove(): array
+    {
+        return [
+            'top' => [[1, 2, 3], 3, [2, 1]],
+            'inside, neighbours kept' => [[1, 2, 3, 4, 5, 6], 4, [6, 5, 3, 2, 1]],
+            'every occurrence' => [[1, 2, 1, 3, 1], 1, [3, 2]],
+        ];
+    }
 
-        $stack = $stack->pop();
-        static::assertNotSame($stack, $stack->remove(1));
+    public function testRemoveMissing(): void
+    {
+        $collection = ArrayStack::fromArray([1, 2, 3]);
+
+        static::assertSame($collection, $collection->remove(4));
     }
 
     public function testPopOnEmpty(): void

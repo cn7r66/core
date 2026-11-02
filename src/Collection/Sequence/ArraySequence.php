@@ -15,9 +15,11 @@ use Iterator;
 use Vivarium\Collection\Exception\IndexOutOfBounds;
 use Vivarium\Collection\Util\LinearSearch;
 use Vivarium\Comparator\Comparator;
+use Vivarium\Equality\Equal;
 use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Equality\HashBuilder;
 
+use function array_filter;
 use function array_values;
 use function count;
 use function usort;
@@ -73,12 +75,18 @@ final class ArraySequence implements Sequence
      */
     public function remove($element): ArraySequence
     {
-        $list  = clone $this;
-        $index = $this->search($element);
+        $remaining = array_values(array_filter(
+            $this->elements,
+            /** @param T $current */
+            static fn ($current): bool => ! Equal::areEquals($current, $element),
+        ));
 
-        unset($list->elements[$index]);
+        if (count($remaining) === count($this->elements)) {
+            return $this;
+        }
 
-        $list->elements = array_values($list->elements);
+        $list           = clone $this;
+        $list->elements = $remaining;
 
         return $list;
     }

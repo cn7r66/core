@@ -98,8 +98,18 @@ final class MultiValueMapTest extends TestCase
 
         $this->checkContent($multimap, $content);
 
-        static::assertNotSame($multimap, $multimap->remove('b', 4));
+        static::assertSame($multimap, $multimap->remove('b', 4));
         static::assertSame($multimap, $multimap->remove('z', 4));
+    }
+
+    public function testRemoveEveryOccurrence(): void
+    {
+        $multimap = $this->createMultiMap(new Pair('a', new ArraySequence(1, 2, 1)));
+
+        $multimap = $multimap->remove('a', 1);
+
+        static::assertSame([2], $multimap->get('a')->toArray());
+        static::assertFalse($multimap->containsKeyValue('a', 1));
     }
 
     public function testRemoveAll(): void

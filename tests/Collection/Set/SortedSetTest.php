@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\Set;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Set\SortedSet;
@@ -40,19 +41,35 @@ class SortedSetTest extends TestCase
         static::assertNotSame($set, $set->add(42));
     }
 
-    public function testRemove(): void
+    /**
+     * @param list<int> $elements
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideRemove')]
+    public function testRemove(array $elements, int $element, array $expected): void
     {
-        /** @var int[] $values */
-        $values = [5, 2, 3, 1, 7];
+        $collection = SortedSet::fromArray(new ByNumber(), $elements);
+        $removed    = $collection->remove($element);
 
-        $set = new SortedSet(new ByNumber(), ...$values);
-        $set = $set->remove(3);
+        static::assertSame($expected, $removed->toArray());
+        static::assertFalse($removed->contains($element));
+        static::assertNotSame($collection, $removed);
+    }
 
-        $expected = [1, 2, 5, 7];
+    /** @return array<string, array{list<int>, int, list<int>}> */
+    public static function provideRemove(): array
+    {
+        return [
+            'inside' => [[5, 2, 3, 1, 7], 3, [1, 2, 5, 7]],
+            'last' => [[5, 2, 3, 1, 7], 7, [1, 2, 3, 5]],
+        ];
+    }
 
-        static::assertCount(4, $set);
-        static::assertEquals($expected, $set->toArray());
-        static::assertNotSame($set, $set->remove(7));
+    public function testRemoveMissing(): void
+    {
+        $collection = SortedSet::fromArray(new ByNumber(), [1, 2, 3]);
+
+        static::assertSame($collection, $collection->remove(4));
     }
 
     public function testClear(): void
