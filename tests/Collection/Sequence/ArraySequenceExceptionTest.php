@@ -10,10 +10,10 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Sequence;
 
-use OutOfBoundsException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Vivarium\Collection\Exception\IndexOutOfBounds;
 use Vivarium\Collection\Sequence\ArraySequence;
 
 use function count;
@@ -26,8 +26,8 @@ class ArraySequenceExceptionTest extends TestCase
     #[DataProvider('getTestIndexOutOfBoundData')]
     public function testGetAtIndexOutOfBound(array $elements, int $index): void
     {
-        $message = sprintf('Index out of bound. Count: %s, Index: %s', count($elements), $index);
-        static::expectException(OutOfBoundsException::class);
+        $message = sprintf('Expected an index in [0, %d). Got int %d.', count($elements), $index);
+        static::expectException(IndexOutOfBounds::class);
         static::expectExceptionMessage($message);
 
         $list = ArraySequence::fromArray($elements);
@@ -38,8 +38,8 @@ class ArraySequenceExceptionTest extends TestCase
     #[DataProvider('getTestIndexOutOfBoundData')]
     public function testSetAtIndexOutOfBound(array $elements, int $index): void
     {
-        $message = sprintf('Index out of bound. Count: %s, Index: %s', count($elements), $index);
-        static::expectException(OutOfBoundsException::class);
+        $message = sprintf('Expected an index in [0, %d). Got int %d.', count($elements), $index);
+        static::expectException(IndexOutOfBounds::class);
         static::expectExceptionMessage($message);
 
         $list = ArraySequence::fromArray($elements);
@@ -50,8 +50,8 @@ class ArraySequenceExceptionTest extends TestCase
     #[DataProvider('getTestIndexOutOfBoundData')]
     public function testRemoveAtIndexOutOfBound(array $elements, int $index): void
     {
-        $message = sprintf('Index out of bound. Count: %s, Index: %s', count($elements), $index);
-        static::expectException(OutOfBoundsException::class);
+        $message = sprintf('Expected an index in [0, %d). Got int %d.', count($elements), $index);
+        static::expectException(IndexOutOfBounds::class);
         static::expectExceptionMessage($message);
 
         $list = ArraySequence::fromArray($elements);

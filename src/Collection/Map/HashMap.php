@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\Map;
 
-use OutOfBoundsException;
+use Vivarium\Collection\Exception\KeyNotFound;
 use Vivarium\Collection\Pair\Pair;
 use Vivarium\Collection\Util\KeyHash;
 use Vivarium\Collection\Util\LinearSearch;
@@ -118,7 +118,7 @@ final class HashMap implements Map
             }
         }
 
-        throw new OutOfBoundsException('The provided key is not present.');
+        throw new KeyNotFound($key);
     }
 
     /**

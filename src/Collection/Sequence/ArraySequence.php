@@ -12,7 +12,7 @@ namespace Vivarium\Collection\Sequence;
 
 use ArrayIterator;
 use Iterator;
-use OutOfBoundsException;
+use Vivarium\Collection\Exception\IndexOutOfBounds;
 use Vivarium\Collection\Util\Vector;
 use Vivarium\Comparator\Comparator;
 use Vivarium\Equality\Equal;
@@ -21,7 +21,6 @@ use Vivarium\Equality\HashBuilder;
 
 use function array_values;
 use function count;
-use function sprintf;
 use function usort;
 
 /**
@@ -209,9 +208,7 @@ final class ArraySequence implements Sequence
     private function checkBounds(int $index): void
     {
         if ($index < 0 || $index >= $this->count()) {
-            $message = sprintf('Index out of bound. Count: %s, Index: %s', $this->count(), $index);
-
-            throw new OutOfBoundsException($message);
+            throw new IndexOutOfBounds($index, $this->count());
         }
     }
 }

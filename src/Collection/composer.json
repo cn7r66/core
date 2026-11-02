@@ -15,7 +15,8 @@
         "php": "^8.5",
         "vivarium/assertion": "^0.1",
         "vivarium/comparator": "^0.1",
-        "vivarium/equality": "^0.1"
+        "vivarium/equality": "^0.1",
+        "vivarium/failure": "^0.1"
     },
     "autoload": {
         "psr-4": {

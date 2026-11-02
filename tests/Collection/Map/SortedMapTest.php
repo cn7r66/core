@@ -10,10 +10,10 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Map;
 
-use OutOfBoundsException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Vivarium\Collection\Exception\KeyNotFound;
 use Vivarium\Collection\Map\Map;
 use Vivarium\Collection\Map\SortedMap;
 use Vivarium\Comparator\ByByte;
@@ -101,8 +101,8 @@ class SortedMapTest extends TestCase
 
     public function testGetNotFound(): void
     {
-        static::expectException(OutOfBoundsException::class);
-        static::expectExceptionMessage('The provided key is not valid.');
+        static::expectException(KeyNotFound::class);
+        static::expectExceptionMessage('Expected a key present in the map. Got int 1.');
 
         $map = new SortedMap(new ByNumber());
 

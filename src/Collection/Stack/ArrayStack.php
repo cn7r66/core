@@ -11,8 +11,8 @@ declare(strict_types=1);
 namespace Vivarium\Collection\Stack;
 
 use ArrayIterator;
-use DomainException;
 use Iterator;
+use Vivarium\Collection\Exception\CollectionIsEmpty;
 use Vivarium\Collection\Sequence\ArraySequence;
 use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Equality\HashBuilder;
@@ -65,7 +65,7 @@ final class ArrayStack implements Stack
     public function pop(): ArrayStack
     {
         if ($this->isEmpty()) {
-            throw new DomainException('Cannot pop from an empty stack.');
+            throw new CollectionIsEmpty('pop', $this);
         }
 
         $stack           = clone $this;
@@ -110,7 +110,7 @@ final class ArrayStack implements Stack
     public function peek()
     {
         if ($this->isEmpty()) {
-            throw new DomainException('Cannot peek from an empty stack.');
+            throw new CollectionIsEmpty('peek', $this);
         }
 
         return $this->elements->getAtIndex($this->count() - 1);

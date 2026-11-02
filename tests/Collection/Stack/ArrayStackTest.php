@@ -10,10 +10,10 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Stack;
 
-use DomainException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Vivarium\Collection\Exception\CollectionIsEmpty;
 use Vivarium\Collection\Stack\ArrayStack;
 use Vivarium\Equality\Equal;
 
@@ -83,8 +83,10 @@ class ArrayStackTest extends TestCase
 
     public function testPopOnEmpty(): void
     {
-        static::expectException(DomainException::class);
-        static::expectExceptionMessage('Cannot pop from an empty stack.');
+        static::expectException(CollectionIsEmpty::class);
+        static::expectExceptionMessage(
+            'Expected an element to pop. Got object ' . ArrayStack::class . ' with no elements.',
+        );
 
         $stack = new ArrayStack();
 
@@ -93,8 +95,10 @@ class ArrayStackTest extends TestCase
 
     public function testPeekOnEmpty(): void
     {
-        static::expectException(DomainException::class);
-        static::expectExceptionMessage('Cannot peek from an empty stack.');
+        static::expectException(CollectionIsEmpty::class);
+        static::expectExceptionMessage(
+            'Expected an element to peek. Got object ' . ArrayStack::class . ' with no elements.',
+        );
 
         $stack = new ArrayStack();
         $stack->peek();

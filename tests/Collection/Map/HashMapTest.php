@@ -10,10 +10,10 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Map;
 
-use OutOfBoundsException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Vivarium\Collection\Exception\KeyNotFound;
 use Vivarium\Collection\Map\HashMap;
 use Vivarium\Collection\Map\Map;
 use Vivarium\Collection\Pair\Pair;
@@ -111,8 +111,8 @@ class HashMapTest extends TestCase
 
     public function testGetException(): void
     {
-        static::expectException(OutOfBoundsException::class);
-        static::expectExceptionMessage('The provided key is not present.');
+        static::expectException(KeyNotFound::class);
+        static::expectExceptionMessage('Expected a key present in the map. Got object stdClass.');
 
         $map = new HashMap();
 

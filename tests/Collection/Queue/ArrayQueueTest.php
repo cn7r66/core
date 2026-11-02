@@ -10,10 +10,10 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\Queue;
 
-use DomainException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Vivarium\Collection\Exception\CollectionIsEmpty;
 use Vivarium\Collection\Queue\ArrayQueue;
 use Vivarium\Collection\Queue\Queue;
 use Vivarium\Equality\Equal;
@@ -94,8 +94,10 @@ class ArrayQueueTest extends TestCase
 
     public function testDequeueOnEmpty(): void
     {
-        static::expectException(DomainException::class);
-        static::expectExceptionMessage('Cannot dequeue from an empty queue.');
+        static::expectException(CollectionIsEmpty::class);
+        static::expectExceptionMessage(
+            'Expected an element to dequeue. Got object ' . ArrayQueue::class . ' with no elements.',
+        );
 
         $queue = new ArrayQueue();
         $queue->dequeue();
@@ -103,8 +105,10 @@ class ArrayQueueTest extends TestCase
 
     public function testPeekOnEmpty(): void
     {
-        static::expectException(DomainException::class);
-        static::expectExceptionMessage('Cannot peek from an empty queue.');
+        static::expectException(CollectionIsEmpty::class);
+        static::expectExceptionMessage(
+            'Expected an element to peek. Got object ' . ArrayQueue::class . ' with no elements.',
+        );
 
         $queue = new ArrayQueue();
         $queue->peek();

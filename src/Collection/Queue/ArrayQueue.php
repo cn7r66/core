@@ -10,8 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\Queue;
 
-use DomainException;
 use Iterator;
+use Vivarium\Collection\Exception\CollectionIsEmpty;
 use Vivarium\Collection\Sequence\ArraySequence;
 use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Equality\HashBuilder;
@@ -111,7 +111,7 @@ final class ArrayQueue implements Queue
     public function dequeue(): Queue
     {
         if ($this->isEmpty()) {
-            throw new DomainException('Cannot dequeue from an empty queue.');
+            throw new CollectionIsEmpty('dequeue', $this);
         }
 
         $queue           = clone $this;
@@ -124,7 +124,7 @@ final class ArrayQueue implements Queue
     public function peek()
     {
         if ($this->isEmpty()) {
-            throw new DomainException('Cannot peek from an empty queue.');
+            throw new CollectionIsEmpty('peek', $this);
         }
 
         return $this->elements->getAtIndex(0);

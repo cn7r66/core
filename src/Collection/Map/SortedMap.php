@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\Map;
 
-use OutOfBoundsException;
+use Vivarium\Collection\Exception\KeyNotFound;
 use Vivarium\Collection\Pair\Pair;
 use Vivarium\Collection\Util\BinarySearch;
 use Vivarium\Collection\Util\SearchAlgorithm;
@@ -104,7 +104,7 @@ class SortedMap implements Map
     {
         $index = $this->searchByKey()->search($this->pairs, $key);
         if ($index < 0) {
-            throw new OutOfBoundsException('The provided key is not valid.');
+            throw new KeyNotFound($key);
         }
 
         return $this->pairs[$index]->getValue();
