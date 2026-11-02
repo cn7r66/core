@@ -22,22 +22,19 @@ use function assert;
  */
 final class MultiMapIterator implements Iterator
 {
-    /** @var Iterator<int, V> */
-    private Iterator|null $iterator;
+    /** @var Iterator<int, V>|null */
+    private Iterator|null $iterator = null;
 
     /** @param Iterator<K, Collection<V>> $mapIterator */
     public function __construct(private Iterator $mapIterator)
     {
-        $this->iterator = null;
+        $this->skipEmptyCollections();
     }
 
     /** @return V */
     public function current(): mixed
     {
-        if ($this->iterator === null) {
-            $this->iterator = $this->mapIterator->current()
-                                                ->getIterator();
-        }
+        assert($this->iterator !== null);
 
         return $this->iterator->current();
     }
@@ -52,12 +49,7 @@ final class MultiMapIterator implements Iterator
         }
 
         $this->mapIterator->next();
-        if (! $this->mapIterator->valid()) {
-            return;
-        }
-
-        $this->iterator = $this->mapIterator->current()
-                                            ->getIterator();
+        $this->skipEmptyCollections();
     }
 
     /** @return K */
@@ -68,12 +60,27 @@ final class MultiMapIterator implements Iterator
 
     public function valid(): bool
     {
-        return $this->mapIterator->valid();
+        return $this->iterator !== null && $this->iterator->valid();
     }
 
     public function rewind(): void
     {
         $this->mapIterator->rewind();
+        $this->skipEmptyCollections();
+    }
+
+    private function skipEmptyCollections(): void
+    {
+        while ($this->mapIterator->valid()) {
+            $this->iterator = $this->mapIterator->current()->getIterator();
+            $this->iterator->rewind();
+            if ($this->iterator->valid()) {
+                return;
+            }
+
+            $this->mapIterator->next();
+        }
+
         $this->iterator = null;
     }
 }

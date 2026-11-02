@@ -21,6 +21,10 @@ use Vivarium\Collection\Pair\Pair;
 use Vivarium\Collection\Sequence\ArraySequence;
 use Vivarium\Equality\Equal;
 
+use function array_keys;
+
+use function sort;
+
 #[CoversClass(MultiValueMap::class)]
 final class MultiValueMapTest extends TestCase
 {
@@ -42,6 +46,47 @@ final class MultiValueMapTest extends TestCase
         $this->checkContent($multimap, $content);
     }
 
+    public function testConstructorSkipsEmptyCollections(): void
+    {
+        $multimap = $this->createMultiMap(
+            new Pair('a', new ArraySequence()),
+            new Pair('b', new ArraySequence(1)),
+        );
+
+        $this->checkContent($multimap, ['b' => [1]]);
+        static::assertFalse($multimap->containsKey('a'));
+    }
+
+    public function testConstructorMergesDuplicateKeys(): void
+    {
+        $multimap = $this->createMultiMap(
+            new Pair('a', new ArraySequence(1, 2)),
+            new Pair('b', new ArraySequence(9)),
+            new Pair('a', new ArraySequence(3, 4)),
+        );
+
+        $this->checkContent($multimap, ['a' => [1, 2, 3, 4], 'b' => [9]]);
+    }
+
+    public function testRemoveLastValueDropsKey(): void
+    {
+        $multimap = $this->createMultiMap(
+            new Pair('a', new ArraySequence(1)),
+            new Pair('b', new ArraySequence(2)),
+        );
+
+        $multimap = $multimap->remove('a', 1);
+
+        static::assertFalse($multimap->containsKey('a'));
+        $this->checkContent($multimap, ['b' => [2]]);
+
+        $multimap = $multimap->remove('b', 2);
+
+        static::assertTrue($multimap->isEmpty());
+        static::assertSame([], $multimap->keys());
+        static::assertCount(0, $multimap);
+    }
+
     public function testPut(): void
     {
         $multimap = $this->createMultiMap();
@@ -53,7 +98,7 @@ final class MultiValueMapTest extends TestCase
 
         /** @var array<string, int[]> $content */
         $content = [
-            'a' => [1, 2, 3],
+            'a' => [1, 2, 3, 1],
             'b' => [5],
         ];
 
@@ -403,10 +448,14 @@ final class MultiValueMapTest extends TestCase
      */
     private function checkContent(MultiMap $multimap, array $content): void
     {
-        foreach ($content as $key => $collection) {
-            foreach ($collection as $value) {
-                static::assertTrue($multimap->containsKeyValue($key, $value));
-            }
+        $keys = $multimap->keys();
+        sort($keys);
+        $expected = array_keys($content);
+        sort($expected);
+
+        static::assertSame($expected, $keys);
+        foreach ($content as $key => $values) {
+            static::assertSame($values, $multimap->get($key)->toArray());
         }
     }
 

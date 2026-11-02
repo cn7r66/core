@@ -10,7 +10,9 @@ declare(strict_types=1);
 
 namespace Vivarium\Test\Collection\MultiMap;
 
+use ArrayIterator;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Vivarium\Collection\Map\MapIterator;
 use Vivarium\Collection\MultiMap\MultiMapIterator;
 use Vivarium\Collection\Pair\Pair;
@@ -47,5 +49,61 @@ final class MultiMapIteratorTest extends IteratorTestCase
         );
 
         $this->doTest($iterator, [1, 1, 3, 3], [1, 2, 4, 5], $map);
+    }
+
+    /**
+     * @param array<string, ArraySequence<int>> $collections
+     * @param list<array{string, int}>          $expected
+     */
+    #[DataProvider('provideEmptyCollections')]
+    public function testIteratorSkipsEmptyCollections(array $collections, array $expected): void
+    {
+        $iterator = new MultiMapIterator(new ArrayIterator($collections));
+
+        static::assertSame($expected, $this->pairsOf($iterator));
+
+        $iterator->rewind();
+
+        static::assertSame($expected, $this->pairsOf($iterator));
+    }
+
+    /** @return array<string, array{array<string, ArraySequence<int>>, list<array{string, int}>}> */
+    public static function provideEmptyCollections(): array
+    {
+        return [
+            'empty first' => [
+                ['a' => new ArraySequence(), 'b' => new ArraySequence(1, 2)],
+                [['b', 1], ['b', 2]],
+            ],
+            'empty in the middle' => [
+                ['a' => new ArraySequence(1), 'b' => new ArraySequence(), 'c' => new ArraySequence(3)],
+                [['a', 1], ['c', 3]],
+            ],
+            'empty last' => [
+                ['a' => new ArraySequence(1), 'b' => new ArraySequence()],
+                [['a', 1]],
+            ],
+            'all empty' => [
+                ['a' => new ArraySequence(), 'b' => new ArraySequence()],
+                [],
+            ],
+            'no collections' => [[], []],
+        ];
+    }
+
+    /**
+     * @param MultiMapIterator<string, int> $iterator
+     *
+     * @return list<array{string, int}>
+     */
+    private function pairsOf(MultiMapIterator $iterator): array
+    {
+        $pairs = [];
+        while ($iterator->valid()) {
+            $pairs[] = [$iterator->key(), $iterator->current()];
+            $iterator->next();
+        }
+
+        return $pairs;
     }
 }

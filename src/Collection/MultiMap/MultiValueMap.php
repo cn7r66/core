@@ -40,16 +40,23 @@ final class MultiValueMap implements MultiMap
     {
         $this->factory = $factory;
 
+        /** @var Map<K, Collection<V>> $map */
         $map = new HashMap();
 
         foreach ($collections as $collection) {
-            $map = $map->put(
-                $collection->getKey(),
-                $collection->getValue(),
-            );
+            $key    = $collection->getKey();
+            $values = $collection->getValue();
+            if ($values->isEmpty()) {
+                continue;
+            }
+
+            if ($map->containsKey($key)) {
+                $values = $this->merge($map->get($key), $values);
+            }
+
+            $map = $map->put($key, $values);
         }
 
-        /** @phpstan-var Map<K, Collection<V>> $map */
         $this->map = $map;
     }
 
@@ -101,7 +108,13 @@ final class MultiValueMap implements MultiMap
             return $this;
         }
 
-        $multimap      = clone $this;
+        $multimap = clone $this;
+        if ($remaining->isEmpty()) {
+            $multimap->map = $multimap->map->remove($key);
+
+            return $multimap;
+        }
+
         $multimap->map = $multimap->map->put($key, $remaining);
 
         return $multimap;
@@ -185,13 +198,7 @@ final class MultiValueMap implements MultiMap
 
     public function isEmpty(): bool
     {
-        foreach ($this->map as $collection) {
-            if (! $collection->isEmpty()) {
-                return false;
-            }
-        }
-
-        return true;
+        return $this->map->isEmpty();
     }
 
     /** @return MultiMap<K, V> */
@@ -238,5 +245,20 @@ final class MultiValueMap implements MultiMap
             ->append(($this->factory)())
             ->append($this->map)
             ->getHashCode();
+    }
+
+    /**
+     * @param Collection<V> $into
+     * @param Collection<V> $values
+     *
+     * @return Collection<V>
+     */
+    private function merge(Collection $into, Collection $values): Collection
+    {
+        foreach ($values as $value) {
+            $into = $into->add($value);
+        }
+
+        return $into;
     }
 }
