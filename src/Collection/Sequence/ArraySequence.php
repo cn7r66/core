@@ -168,7 +168,7 @@ final class ArraySequence implements Sequence
     {
         $list = clone $this;
 
-        usort($list->elements, $comparator);
+        usort($list->elements, $comparator->compare(...));
 
         return $list;
     }

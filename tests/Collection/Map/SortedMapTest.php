@@ -16,8 +16,8 @@ use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Map\Map;
 use Vivarium\Collection\Map\SortedMap;
-use Vivarium\Comparator\IntegerComparator;
-use Vivarium\Comparator\StringComparator;
+use Vivarium\Comparator\ByByte;
+use Vivarium\Comparator\ByNumber;
 
 use function count;
 use function usort;
@@ -31,7 +31,7 @@ class SortedMapTest extends TestCase
         $keys   = ['c', 'b', 'a', 'd'];
         $values = [1, 2, 3, 4];
 
-        $map = SortedMap::fromKeyValue(new StringComparator(), $keys, $values);
+        $map = SortedMap::fromKeyValue(new ByByte(), $keys, $values);
 
         $expected = ['a', 'b', 'c', 'd'];
         $keys     = $map->keys();
@@ -46,7 +46,7 @@ class SortedMapTest extends TestCase
         $values = [1, 2, 3, 4];
 
         /** @var Map<string, int> $map */
-        $map = SortedMap::fromKeyValue(new StringComparator(), $keys, $values);
+        $map = SortedMap::fromKeyValue(new ByByte(), $keys, $values);
 
         $map = $map->put('f', 42);
         $map = $map->put('a', 5);
@@ -57,7 +57,7 @@ class SortedMapTest extends TestCase
 
     public function testDoublePut(): void
     {
-        $map = new SortedMap(new StringComparator());
+        $map = new SortedMap(new ByByte());
         $map = $map
             ->put('c', 1)
             ->put('c', 12)
@@ -75,7 +75,7 @@ class SortedMapTest extends TestCase
 
     public function testKeySorting(): void
     {
-        $map = new SortedMap(new StringComparator());
+        $map = new SortedMap(new ByByte());
         $map = $map
             ->put('Hello', 1)
             ->put('H', 1)
@@ -93,7 +93,7 @@ class SortedMapTest extends TestCase
         $values = ['a', 'b'];
 
         /** @var Map<int, string> $map */
-        $map = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
+        $map = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
 
         static::assertEquals('a', $map->get(0));
         static::assertEquals('b', $map->get(1));
@@ -104,7 +104,7 @@ class SortedMapTest extends TestCase
         static::expectException(OutOfBoundsException::class);
         static::expectExceptionMessage('The provided key is not valid.');
 
-        $map = new SortedMap(new IntegerComparator());
+        $map = new SortedMap(new ByNumber());
 
         $map->get(1);
     }
@@ -116,7 +116,7 @@ class SortedMapTest extends TestCase
         $values = [7, 5, 3, 8, 9];
 
         /** @var Map<int, int> $map */
-        $map = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
+        $map = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
 
         static::assertTrue($map->containsKey(2));
 
@@ -128,7 +128,7 @@ class SortedMapTest extends TestCase
 
     public function testRemoveOnFirstElement(): void
     {
-        $map = new SortedMap(new IntegerComparator());
+        $map = new SortedMap(new ByNumber());
         $map = $map
             ->put(0, 1)
             ->put(1, 1);
@@ -151,9 +151,9 @@ class SortedMapTest extends TestCase
         $values = ['a', 'b', 'c', 'd', 'e'];
 
         /** @var Map<int, string> $map */
-        $map = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
+        $map = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
 
-        usort($keys, new IntegerComparator());
+        usort($keys, (new ByNumber())->compare(...));
 
         $pairs = $map->pairs();
         for ($i = 0; $i < count($keys); $i++) {
@@ -168,7 +168,7 @@ class SortedMapTest extends TestCase
         $values = ['a', 'b', 'c', 'd', 'e'];
 
         /** @var Map<int, string> $map */
-        $map = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
+        $map = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
         $map = $map->clear();
 
         static::assertCount(0, $map);
@@ -181,7 +181,7 @@ class SortedMapTest extends TestCase
         $values = [1, 2, 3];
 
         /** @var Map<string, int> $map */
-        $map = SortedMap::fromKeyValue(new StringComparator(), $keys, $values);
+        $map = SortedMap::fromKeyValue(new ByByte(), $keys, $values);
 
         $order = [
             'a' => 1,
@@ -203,7 +203,7 @@ class SortedMapTest extends TestCase
         $keys   = [1, 2, 3, 4, 5];
         $values = ['a', 'b', 'c', 'd', 'e'];
 
-        $map = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
+        $map = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
 
         static::assertTrue($map->containsValue('c'));
         static::assertFalse($map->containsValue('z'));
@@ -215,14 +215,14 @@ class SortedMapTest extends TestCase
         $keys   = [1, 2];
         $values = ['a', 'b'];
 
-        $map = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
+        $map = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
 
         static::assertSame(['a', 'b'], $map->values());
     }
 
     public function testIsEmpty(): void
     {
-        $map = new SortedMap(new IntegerComparator());
+        $map = new SortedMap(new ByNumber());
 
         static::assertTrue($map->isEmpty());
     }
@@ -233,14 +233,14 @@ class SortedMapTest extends TestCase
         $keys   = [1, 2, 3];
         $values = ['a', 'b', 'c'];
 
-        $map1 = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
-        $map2 = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
+        $map1 = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
+        $map2 = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
 
         /** @var int[] $keys */
         $keys   = [3, 4, 5];
         $values = ['d', 'e', 'f'];
 
-        $map3 = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
+        $map3 = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
 
         static::assertTrue($map1->equals($map1));
         static::assertTrue($map1->equals($map2));
@@ -254,14 +254,14 @@ class SortedMapTest extends TestCase
         $keys   = [1, 2, 3];
         $values = ['a', 'b', 'c'];
 
-        $map1 = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
-        $map2 = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
+        $map1 = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
+        $map2 = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
 
         /** @var int[] $keys */
         $keys   = [3, 4, 5];
         $values = ['d', 'e', 'f'];
 
-        $map3 = SortedMap::fromKeyValue(new IntegerComparator(), $keys, $values);
+        $map3 = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
 
         static::assertSame($map1->hash(), $map1->hash());
         static::assertSame($map1->hash(), $map2->hash());

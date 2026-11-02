@@ -15,8 +15,8 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Sequence\ArraySequence;
+use Vivarium\Comparator\ByNumber;
 use Vivarium\Comparator\Comparator;
-use Vivarium\Comparator\IntegerComparator;
 use Vivarium\Equality\Equal;
 use Vivarium\Equality\Equality;
 
@@ -151,7 +151,7 @@ class ArraySequenceTest extends TestCase
     {
         /** @var ArraySequence<int> $list */
         $list   = new ArraySequence(5, 2, 7, 8, 1);
-        $sorted = $list->sort(new IntegerComparator());
+        $sorted = $list->sort(new ByNumber());
 
         $expected = new ArraySequence(1, 2, 5, 7, 8);
 
@@ -174,7 +174,7 @@ class ArraySequenceTest extends TestCase
         /** @var Comparator<Equality>&Stub $comparator */
         $comparator = static::createStub(Comparator::class);
 
-        $comparator->method('__invoke')->willReturnMap([
+        $comparator->method('compare')->willReturnMap([
             [$stub1, $stub1, 0],
             [$stub1, $stub2, -1],
             [$stub1, $stub3, -1],

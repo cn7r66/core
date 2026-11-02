@@ -14,8 +14,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Queue\PriorityQueue;
-use Vivarium\Comparator\IntegerComparator;
-use Vivarium\Comparator\StringComparator;
+use Vivarium\Comparator\ByByte;
+use Vivarium\Comparator\ByNumber;
 use Vivarium\Equality\Equal;
 
 use function usort;
@@ -25,7 +25,7 @@ class PriorityQueueTest extends TestCase
 {
     public function testEnqueue(): void
     {
-        $queue = new PriorityQueue(new IntegerComparator());
+        $queue = new PriorityQueue(new ByNumber());
         $queue = $queue
             ->enqueue(4)
             ->enqueue(3)
@@ -42,7 +42,7 @@ class PriorityQueueTest extends TestCase
         /** @var int[] $values */
         $values = [1, 2, 3];
 
-        $queue = new PriorityQueue(new IntegerComparator(), ...$values);
+        $queue = new PriorityQueue(new ByNumber(), ...$values);
         $queue = $queue->add(4);
 
         static::assertCount(4, $queue);
@@ -55,9 +55,9 @@ class PriorityQueueTest extends TestCase
     {
         /** @var string[] $elements */
         $elements = ['z', 'k', 'v', 'a', 'd'];
-        $queue    = PriorityQueue::fromArray(new StringComparator(), $elements);
+        $queue    = PriorityQueue::fromArray(new ByByte(), $elements);
 
-        usort($elements, new StringComparator());
+        usort($elements, (new ByByte())->compare(...));
 
         $index = 0;
         while (! $queue->isEmpty()) {
@@ -79,7 +79,7 @@ class PriorityQueueTest extends TestCase
         /** @var int[] $values */
         $values = [1, 2, 3, 4, 5];
 
-        $queue = new PriorityQueue(new IntegerComparator(), ...$values);
+        $queue = new PriorityQueue(new ByNumber(), ...$values);
 
         static::assertTrue($queue->contains(3));
         static::assertFalse($queue->contains(42));
@@ -91,7 +91,7 @@ class PriorityQueueTest extends TestCase
         $elements = [3, 4, 5, 1, 2, 6];
         $expected = [2, 3, 4, 5, 6];
 
-        $queue = PriorityQueue::fromArray(new IntegerComparator(), $elements);
+        $queue = PriorityQueue::fromArray(new ByNumber(), $elements);
         $queue = $queue->remove(1);
 
         static::assertEquals($expected, $queue->toArray());
@@ -103,7 +103,7 @@ class PriorityQueueTest extends TestCase
         /** @var int[] $values */
         $values = [5, 2, 1];
 
-        $queue = new PriorityQueue(new IntegerComparator(), ...$values);
+        $queue = new PriorityQueue(new ByNumber(), ...$values);
         $queue = $queue->clear();
 
         static::assertCount(0, $queue);
@@ -114,7 +114,7 @@ class PriorityQueueTest extends TestCase
         /** @var int[] $values */
         $values = [3, 2, 1];
 
-        $queue = new PriorityQueue(new IntegerComparator(), ...$values);
+        $queue = new PriorityQueue(new ByNumber(), ...$values);
         /** @var array<int> $order */
         $order = [1, 2, 3];
 
@@ -132,7 +132,7 @@ class PriorityQueueTest extends TestCase
         /** @var int[] $values */
         $values = [42, 6, 3, 23, 1];
 
-        $queue = new PriorityQueue(new IntegerComparator(), ...$values);
+        $queue = new PriorityQueue(new ByNumber(), ...$values);
 
         $expected = [1, 3, 6, 23, 42];
 
@@ -144,8 +144,8 @@ class PriorityQueueTest extends TestCase
         /** @var int[] $values */
         $values = [1, 2, 3];
 
-        $queue1 = PriorityQueue::fromArray(new IntegerComparator(), $values);
-        $queue2 = new PriorityQueue(new IntegerComparator(), ...$values);
+        $queue1 = PriorityQueue::fromArray(new ByNumber(), $values);
+        $queue2 = new PriorityQueue(new ByNumber(), ...$values);
 
         static::assertTrue(Equal::areEquals($queue1, $queue2));
     }
@@ -155,13 +155,13 @@ class PriorityQueueTest extends TestCase
         /** @var int[] $values1 */
         $values1 = [1, 2, 3];
 
-        $queue1 = new PriorityQueue(new IntegerComparator(), ...$values1);
-        $queue2 = new PriorityQueue(new IntegerComparator(), ...$values1);
+        $queue1 = new PriorityQueue(new ByNumber(), ...$values1);
+        $queue2 = new PriorityQueue(new ByNumber(), ...$values1);
 
         /** @var int[] $values2 */
         $values2 = [4, 5, 6];
 
-        $queue3 = new PriorityQueue(new IntegerComparator(), ...$values2);
+        $queue3 = new PriorityQueue(new ByNumber(), ...$values2);
 
         static::assertTrue($queue1->equals($queue1));
         static::assertTrue($queue1->equals($queue2));
@@ -174,13 +174,13 @@ class PriorityQueueTest extends TestCase
         /** @var int[] $values1 */
         $values1 = [1, 2, 3];
 
-        $queue1 = new PriorityQueue(new IntegerComparator(), ...$values1);
-        $queue2 = new PriorityQueue(new IntegerComparator(), ...$values1);
+        $queue1 = new PriorityQueue(new ByNumber(), ...$values1);
+        $queue2 = new PriorityQueue(new ByNumber(), ...$values1);
 
         /** @var int[] $values2 */
         $values2 = [4, 5, 6];
 
-        $queue3 = new PriorityQueue(new IntegerComparator(), ...$values2);
+        $queue3 = new PriorityQueue(new ByNumber(), ...$values2);
 
         static::assertSame($queue1->hash(), $queue1->hash());
         static::assertSame($queue1->hash(), $queue2->hash());

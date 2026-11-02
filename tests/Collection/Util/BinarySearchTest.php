@@ -13,14 +13,14 @@ namespace Vivarium\Test\Collection\Util;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Collection\Util\BinarySearch;
-use Vivarium\Comparator\IntegerComparator;
+use Vivarium\Comparator\ByNumber;
 
 #[CoversClass(BinarySearch::class)]
 final class BinarySearchTest extends TestCase
 {
     public function testSearch(): void
     {
-        $binary = new BinarySearch(new IntegerComparator());
+        $binary = new BinarySearch((new ByNumber())->compare(...));
         $arr    = [1, 2, 4, 5, 7, 8];
 
         static::assertSame(0, $binary->search($arr, 1));
@@ -31,7 +31,7 @@ final class BinarySearchTest extends TestCase
 
     public function testContains(): void
     {
-        $binary = new BinarySearch(new IntegerComparator());
+        $binary = new BinarySearch((new ByNumber())->compare(...));
         $arr    = [1, 2, 4, 5, 7, 8];
 
         static::assertTrue($binary->contains($arr, 1));

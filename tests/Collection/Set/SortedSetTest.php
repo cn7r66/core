@@ -14,9 +14,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Set\SortedSet;
+use Vivarium\Comparator\ByByte;
+use Vivarium\Comparator\ByNumber;
 use Vivarium\Comparator\Comparator;
-use Vivarium\Comparator\IntegerComparator;
-use Vivarium\Comparator\StringComparator;
 use Vivarium\Equality\Equal;
 use Vivarium\Equality\Equality;
 
@@ -28,7 +28,7 @@ class SortedSetTest extends TestCase
         /** @var int[] $values */
         $values = [5, 2, 4, 3, 1];
 
-        $set = new SortedSet(new IntegerComparator(), ...$values);
+        $set = new SortedSet(new ByNumber(), ...$values);
         $set = $set
             ->add(3)
             ->add(6);
@@ -45,7 +45,7 @@ class SortedSetTest extends TestCase
         /** @var int[] $values */
         $values = [5, 2, 3, 1, 7];
 
-        $set = new SortedSet(new IntegerComparator(), ...$values);
+        $set = new SortedSet(new ByNumber(), ...$values);
         $set = $set->remove(3);
 
         $expected = [1, 2, 5, 7];
@@ -60,7 +60,7 @@ class SortedSetTest extends TestCase
         /** @var int[] $values */
         $values = [3, 2, 1];
 
-        $set = new SortedSet(new IntegerComparator(), ...$values);
+        $set = new SortedSet(new ByNumber(), ...$values);
         $set = $set->clear();
 
         static::assertCount(0, $set);
@@ -74,7 +74,7 @@ class SortedSetTest extends TestCase
         /** @var array<int> $expected */
         $expected = [1, 2, 3];
 
-        $set   = SortedSet::fromArray(new IntegerComparator(), $values);
+        $set   = SortedSet::fromArray(new ByNumber(), $values);
         $index = 0;
         foreach ($set as $item) {
             static::assertEquals($expected[$index], $item);
@@ -87,7 +87,7 @@ class SortedSetTest extends TestCase
         /** @var string[] $values */
         $values = ['c', 'd', 'e', 'a'];
 
-        $set = new SortedSet(new StringComparator(), ...$values);
+        $set = new SortedSet(new ByByte(), ...$values);
 
         static::assertTrue($set->contains('d'));
         static::assertFalse($set->contains('z'));
@@ -136,8 +136,8 @@ class SortedSetTest extends TestCase
         /** @var int[] $values2 */
         $values2 = [6, 27, 1, 3, 7];
 
-        $set1 = new SortedSet(new IntegerComparator(), ...$values1);
-        $set2 = new SortedSet(new IntegerComparator(), ...$values2);
+        $set1 = new SortedSet(new ByNumber(), ...$values1);
+        $set2 = new SortedSet(new ByNumber(), ...$values2);
 
         $set = $set1->union($set2);
 
@@ -152,12 +152,12 @@ class SortedSetTest extends TestCase
         /** @var int[] $values1 */
         $values1 = [5, 4, 2, 3, 6];
 
-        $set1 = new SortedSet(new IntegerComparator(), ...$values1);
+        $set1 = new SortedSet(new ByNumber(), ...$values1);
 
         /** @var int[] $values2 */
         $values2 = [8, 7, 4, 5, 6, 1];
 
-        $set2 = new SortedSet(new IntegerComparator(), ...$values2);
+        $set2 = new SortedSet(new ByNumber(), ...$values2);
 
         $set = $set1->intersection($set2);
 
@@ -172,12 +172,12 @@ class SortedSetTest extends TestCase
         /** @var int[] $values1 */
         $values1 = [4, 5, 1, 2, 3];
 
-        $set1 = new SortedSet(new IntegerComparator(), ...$values1);
+        $set1 = new SortedSet(new ByNumber(), ...$values1);
 
         /** @var int[] $values2 */
         $values2 = [8, 7, 4, 6, 5, 2];
 
-        $set2 = new SortedSet(new IntegerComparator(), ...$values2);
+        $set2 = new SortedSet(new ByNumber(), ...$values2);
 
         $set = $set1->difference($set2);
 
@@ -192,12 +192,12 @@ class SortedSetTest extends TestCase
         /** @var int[] $values1 */
         $values1 = [4, 5, 1, 2, 6, 3];
 
-        $set = new SortedSet(new IntegerComparator(), ...$values1);
+        $set = new SortedSet(new ByNumber(), ...$values1);
 
         /** @var int[] $values2 */
         $values2 = [3, 2, 1];
 
-        $subset = new SortedSet(new IntegerComparator(), ...$values2);
+        $subset = new SortedSet(new ByNumber(), ...$values2);
 
         static::assertTrue($subset->isSubsetOf($set));
         static::assertFalse($set->isSubsetOf($subset));
@@ -208,8 +208,8 @@ class SortedSetTest extends TestCase
         /** @var int[] $values */
         $values = [1, 2, 3];
 
-        $set1 = new SortedSet(new IntegerComparator(), ...$values);
-        $set2 = new SortedSet(new IntegerComparator());
+        $set1 = new SortedSet(new ByNumber(), ...$values);
+        $set2 = new SortedSet(new ByNumber());
 
         $set = $set1->union($set2);
 
@@ -221,8 +221,8 @@ class SortedSetTest extends TestCase
         /** @var int[] $values */
         $values = [3, 3, 2, 2, 1, 1];
 
-        $set1 = SortedSet::fromArray(new IntegerComparator(), $values);
-        $set2 = new SortedSet(new IntegerComparator(), ...$values);
+        $set1 = SortedSet::fromArray(new ByNumber(), $values);
+        $set2 = new SortedSet(new ByNumber(), ...$values);
 
         static::assertTrue(Equal::areEquals($set1, $set2));
     }
@@ -232,13 +232,13 @@ class SortedSetTest extends TestCase
         /** @var int[] $values1 */
         $values1 = [1, 2, 3, 3, 1];
 
-        $set1 = new SortedSet(new IntegerComparator(), ...$values1);
-        $set2 = new SortedSet(new IntegerComparator(), ...$values1);
+        $set1 = new SortedSet(new ByNumber(), ...$values1);
+        $set2 = new SortedSet(new ByNumber(), ...$values1);
 
         /** @var int[] $values2 */
         $values2 = [4, 4, 5, 2, 3];
 
-        $set3 = new SortedSet(new IntegerComparator(), ...$values2);
+        $set3 = new SortedSet(new ByNumber(), ...$values2);
 
         static::assertTrue($set1->equals($set1));
         static::assertTrue($set1->equals($set2));
@@ -251,13 +251,13 @@ class SortedSetTest extends TestCase
         /** @var int[] $values1 */
         $values1 = [1, 2, 3, 3, 1];
 
-        $set1 = new SortedSet(new IntegerComparator(), ...$values1);
-        $set2 = new SortedSet(new IntegerComparator(), ...$values1);
+        $set1 = new SortedSet(new ByNumber(), ...$values1);
+        $set2 = new SortedSet(new ByNumber(), ...$values1);
 
         /** @var int[] $values2 */
         $values2 = [4, 4, 5, 2, 3];
 
-        $set3 = new SortedSet(new IntegerComparator(), ...$values2);
+        $set3 = new SortedSet(new ByNumber(), ...$values2);
 
         static::assertSame($set1->hash(), $set1->hash());
         static::assertSame($set1->hash(), $set2->hash());

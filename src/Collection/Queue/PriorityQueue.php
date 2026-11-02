@@ -32,7 +32,7 @@ final class PriorityQueue implements Queue
      */
     public function __construct(private Comparator $comparator, ...$elements)
     {
-        usort($elements, $comparator);
+        usort($elements, $comparator->compare(...));
 
         $this->queue = new ArrayQueue(...$elements);
     }
@@ -101,7 +101,7 @@ final class PriorityQueue implements Queue
         $elements   = $priority->queue->toArray();
         $elements[] = $element;
 
-        usort($elements, $this->comparator);
+        usort($elements, $this->comparator->compare(...));
         $priority->queue = new ArrayQueue(...$elements);
 
         return $priority;

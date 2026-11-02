@@ -15,14 +15,14 @@ use PHPUnit\Framework\TestCase;
 use Vivarium\Assertion\Exception\AssertionFailed;
 use Vivarium\Collection\Util\BinarySearch;
 use Vivarium\Collection\Util\Vector;
-use Vivarium\Comparator\IntegerComparator;
+use Vivarium\Comparator\ByNumber;
 
 #[CoversClass(Vector::class)]
 final class VectorTest extends TestCase
 {
     public function testPutInPlace(): void
     {
-        $binary = new BinarySearch(new IntegerComparator());
+        $binary = new BinarySearch((new ByNumber())->compare(...));
 
         $arr = [1, 2, 3, 4, 5];
 
@@ -34,7 +34,7 @@ final class VectorTest extends TestCase
 
     public function testPutAtPlace(): void
     {
-        $binary = new BinarySearch(new IntegerComparator());
+        $binary = new BinarySearch((new ByNumber())->compare(...));
 
         $arr = [1, 2, 3, 4, 5];
 
@@ -47,7 +47,7 @@ final class VectorTest extends TestCase
     public function testPutAtIndex(): void
     {
         static::expectException(AssertionFailed::class);
-        static::expectExceptionMessage('Expected number to be in closed range [0, 5]. Got 6.');
+        static::expectExceptionMessage('Expected value to be in [0, 5]. Got int 6.');
 
         $arr = [3, 6, 1, 2, 5];
 
@@ -80,7 +80,7 @@ final class VectorTest extends TestCase
 
     public function testBinarySearch(): void
     {
-        $comparator = new IntegerComparator();
+        $comparator = (new ByNumber())->compare(...);
         $arr        = [1, 2, 4, 5, 7, 8];
 
         static::assertSame(0, Vector::binarySearch($arr, 1, $comparator));
@@ -91,7 +91,7 @@ final class VectorTest extends TestCase
 
     public function testBinaryContains(): void
     {
-        $comparator = new IntegerComparator();
+        $comparator = (new ByNumber())->compare(...);
         $arr        = [1, 2, 4, 5, 7, 8];
 
         static::assertTrue(Vector::binaryContains($arr, 1, $comparator));
