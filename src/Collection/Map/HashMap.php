@@ -16,13 +16,15 @@ use Vivarium\Collection\Pair\Pair;
 use Vivarium\Collection\Util\KeyHash;
 use Vivarium\Collection\Util\LinearSearch;
 use Vivarium\Collection\Util\Vector;
+use Vivarium\Comparator\ByByte;
 use Vivarium\Equality\Equal;
-use Vivarium\Equality\EqualsBuilder;
 use Vivarium\Equality\HashBuilder;
 
+use function array_all;
 use function array_map;
 use function array_values;
 use function count;
+use function usort;
 
 /**
  * @template K
@@ -248,15 +250,27 @@ final class HashMap implements Map
             return true;
         }
 
-        return (new EqualsBuilder())
-            ->append($this->pairs, $object->pairs)
-            ->isEquals();
+        return $this->count() === $object->count() && array_all(
+            $this->pairs(),
+            /** @param Pair<K, V> $pair */
+            static function (Pair $pair) use ($object): bool {
+                return $object->containsKey($pair->getKey())
+                    && Equal::areEquals(
+                        $pair->getValue(),
+                        $object->get($pair->getKey()),
+                    );
+            },
+        );
     }
 
+    /** Entry hashes in sorted order, so maps equal in content hash alike whatever their insertion order. */
     public function hash(): string
     {
+        $entries = array_map(static fn (Pair $pair): string => $pair->hash(), $this->pairs());
+        usort($entries, (new ByByte())->compare(...));
+
         return (new HashBuilder())
-            ->append($this->pairs)
+            ->append($entries)
             ->getHashCode();
     }
 

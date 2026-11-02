@@ -343,4 +343,74 @@ class HashMapTest extends TestCase
         static::assertSame($map1->hash(), $map2->hash());
         static::assertNotSame($map1->hash(), $map3->hash());
     }
+
+    /**
+     * @param HashMap<mixed, mixed> $first
+     * @param HashMap<mixed, mixed> $second
+     */
+    #[DataProvider('provideSameContent')]
+    public function testEqualsWithSameContent(HashMap $first, HashMap $second): void
+    {
+        static::assertTrue($first->equals($second));
+        static::assertTrue($second->equals($first));
+        static::assertSame($first->hash(), $second->hash());
+    }
+
+    /** @return array<string, array{object, object}> */
+    public static function provideSameContent(): array
+    {
+        return [
+            'insertion order' => [
+                HashMap::fromKeyValue([1, 2, 3], ['a', 'b', 'c']),
+                HashMap::fromKeyValue([3, 2, 1], ['c', 'b', 'a']),
+            ],
+            'colliding keys in another order' => [
+                new HashMap(
+                    new Pair(new KeyWithHashCollision(1), 'a'),
+                    new Pair(new KeyWithHashCollision(2), 'b'),
+                    new Pair(new KeyWithHashCollision(99), 'z'),
+                ),
+                new HashMap(
+                    new Pair(new KeyWithHashCollision(99), 'z'),
+                    new Pair(new KeyWithHashCollision(2), 'b'),
+                    new Pair(new KeyWithHashCollision(1), 'a'),
+                ),
+            ],
+            'removed and put back' => [
+                HashMap::fromKeyValue([1, 2, 3], ['a', 'b', 'c']),
+                HashMap::fromKeyValue([1, 2, 3], ['a', 'b', 'c'])->remove(1)->put(1, 'a'),
+            ],
+            'empty' => [new HashMap(), new HashMap()],
+        ];
+    }
+
+    /**
+     * @param HashMap<mixed, mixed> $first
+     * @param HashMap<mixed, mixed> $second
+     */
+    #[DataProvider('provideDifferentContent')]
+    public function testEqualsWithDifferentContent(HashMap $first, HashMap $second): void
+    {
+        static::assertFalse($first->equals($second));
+        static::assertFalse($second->equals($first));
+    }
+
+    /** @return array<string, array{object, object}> */
+    public static function provideDifferentContent(): array
+    {
+        return [
+            'one value differs' => [
+                HashMap::fromKeyValue([1, 2, 3], ['a', 'b', 'c']),
+                HashMap::fromKeyValue([1, 2, 3], ['a', 'b', 'x']),
+            ],
+            'one extra key' => [
+                HashMap::fromKeyValue([1, 2, 3], ['a', 'b', 'c']),
+                HashMap::fromKeyValue([1, 2, 3, 4], ['a', 'b', 'c', 'd']),
+            ],
+            'values swapped between keys' => [
+                HashMap::fromKeyValue([1, 2], ['a', 'b']),
+                HashMap::fromKeyValue([1, 2], ['b', 'a']),
+            ],
+        ];
+    }
 }

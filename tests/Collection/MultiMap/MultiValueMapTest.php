@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Vivarium\Test\Collection\MultiMap;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Vivarium\Collection\Collection;
@@ -334,6 +335,63 @@ final class MultiValueMapTest extends TestCase
         static::assertSame($multimap1->hash(), $multimap1->hash());
         static::assertSame($multimap1->hash(), $multimap2->hash());
         static::assertNotSame($multimap1->hash(), $multimap3->hash());
+    }
+
+    /**
+     * @param MultiValueMap<string, int> $first
+     * @param MultiValueMap<string, int> $second
+     */
+    #[DataProvider('provideSameContent')]
+    public function testEqualsWithSameContent(MultiValueMap $first, MultiValueMap $second): void
+    {
+        static::assertTrue($first->equals($second));
+        static::assertTrue($second->equals($first));
+        static::assertSame($first->hash(), $second->hash());
+    }
+
+    /** @return array<string, array{MultiValueMap<string, int>, MultiValueMap<string, int>}> */
+    public static function provideSameContent(): array
+    {
+        $factory = static fn (): ArraySequence => new ArraySequence();
+
+        return [
+            'key order' => [
+                new MultiValueMap(
+                    $factory,
+                    new Pair('a', new ArraySequence(1, 2)),
+                    new Pair('b', new ArraySequence(3)),
+                ),
+                new MultiValueMap(
+                    $factory,
+                    new Pair('b', new ArraySequence(3)),
+                    new Pair('a', new ArraySequence(1, 2)),
+                ),
+            ],
+        ];
+    }
+
+    /**
+     * @param MultiValueMap<string, int> $first
+     * @param MultiValueMap<string, int> $second
+     */
+    #[DataProvider('provideDifferentContent')]
+    public function testEqualsWithDifferentContent(MultiValueMap $first, MultiValueMap $second): void
+    {
+        static::assertFalse($first->equals($second));
+        static::assertFalse($second->equals($first));
+    }
+
+    /** @return array<string, array{MultiValueMap<string, int>, MultiValueMap<string, int>}> */
+    public static function provideDifferentContent(): array
+    {
+        $factory = static fn (): ArraySequence => new ArraySequence();
+
+        return [
+            'values of a key in another order' => [
+                new MultiValueMap($factory, new Pair('a', new ArraySequence(1, 2))),
+                new MultiValueMap($factory, new Pair('a', new ArraySequence(2, 1))),
+            ],
+        ];
     }
 
     /**

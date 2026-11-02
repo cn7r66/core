@@ -235,4 +235,45 @@ class HashSetTest extends TestCase
         static::assertSame($set1->hash(), $set2->hash());
         static::assertNotSame($set1->hash(), $set3->hash());
     }
+
+    /**
+     * @param HashSet<int> $first
+     * @param HashSet<int> $second
+     */
+    #[DataProvider('provideSameContent')]
+    public function testEqualsWithSameContent(HashSet $first, HashSet $second): void
+    {
+        static::assertTrue($first->equals($second));
+        static::assertTrue($second->equals($first));
+        static::assertSame($first->hash(), $second->hash());
+    }
+
+    /** @return array<string, array{HashSet<int>, HashSet<int>}> */
+    public static function provideSameContent(): array
+    {
+        return [
+            'insertion order' => [new HashSet(1, 2, 3), new HashSet(3, 2, 1)],
+            'duplicates in the input' => [new HashSet(1, 2, 3, 3, 1), new HashSet(3, 2, 1)],
+        ];
+    }
+
+    /**
+     * @param HashSet<int> $first
+     * @param HashSet<int> $second
+     */
+    #[DataProvider('provideDifferentContent')]
+    public function testEqualsWithDifferentContent(HashSet $first, HashSet $second): void
+    {
+        static::assertFalse($first->equals($second));
+        static::assertFalse($second->equals($first));
+    }
+
+    /** @return array<string, array{HashSet<int>, HashSet<int>}> */
+    public static function provideDifferentContent(): array
+    {
+        return [
+            'one element differs' => [new HashSet(1, 2, 3), new HashSet(1, 2, 4)],
+            'one extra element' => [new HashSet(1, 2, 3), new HashSet(1, 2, 3, 4)],
+        ];
+    }
 }
