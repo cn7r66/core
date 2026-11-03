@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\MultiMap;
 
+use Closure;
+use Override;
 use Vivarium\Collection\Collection;
 use Vivarium\Collection\Map\HashMap;
 use Vivarium\Collection\Map\Map;
@@ -205,6 +207,75 @@ final class MultiValueMap implements MultiMap
     public function clear(): MultiValueMap
     {
         return new MultiValueMap($this->factory);
+    }
+
+    /**
+     * A bucket left with no values is dropped.
+     *
+     * @param Closure(V, K): bool $predicate
+     *
+     * @return MultiValueMap<K, V>
+     */
+    #[Override]
+    public function filter(Closure $predicate): MultiValueMap
+    {
+        $buckets = [];
+        foreach ($this->map as $key => $collection) {
+            $buckets[] = new Pair(
+                $key,
+                $collection->filter(
+                    /** @param V $value */
+                    static fn ($value): bool => $predicate($value, $key),
+                ),
+            );
+        }
+
+        return new MultiValueMap($this->factory, ...$buckets);
+    }
+
+    /**
+     * Every bucket, the existing ones and the ones made from then on, comes from $factory.
+     *
+     * @param Closure(V, K): U         $mapper
+     * @param Closure(): Collection<U> $factory
+     *
+     * @return MultiValueMap<K, U>
+     *
+     * @template U
+     */
+    #[Override]
+    public function map(Closure $mapper, Closure $factory): MultiValueMap
+    {
+        $buckets = [];
+        foreach ($this->map as $key => $collection) {
+            $bucket = $factory();
+            foreach ($collection as $value) {
+                $bucket = $bucket->add($mapper($value, $key));
+            }
+
+            $buckets[] = new Pair($key, $bucket);
+        }
+
+        return new MultiValueMap($factory, ...$buckets);
+    }
+
+    /**
+     * @param Closure(R, V, K): R $reducer
+     * @param R                   $initial
+     *
+     * @return R
+     *
+     * @template R
+     */
+    #[Override]
+    public function reduce(Closure $reducer, $initial)
+    {
+        $carry = $initial;
+        foreach ($this as $key => $value) {
+            $carry = $reducer($carry, $value, $key);
+        }
+
+        return $carry;
     }
 
     /** @return MultiMapIterator<K, V> */

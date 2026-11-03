@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\Map;
 
+use Closure;
+use Override;
 use Vivarium\Assertion\Comparison\IsEqualTo;
 use Vivarium\Collection\Exception\KeyNotFound;
 use Vivarium\Collection\Pair\Pair;
@@ -21,6 +23,7 @@ use Vivarium\Equality\Equal;
 use Vivarium\Equality\HashBuilder;
 
 use function array_all;
+use function array_filter;
 use function array_map;
 use function array_values;
 use function count;
@@ -217,6 +220,57 @@ final class HashMap implements Map
     public function clear(): HashMap
     {
         return new HashMap();
+    }
+
+    /**
+     * @param Closure(V, K): bool $predicate
+     *
+     * @return HashMap<K, V>
+     */
+    #[Override]
+    public function filter(Closure $predicate): HashMap
+    {
+        return new HashMap(...array_filter(
+            $this->pairs(),
+            /** @param Pair<K, V> $pair */
+            static fn (Pair $pair): bool => $predicate($pair->getValue(), $pair->getKey()),
+        ));
+    }
+
+    /**
+     * @param Closure(V, K): U $mapper
+     *
+     * @return HashMap<K, U>
+     *
+     * @template U
+     */
+    #[Override]
+    public function map(Closure $mapper): HashMap
+    {
+        return new HashMap(...array_map(
+            /** @param Pair<K, V> $pair */
+            static fn (Pair $pair): Pair => new Pair($pair->getKey(), $mapper($pair->getValue(), $pair->getKey())),
+            $this->pairs(),
+        ));
+    }
+
+    /**
+     * @param Closure(R, V, K): R $reducer
+     * @param R                   $initial
+     *
+     * @return R
+     *
+     * @template R
+     */
+    #[Override]
+    public function reduce(Closure $reducer, $initial)
+    {
+        $carry = $initial;
+        foreach ($this as $key => $value) {
+            $carry = $reducer($carry, $value, $key);
+        }
+
+        return $carry;
     }
 
     public function count(): int

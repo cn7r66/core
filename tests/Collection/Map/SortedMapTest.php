@@ -21,6 +21,9 @@ use Vivarium\Collection\Map\SortedMap;
 use Vivarium\Comparator\ByByte;
 use Vivarium\Comparator\ByNumber;
 
+use function array_combine;
+use function array_keys;
+use function array_values;
 use function count;
 use function usort;
 
@@ -138,31 +141,12 @@ class SortedMapTest extends TestCase
         SortedMap::fromKeyValue(new ByNumber(), [1, 2, 3], $values);
     }
 
-    /** @return array<string, array{list<string>, string}> */
-    public static function provideFromKeyValueMismatch(): array
-    {
-        return [
-            'too few values' => [['a'], 'Expected 3 values, one per key. Got int 1.'],
-            'too many values' => [['a', 'b', 'c', 'd'], 'Expected 3 values, one per key. Got int 4.'],
-        ];
-    }
-
     #[DataProvider('provideRemoveMissing')]
     public function testRemoveMissing(int $key): void
     {
         $map = SortedMap::fromKeyValue(new ByNumber(), [2, 4, 6], ['a', 'b', 'c']);
 
         static::assertSame($map, $map->remove($key));
-    }
-
-    /** @return array<string, array{int}> */
-    public static function provideRemoveMissing(): array
-    {
-        return [
-            'before every key' => [1],
-            'between keys' => [3],
-            'after every key' => [7],
-        ];
     }
 
     public function testRemoveOnFirstElement(): void
@@ -305,5 +289,116 @@ class SortedMapTest extends TestCase
         static::assertSame($map1->hash(), $map1->hash());
         static::assertSame($map1->hash(), $map2->hash());
         static::assertNotSame($map1->hash(), $map3->hash());
+    }
+
+    /**
+     * @param array<string, int> $pairs
+     * @param array<string, int> $expected
+     */
+    #[DataProvider('provideFilter')]
+    public function testFilter(array $pairs, array $expected): void
+    {
+        $map      = $this->mapOf($pairs);
+        $filtered = $map->filter(static fn (int $value, string $key): bool => $value > 1 && $key !== 'b');
+
+        static::assertSame($expected, $this->contentOf($filtered));
+        static::assertSame(['0', ...array_keys($expected)], $filtered->put('0', 0)->keys());
+        static::assertCount(count($pairs), $map);
+        static::assertNotSame($map, $filtered);
+    }
+
+    /**
+     * @param array<string, int>    $pairs
+     * @param array<string, string> $expected
+     */
+    #[DataProvider('provideMap')]
+    public function testMap(array $pairs, array $expected): void
+    {
+        $mapped = $this->mapOf($pairs)->map(static fn (int $value, string $key): string => $key . $value);
+
+        static::assertSame($expected, $this->contentOf($mapped));
+        static::assertSame(['0', ...array_keys($expected)], $mapped->put('0', '0')->keys());
+    }
+
+    /** @param array<string, int> $pairs */
+    #[DataProvider('provideReduce')]
+    public function testReduce(array $pairs, string $expected): void
+    {
+        static::assertSame($expected, $this->mapOf($pairs)->reduce(
+            static fn (string $carry, int $value, string $key): string => $carry . $key . $value,
+            '>',
+        ));
+    }
+
+    /** @return array<string, array{list<string>, string}> */
+    public static function provideFromKeyValueMismatch(): array
+    {
+        return [
+            'too few values' => [['a'], 'Expected 3 values, one per key. Got int 1.'],
+            'too many values' => [['a', 'b', 'c', 'd'], 'Expected 3 values, one per key. Got int 4.'],
+        ];
+    }
+
+    /** @return array<string, array{int}> */
+    public static function provideRemoveMissing(): array
+    {
+        return [
+            'before every key' => [1],
+            'between keys' => [3],
+            'after every key' => [7],
+        ];
+    }
+
+    /** @return array<string, array{array<string, int>, array<string, int>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [['a' => 2, 'b' => 3, 'c' => 1, 'd' => 4], ['a' => 2, 'd' => 4]],
+            'none kept' => [['b' => 5, 'c' => 0], []],
+            'all kept' => [['a' => 2, 'c' => 3], ['a' => 2, 'c' => 3]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @return array<string, array{array<string, int>, array<string, string>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'pairs' => [['b' => 2, 'a' => 1], ['a' => 'a1', 'b' => 'b2']],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @return array<string, array{array<string, int>, string}> */
+    public static function provideReduce(): array
+    {
+        return [
+            'in iteration order' => [['c' => 3, 'a' => 1, 'b' => 2], '>a1b2c3'],
+            'empty' => [[], '>'],
+        ];
+    }
+
+    /**
+     * @param array<string, V> $pairs
+     *
+     * @return SortedMap<string, V>
+     *
+     * @template V
+     */
+    private function mapOf(array $pairs): SortedMap
+    {
+        return SortedMap::fromKeyValue(new ByByte(), array_keys($pairs), array_values($pairs));
+    }
+
+    /**
+     * @param SortedMap<string, V> $map
+     *
+     * @return array<string, V>
+     *
+     * @template V
+     */
+    private function contentOf(SortedMap $map): array
+    {
+        return array_combine($map->keys(), $map->values());
     }
 }

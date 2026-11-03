@@ -19,10 +19,13 @@ use Vivarium\Collection\MultiMap\MultiMap;
 use Vivarium\Collection\MultiMap\MultiValueMap;
 use Vivarium\Collection\Pair\Pair;
 use Vivarium\Collection\Sequence\ArraySequence;
+use Vivarium\Collection\Set\HashSet;
 use Vivarium\Equality\Equal;
 
 use function array_keys;
 
+use function array_map;
+use function intdiv;
 use function sort;
 
 #[CoversClass(MultiValueMap::class)]
@@ -394,6 +397,92 @@ final class MultiValueMapTest extends TestCase
         static::assertSame($first->hash(), $second->hash());
     }
 
+    /**
+     * @param MultiValueMap<string, int> $first
+     * @param MultiValueMap<string, int> $second
+     */
+    #[DataProvider('provideDifferentContent')]
+    public function testEqualsWithDifferentContent(MultiValueMap $first, MultiValueMap $second): void
+    {
+        static::assertFalse($first->equals($second));
+        static::assertFalse($second->equals($first));
+    }
+
+    /**
+     * @param array<string, list<int>> $content
+     * @param array<string, list<int>> $expected
+     */
+    #[DataProvider('provideFilter')]
+    public function testFilter(array $content, array $expected): void
+    {
+        $multimap = $this->multimapOf($content);
+        $filtered = $multimap->filter(static fn (int $value, string $key): bool => $value > 1 && $key !== 'b');
+
+        $this->checkContent($filtered, $expected);
+        $this->checkContent($multimap, $content);
+    }
+
+    /**
+     * @param array<string, list<int>>              $content
+     * @param array<string, list<non-empty-string>> $expected
+     */
+    #[DataProvider('provideMap')]
+    public function testMap(array $content, array $expected): void
+    {
+        $mapped = $this->multimapOf($content)->map(
+            static fn (int $value, string $key): string => $key . $value,
+            static fn (): ArraySequence => new ArraySequence(),
+        );
+
+        $this->checkContent($mapped, $expected);
+    }
+
+    public function testMapBucketsFollowTheFactory(): void
+    {
+        $multimap = new MultiValueMap(
+            static fn (): ArraySequence => new ArraySequence(),
+            new Pair('a', new ArraySequence(3, 1)),
+        );
+        $mapped   = $multimap->map(
+            static fn (int $value): int => $value * 10,
+            static fn (): HashSet => new HashSet(),
+        );
+
+        static::assertInstanceOf(HashSet::class, $mapped->get('a'));
+        static::assertInstanceOf(HashSet::class, $mapped->get('b'));
+        static::assertInstanceOf(HashSet::class, $mapped->put('b', 5)->get('b'));
+    }
+
+    public function testMapMergesEqualResultsInSets(): void
+    {
+        $multimap = new MultiValueMap(
+            static fn (): HashSet => new HashSet(),
+            new Pair('a', new HashSet(1, 2, 3, 4)),
+        );
+        $mapped   = $multimap->map(
+            static fn (int $value): int => intdiv($value, 2),
+            static fn (): HashSet => new HashSet(),
+        );
+
+        static::assertCount(3, $mapped);
+    }
+
+    /**
+     * @param array<string, list<int>> $content
+     * @param list<string>             $expected
+     */
+    #[DataProvider('provideReduce')]
+    public function testReduce(array $content, array $expected): void
+    {
+        $visited = $this->multimapOf($content)->reduce(
+            static fn (array $carry, int $value, string $key): array => [...$carry, $key . $value],
+            [],
+        );
+        sort($visited);
+
+        static::assertSame($expected, $visited);
+    }
+
     /** @return array<string, array{MultiValueMap<string, int>, MultiValueMap<string, int>}> */
     public static function provideSameContent(): array
     {
@@ -415,17 +504,6 @@ final class MultiValueMapTest extends TestCase
         ];
     }
 
-    /**
-     * @param MultiValueMap<string, int> $first
-     * @param MultiValueMap<string, int> $second
-     */
-    #[DataProvider('provideDifferentContent')]
-    public function testEqualsWithDifferentContent(MultiValueMap $first, MultiValueMap $second): void
-    {
-        static::assertFalse($first->equals($second));
-        static::assertFalse($second->equals($first));
-    }
-
     /** @return array<string, array{MultiValueMap<string, int>, MultiValueMap<string, int>}> */
     public static function provideDifferentContent(): array
     {
@@ -436,6 +514,39 @@ final class MultiValueMapTest extends TestCase
                 new MultiValueMap($factory, new Pair('a', new ArraySequence(1, 2))),
                 new MultiValueMap($factory, new Pair('a', new ArraySequence(2, 1))),
             ],
+        ];
+    }
+
+    /** @return array<string, array{array<string, list<int>>, array<string, list<int>>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [
+                ['a' => [1, 2, 3], 'b' => [4], 'c' => [0, 5]],
+                ['a' => [2, 3], 'c' => [5]],
+            ],
+            'emptied bucket dropped' => [['a' => [1], 'c' => [2]], ['c' => [2]]],
+            'none kept' => [['a' => [0, 1], 'b' => [5]], []],
+            'all kept' => [['a' => [2, 3]], ['a' => [2, 3]]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @return array<string, array{array<string, list<int>>, array<string, list<non-empty-string>>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'values' => [['a' => [1, 2], 'b' => [3]], ['a' => ['a1', 'a2'], 'b' => ['b3']]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @return array<string, array{array<string, list<int>>, list<string>}> */
+    public static function provideReduce(): array
+    {
+        return [
+            'every value' => [['b' => [3], 'a' => [1, 2]], ['a1', 'a2', 'b3']],
+            'empty' => [[], []],
         ];
     }
 
@@ -482,5 +593,19 @@ final class MultiValueMapTest extends TestCase
             $this->ofArraySequence(),
             ...$pairs,
         );
+    }
+
+    /**
+     * @param array<string, list<int>> $content
+     *
+     * @return MultiMap<string, int>
+     */
+    private function multimapOf(array $content): MultiMap
+    {
+        return $this->createMultiMap(...array_map(
+            static fn (string $key, array $values): Pair => new Pair($key, ArraySequence::fromArray($values)),
+            array_keys($content),
+            $content,
+        ));
     }
 }

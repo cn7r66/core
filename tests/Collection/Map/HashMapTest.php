@@ -24,6 +24,8 @@ use Vivarium\Equality\Equal;
 use Vivarium\Equality\Equality;
 use Vivarium\Test\Collection\Stub\KeyWithHashCollision;
 
+use function array_keys;
+use function array_values;
 use function count;
 use function rand;
 use function sort;
@@ -178,16 +180,6 @@ class HashMapTest extends TestCase
         static::assertSame($expected, $iterated);
     }
 
-    /** @return array<string, array{int, list<string>}> */
-    public static function provideRemoveHashCollisionIteration(): array
-    {
-        return [
-            'first of the bucket' => [1, ['b', 'c', 'z']],
-            'middle of the bucket' => [2, ['a', 'c', 'z']],
-            'last of the bucket' => [3, ['a', 'b', 'z']],
-        ];
-    }
-
     public function testContainsValue(): void
     {
         $keys   = [1, 2, 3, 4];
@@ -282,15 +274,6 @@ class HashMapTest extends TestCase
         HashMap::fromKeyValue([1, 2, 3], $values);
     }
 
-    /** @return array<string, array{list<string>, string}> */
-    public static function provideFromKeyValueMismatch(): array
-    {
-        return [
-            'too few values' => [['a'], 'Expected 3 values, one per key. Got int 1.'],
-            'too many values' => [['a', 'b', 'c', 'd'], 'Expected 3 values, one per key. Got int 4.'],
-        ];
-    }
-
     public function testFromKeyValue(): void
     {
         $keys   = [1, 2, 3];
@@ -356,6 +339,79 @@ class HashMapTest extends TestCase
         static::assertSame($first->hash(), $second->hash());
     }
 
+    /**
+     * @param HashMap<mixed, mixed> $first
+     * @param HashMap<mixed, mixed> $second
+     */
+    #[DataProvider('provideDifferentContent')]
+    public function testEqualsWithDifferentContent(HashMap $first, HashMap $second): void
+    {
+        static::assertFalse($first->equals($second));
+        static::assertFalse($second->equals($first));
+    }
+
+    /**
+     * @param array<string, int> $pairs
+     * @param array<string, int> $expected
+     */
+    #[DataProvider('provideFilter')]
+    public function testFilter(array $pairs, array $expected): void
+    {
+        $map      = $this->mapOf($pairs);
+        $filtered = $map->filter(static fn (int $value, string $key): bool => $value > 1 && $key !== 'b');
+
+        static::assertTrue($this->mapOf($expected)->equals($filtered));
+        static::assertCount(count($pairs), $map);
+        static::assertNotSame($map, $filtered);
+    }
+
+    /**
+     * @param array<string, int>    $pairs
+     * @param array<string, string> $expected
+     */
+    #[DataProvider('provideMap')]
+    public function testMap(array $pairs, array $expected): void
+    {
+        $mapped = $this->mapOf($pairs)->map(static fn (int $value, string $key): string => $key . $value);
+
+        static::assertTrue($this->mapOf($expected)->equals($mapped));
+    }
+
+    /**
+     * @param array<string, int> $pairs
+     * @param list<string>       $expected
+     */
+    #[DataProvider('provideReduce')]
+    public function testReduce(array $pairs, array $expected): void
+    {
+        $visited = $this->mapOf($pairs)->reduce(
+            static fn (array $carry, int $value, string $key): array => [...$carry, $key . $value],
+            [],
+        );
+        sort($visited);
+
+        static::assertSame($expected, $visited);
+    }
+
+    /** @return array<string, array{int, list<string>}> */
+    public static function provideRemoveHashCollisionIteration(): array
+    {
+        return [
+            'first of the bucket' => [1, ['b', 'c', 'z']],
+            'middle of the bucket' => [2, ['a', 'c', 'z']],
+            'last of the bucket' => [3, ['a', 'b', 'z']],
+        ];
+    }
+
+    /** @return array<string, array{list<string>, string}> */
+    public static function provideFromKeyValueMismatch(): array
+    {
+        return [
+            'too few values' => [['a'], 'Expected 3 values, one per key. Got int 1.'],
+            'too many values' => [['a', 'b', 'c', 'd'], 'Expected 3 values, one per key. Got int 4.'],
+        ];
+    }
+
     /** @return array<string, array{object, object}> */
     public static function provideSameContent(): array
     {
@@ -384,17 +440,6 @@ class HashMapTest extends TestCase
         ];
     }
 
-    /**
-     * @param HashMap<mixed, mixed> $first
-     * @param HashMap<mixed, mixed> $second
-     */
-    #[DataProvider('provideDifferentContent')]
-    public function testEqualsWithDifferentContent(HashMap $first, HashMap $second): void
-    {
-        static::assertFalse($first->equals($second));
-        static::assertFalse($second->equals($first));
-    }
-
     /** @return array<string, array{object, object}> */
     public static function provideDifferentContent(): array
     {
@@ -412,5 +457,46 @@ class HashMapTest extends TestCase
                 HashMap::fromKeyValue([1, 2], ['b', 'a']),
             ],
         ];
+    }
+
+    /** @return array<string, array{array<string, int>, array<string, int>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [['a' => 2, 'b' => 3, 'c' => 1, 'd' => 4], ['a' => 2, 'd' => 4]],
+            'none kept' => [['b' => 5, 'c' => 0], []],
+            'all kept' => [['a' => 2, 'c' => 3], ['a' => 2, 'c' => 3]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @return array<string, array{array<string, int>, array<string, string>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'pairs' => [['a' => 1, 'b' => 2], ['a' => 'a1', 'b' => 'b2']],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @return array<string, array{array<string, int>, list<string>}> */
+    public static function provideReduce(): array
+    {
+        return [
+            'pairs' => [['b' => 2, 'a' => 1], ['a1', 'b2']],
+            'empty' => [[], []],
+        ];
+    }
+
+    /**
+     * @param array<string, V> $pairs
+     *
+     * @return HashMap<string, V>
+     *
+     * @template V
+     */
+    private function mapOf(array $pairs): HashMap
+    {
+        return HashMap::fromKeyValue(array_keys($pairs), array_values($pairs));
     }
 }

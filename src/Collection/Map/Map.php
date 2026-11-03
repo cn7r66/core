@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Vivarium\Collection\Map;
 
+use Closure;
 use Countable;
 use Iterator;
 use IteratorAggregate;
@@ -64,6 +65,38 @@ interface Map extends Countable, IteratorAggregate, Equality
 
     /** @return self<K, V> */
     public function clear(): self;
+
+    /**
+     * The pairs $predicate accepts, in iteration order.
+     *
+     * @param Closure(V, K): bool $predicate
+     *
+     * @return self<K, V>
+     */
+    public function filter(Closure $predicate): self;
+
+    /**
+     * Every value through $mapper, in iteration order; keys stay as they are.
+     *
+     * @param Closure(V, K): U $mapper
+     *
+     * @return self<K, U>
+     *
+     * @template U
+     */
+    public function map(Closure $mapper): self;
+
+    /**
+     * Folds the pairs in iteration order, starting from $initial.
+     *
+     * @param Closure(R, V, K): R $reducer
+     * @param R                   $initial
+     *
+     * @return R
+     *
+     * @template R
+     */
+    public function reduce(Closure $reducer, $initial);
 
     /** @return Iterator<K, V> */
     public function getIterator(): Iterator;
