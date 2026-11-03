@@ -19,7 +19,7 @@ use Vivarium\Test\Collection\Stub\Key;
 use Vivarium\Test\Collection\Stub\KeyWithHashCollision;
 
 use function array_keys;
-use function array_values;
+use function array_map;
 
 #[CoversClass(MapIterator::class)]
 class MapIteratorTest extends IteratorTestCase
@@ -48,7 +48,11 @@ class MapIteratorTest extends IteratorTestCase
 
         $iterator = new MapIterator($pairs);
 
-        $this->doTest($iterator, array_keys($expected), array_values($expected), $map);
+        $this->doTest($iterator, array_map(
+            static fn (int $key, int $value): array => [$map($key), $value],
+            array_keys($expected),
+            $expected,
+        ));
     }
 
     public function testMapIteratorWithBuckets(): void
@@ -88,6 +92,10 @@ class MapIteratorTest extends IteratorTestCase
 
         $iterator = new MapIterator($pairs);
 
-        $this->doTest($iterator, array_keys($expected), array_values($expected), $map);
+        $this->doTest($iterator, array_map(
+            static fn (int $key, int $value): array => [$map($key), $value],
+            array_keys($expected),
+            $expected,
+        ));
     }
 }

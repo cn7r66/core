@@ -310,7 +310,7 @@ final class MultiValueMapTest extends TestCase
 
     public function testGetIterator(): void
     {
-        $multimap = new MultiValueMap(static fn () => new ArraySequence());
+        $multimap = new MultiValueMap($this->ofArraySequence());
 
         $multimap = $multimap->put('a', 1)
                              ->put('a', 2)

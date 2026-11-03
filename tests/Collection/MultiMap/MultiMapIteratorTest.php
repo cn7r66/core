@@ -48,7 +48,7 @@ final class MultiMapIteratorTest extends IteratorTestCase
             new MapIterator($pairs),
         );
 
-        $this->doTest($iterator, [1, 1, 3, 3], [1, 2, 4, 5], $map);
+        $this->doTest($iterator, [[$map(1), 1], [$map(1), 2], [$map(3), 4], [$map(3), 5]]);
     }
 
     /**

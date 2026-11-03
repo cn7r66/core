@@ -19,7 +19,6 @@ use Vivarium\Collection\Exception\KeyNotFound;
 use Vivarium\Collection\Map\HashMap;
 use Vivarium\Collection\Map\Map;
 use Vivarium\Collection\Pair\Pair;
-use Vivarium\Collection\Set\HashSet;
 use Vivarium\Equality\Equal;
 use Vivarium\Equality\Equality;
 use Vivarium\Test\Collection\Stub\KeyWithHashCollision;
@@ -27,7 +26,6 @@ use Vivarium\Test\Collection\Stub\KeyWithHashCollision;
 use function array_keys;
 use function array_values;
 use function count;
-use function rand;
 use function sort;
 
 #[CoversClass(HashMap::class)]
@@ -35,9 +33,9 @@ class HashMapTest extends TestCase
 {
     public function testEmptyConstructor(): void
     {
-        $set = new HashSet();
+        $map = new HashMap();
 
-        static::assertCount(0, $set);
+        static::assertCount(0, $map);
     }
 
     public function testConstructionWithPairs(): void
@@ -89,17 +87,16 @@ class HashMapTest extends TestCase
         $keys   = [1, 2, 3, 4];
         $values = ['a', 'b', 'c', 'd'];
 
-        $map   = HashMap::fromKeyValue($keys, $values);
-        $index = rand(0, count($keys) - 1);
+        $map = HashMap::fromKeyValue($keys, $values);
 
-        $value = $map->get($keys[$index]);
-
-        static::assertEquals($values[$index], $value);
+        foreach ($keys as $index => $key) {
+            static::assertSame($values[$index], $map->get($key));
+        }
     }
 
     public function testGetWithEquality(): void
     {
-        $equality = $this->createStub(Equality::class);
+        $equality = static::createStub(Equality::class);
         $equality->method('hash')
                  ->willReturn('a4bbe8f088dbfba72434f05585ed0ce4ecb3c952');
 
@@ -185,10 +182,12 @@ class HashMapTest extends TestCase
         $keys   = [1, 2, 3, 4];
         $values = ['a', 'b', 'c', 'd'];
 
-        $map   = HashMap::fromKeyValue($keys, $values);
-        $index = rand(0, count($values) - 1);
+        $map = HashMap::fromKeyValue($keys, $values);
 
-        static::assertTrue($map->containsValue($values[$index]));
+        foreach ($values as $value) {
+            static::assertTrue($map->containsValue($value));
+        }
+
         static::assertFalse($map->containsValue(-42));
     }
 

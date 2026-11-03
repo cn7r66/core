@@ -34,6 +34,6 @@ class SetIteratorTest extends IteratorTestCase
 
         $iterator = new SetIterator($pairs);
 
-        $this->doTest($iterator, [0, 1, 2, 3], [1, 3, 5, 7], static fn (int $key): int => $key);
+        $this->doTest($iterator, [[0, 1], [1, 3], [2, 5], [3, 7]]);
     }
 }

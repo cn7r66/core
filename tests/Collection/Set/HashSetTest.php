@@ -83,9 +83,9 @@ class HashSetTest extends TestCase
 
     public function testContainsWithObjects(): void
     {
-        $stub1 = $this->createStub(Equality::class);
-        $stub2 = $this->createStub(Equality::class);
-        $stub3 = $this->createStub(Equality::class);
+        $stub1 = static::createStub(Equality::class);
+        $stub2 = static::createStub(Equality::class);
+        $stub3 = static::createStub(Equality::class);
 
         $stub2->method('equals')
               ->willReturnMap(

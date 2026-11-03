@@ -14,86 +14,69 @@ use Iterator;
 use PHPUnit\Framework\TestCase;
 use Vivarium\Equality\Equal;
 
-use function array_values;
-
 abstract class IteratorTestCase extends TestCase
 {
     /**
-     * @param Iterator<T, int> $iterator
-     * @param int[]            $keys
-     * @param int[]            $values
-     * @param callable(int): T $map
+     * @param Iterator<K, V>    $iterator
+     * @param list<array{K, V}> $expected
      *
-     * @template T
+     * @template K
+     * @template V
      */
-    protected function doTest(Iterator $iterator, array $keys, array $values, callable $map): void
+    protected function doTest(Iterator $iterator, array $expected): void
     {
-        $this->iterate($iterator, $keys, $values, $map);
+        $this->checkPairs($expected, $this->pairsOf($iterator));
 
         $iterator->rewind();
 
-        $this->iterate($iterator, $keys, $values, $map);
+        $this->checkPairs($expected, $this->pairsOf($iterator));
     }
 
     /**
-     * @param Iterator<T, int> $iterator
-     * @param int[]            $expectedKeys
-     * @param int[]            $expectedValues
-     * @param callable(int): T $map
+     * @param Iterator<K, V> $iterator
      *
-     * @template T
+     * @return list<array{K, V}>
+     *
+     * @template K
+     * @template V
      */
-    private function iterate(Iterator $iterator, array $expectedKeys, array $expectedValues, callable $map): void
+    private function pairsOf(Iterator $iterator): array
     {
-        $keys   = [];
-        $values = [];
+        $pairs = [];
         while ($iterator->valid()) {
-            $keys[]   = $iterator->key();
-            $values[] = $iterator->current();
+            $pairs[] = [$iterator->key(), $iterator->current()];
             $iterator->next();
         }
 
-        $this->checkKeys($expectedKeys, $keys, $map);
-        $this->checkValues($expectedValues, $values);
+        return $pairs;
     }
 
     /**
-     * @param int[]            $expected
-     * @param T[]              $keys
-     * @param callable(int): T $map
+     * @param list<array{K, V}> $expected
+     * @param list<array{K, V}> $pairs
      *
-     * @template T
+     * @template K
+     * @template V
      */
-    private function checkKeys(array $expected, array $keys, callable $map): void
+    private function checkPairs(array $expected, array $pairs): void
     {
-        static::assertSameSize($expected, $keys);
-        foreach ($expected as $value) {
-            static::assertTrue($this->contains($map($value), $keys));
+        static::assertSameSize($expected, $pairs);
+        foreach ($expected as $pair) {
+            static::assertTrue($this->contains($pair, $pairs));
         }
     }
 
     /**
-     * @param int[] $expected
-     * @param int[] $values
-     */
-    private function checkValues(array $expected, array $values): void
-    {
-        static::assertSameSize($expected, $values);
-        foreach (array_values($expected) as $value) {
-            static::assertTrue($this->contains($value, $values));
-        }
-    }
-
-    /**
-     * @param T                   $needle
-     * @param array<array-key, T> $array
+     * @param array{K, V}       $needle
+     * @param list<array{K, V}> $pairs
      *
-     * @template T
+     * @template K
+     * @template V
      */
-    private function contains($needle, array $array): bool
+    private function contains(array $needle, array $pairs): bool
     {
-        foreach ($array as $value) {
-            if (Equal::areEquals($needle, $value)) {
+        foreach ($pairs as $pair) {
+            if (Equal::areEquals($needle[0], $pair[0]) && Equal::areEquals($needle[1], $pair[1])) {
                 return true;
             }
         }
