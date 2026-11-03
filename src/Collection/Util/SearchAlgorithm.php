@@ -11,8 +11,8 @@ declare(strict_types=1);
 namespace Vivarium\Collection\Util;
 
 /**
- * @template T
- * @template V
+ * @template-contravariant T
+ * @template-contravariant V
  */
 interface SearchAlgorithm
 {

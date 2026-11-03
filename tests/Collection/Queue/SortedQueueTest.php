@@ -184,8 +184,7 @@ class SortedQueueTest extends TestCase
 
     public function testFromArray(): void
     {
-        /** @var int[] $values */
-        $values = [1, 2, 3];
+        $values = ['k0' => 1, 'k1' => 2, 'k2' => 3];
 
         $queue1 = SortedQueue::fromArray(new ByNumber(), $values);
         $queue2 = new SortedQueue(new ByNumber(), ...$values);

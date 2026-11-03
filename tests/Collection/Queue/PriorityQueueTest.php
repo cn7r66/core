@@ -38,7 +38,7 @@ final class PriorityQueueTest extends TestCase
 
     public function testFromArray(): void
     {
-        static::assertTrue(PriorityQueue::fromArray(['a', 'b'])->equals(new PriorityQueue('a', 'b')));
+        static::assertTrue(PriorityQueue::fromArray(['x' => 'a', 'y' => 'b'])->equals(new PriorityQueue('a', 'b')));
     }
 
     /**
@@ -48,12 +48,14 @@ final class PriorityQueueTest extends TestCase
     #[DataProvider('provideEnqueue')]
     public function testEnqueue(array $enqueued, array $expected): void
     {
-        $queue = new PriorityQueue();
+        $empty = new PriorityQueue();
+        $queue = $empty;
         foreach ($enqueued as [$element, $priority]) {
             $queue = $queue->enqueue($element, $priority);
         }
 
         static::assertSame($expected, $queue->toArray());
+        static::assertTrue($empty->isEmpty());
     }
 
     public function testEnqueueDefaultsToNormal(): void
@@ -105,7 +107,11 @@ final class PriorityQueueTest extends TestCase
     #[DataProvider('provideMerge')]
     public function testMerge(array $left, array $right, array $expected): void
     {
-        static::assertSame($expected, $this->queueOf($left)->merge($this->queueOf($right))->toArray());
+        $queue  = $this->queueOf($left);
+        $before = $queue->toArray();
+
+        static::assertSame($expected, $queue->merge($this->queueOf($right))->toArray());
+        static::assertSame($before, $queue->toArray());
     }
 
     public function testRemove(): void
@@ -115,10 +121,12 @@ final class PriorityQueueTest extends TestCase
             ->enqueue('b', 2)
             ->enqueue('a', 3);
 
+        $before  = $queue->toArray();
         $removed = $queue->remove('a');
 
         static::assertSame(['b'], $removed->toArray());
         static::assertFalse($removed->contains('a'));
+        static::assertSame($before, $queue->toArray());
     }
 
     public function testRemoveMissing(): void

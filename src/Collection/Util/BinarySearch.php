@@ -14,8 +14,8 @@ use function count;
 use function intval;
 
 /**
- * @template T
- * @template V
+ * @template-contravariant T
+ * @template-contravariant V
  * @implements SearchAlgorithm<T, V>
  */
 final class BinarySearch implements SearchAlgorithm

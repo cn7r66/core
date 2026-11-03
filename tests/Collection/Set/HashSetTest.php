@@ -198,8 +198,7 @@ class HashSetTest extends TestCase
 
     public function testFromArray(): void
     {
-        /** @var int[] $values */
-        $values = [1, 1, 2, 2, 3, 3];
+        $values = ['k0' => 1, 'k1' => 1, 'k2' => 2, 'k3' => 2, 'k4' => 3, 'k5' => 3];
 
         $set1 = HashSet::fromArray($values);
         $set2 = new HashSet(1, 1, 2, 2, 3, 3);

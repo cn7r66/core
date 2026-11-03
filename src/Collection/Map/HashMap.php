@@ -219,7 +219,10 @@ final class HashMap implements Map
     /** @return HashMap<K, V> */
     public function clear(): HashMap
     {
-        return new HashMap();
+        $map        = clone $this;
+        $map->pairs = [];
+
+        return $map;
     }
 
     /**

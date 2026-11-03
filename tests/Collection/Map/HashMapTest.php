@@ -234,11 +234,12 @@ class HashMapTest extends TestCase
         $keys   = [1, 2, 3, 4];
         $values = ['a', 'b', 'c', 'd'];
 
-        $map = HashMap::fromKeyValue($keys, $values);
-        $map = $map->clear();
+        $map     = HashMap::fromKeyValue($keys, $values);
+        $cleared = $map->clear();
 
-        static::assertEquals(0, $map->count());
-        static::assertTrue($map->isEmpty());
+        static::assertEquals(0, $cleared->count());
+        static::assertTrue($cleared->isEmpty());
+        static::assertCount(4, $map);
     }
 
     public function testGetIterator(): void

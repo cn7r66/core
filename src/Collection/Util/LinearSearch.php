@@ -15,8 +15,8 @@ use Vivarium\Equality\Equal;
 use function count;
 
 /**
- * @template T
- * @template V
+ * @template-contravariant T
+ * @template-contravariant V
  * @template-implements SearchAlgorithm<T, V>
  */
 final class LinearSearch implements SearchAlgorithm

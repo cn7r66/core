@@ -27,6 +27,7 @@ final class BinarySearchTest extends TestCase
         static::assertSame(5, $binary->search($arr, 8));
         static::assertSame(2, $binary->search($arr, 4));
         static::assertSame(-3, $binary->search($arr, 3));
+        static::assertSame(-1, $binary->search($arr, 0));
     }
 
     public function testContains(): void

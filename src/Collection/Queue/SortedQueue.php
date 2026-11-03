@@ -48,7 +48,6 @@ final class SortedQueue implements Queue
      */
     public function __construct(private Comparator $comparator, ...$elements)
     {
-        $elements = array_values($elements);
         usort($elements, $comparator->compare(...));
 
         $this->elements = $elements;

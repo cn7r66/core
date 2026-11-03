@@ -203,8 +203,7 @@ class ArraySequenceTest extends TestCase
 
     public function testFromArray(): void
     {
-        /** @var array<int, int> $values */
-        $values = [1, 2, 3];
+        $values = ['k0' => 1, 'k1' => 2, 'k2' => 3];
 
         $list1 = ArraySequence::fromArray($values);
         $list2 = new ArraySequence(1, 2, 3);

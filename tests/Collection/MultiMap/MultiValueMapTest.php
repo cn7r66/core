@@ -133,6 +133,7 @@ final class MultiValueMapTest extends TestCase
             new Pair('b', new ArraySequence(3, 4, 5)),
         );
 
+        $original = $multimap;
         $multimap = $multimap->remove('a', 1)
                              ->remove('a', 3)
                              ->remove('a', 4)
@@ -146,6 +147,7 @@ final class MultiValueMapTest extends TestCase
         ];
 
         $this->checkContent($multimap, $content);
+        $this->checkContent($original, ['a' => [1, 2, 3], 'b' => [3, 4, 5]]);
 
         static::assertSame($multimap, $multimap->remove('b', 4));
         static::assertSame($multimap, $multimap->remove('z', 4));
@@ -291,11 +293,11 @@ final class MultiValueMapTest extends TestCase
             new Pair('a', new ArraySequence(1, 2, 3)),
         );
 
-        static::assertFalse($multimap->isEmpty());
         static::assertTrue(
             $multimap->clear()
                      ->isEmpty(),
         );
+        static::assertFalse($multimap->isEmpty());
     }
 
     public function testCount(): void

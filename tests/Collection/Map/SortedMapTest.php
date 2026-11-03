@@ -191,10 +191,11 @@ class SortedMapTest extends TestCase
         $values = ['a', 'b', 'c', 'd', 'e'];
 
         /** @var Map<int, string> $map */
-        $map = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
-        $map = $map->clear();
+        $map     = SortedMap::fromKeyValue(new ByNumber(), $keys, $values);
+        $cleared = $map->clear();
 
-        static::assertCount(0, $map);
+        static::assertCount(0, $cleared);
+        static::assertCount(5, $map);
     }
 
     public function testGetIterator(): void

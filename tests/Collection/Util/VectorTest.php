@@ -61,6 +61,7 @@ final class VectorTest extends TestCase
             'insert inside' => [[1, 2, 4, 5], 3, [1, 2, 3, 4, 5]],
             'into empty' => [[], 3, [3]],
             'replace equal' => [[1, 2, 4, 5], 2.0, [1, 2.0, 4, 5]],
+            'replace first' => [[1, 2, 4, 5], 1.0, [1.0, 2, 4, 5]],
         ];
     }
 

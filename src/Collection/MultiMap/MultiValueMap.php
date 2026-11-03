@@ -206,7 +206,10 @@ final class MultiValueMap implements MultiMap
     /** @return MultiValueMap<K, V> */
     public function clear(): MultiValueMap
     {
-        return new MultiValueMap($this->factory);
+        $multimap      = clone $this;
+        $multimap->map = $this->map->clear();
+
+        return $multimap;
     }
 
     /**

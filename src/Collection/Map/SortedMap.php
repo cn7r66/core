@@ -195,7 +195,10 @@ final class SortedMap implements Map
     /** @return SortedMap<K, V> */
     public function clear(): SortedMap
     {
-        return new SortedMap($this->comparator);
+        $map        = clone $this;
+        $map->pairs = [];
+
+        return $map;
     }
 
     /**
