@@ -43,6 +43,19 @@ final class NotATypeTest extends TestCase
         self::assertSame($message, $exception->getFailure()->format());
     }
 
+    public function testGetMessageOfResource(): void
+    {
+        $resource = fopen('php://memory', 'r');
+        self::assertNotFalse($resource);
+
+        self::assertSame(
+            'Expected a valid type: resources have no type. Got resource (stream).',
+            (new NotAType($resource, 'resources have no type'))->getMessage(),
+        );
+
+        fclose($resource);
+    }
+
     /** @return array<string, array{string, string, array<string, string>, string}> */
     public static function provideMessages(): array
     {
@@ -66,18 +79,5 @@ final class NotATypeTest extends TestCase
                 'Expected a valid type: it has an empty part. Got string "".',
             ],
         ];
-    }
-
-    public function testGetMessageOfResource(): void
-    {
-        $resource = fopen('php://memory', 'r');
-        self::assertNotFalse($resource);
-
-        self::assertSame(
-            'Expected a valid type: resources have no type. Got resource (stream).',
-            (new NotAType($resource, 'resources have no type'))->getMessage(),
-        );
-
-        fclose($resource);
     }
 }
