@@ -63,15 +63,6 @@ class HashSetTest extends TestCase
         static::assertNotSame($collection, $removed);
     }
 
-    /** @return array<string, array{list<int>, int, list<int>}> */
-    public static function provideRemove(): array
-    {
-        return [
-            'inside' => [[1, 2, 3, 4, 5], 3, [1, 2, 4, 5]],
-            'only element' => [[7], 7, []],
-        ];
-    }
-
     public function testRemoveMissing(): void
     {
         $collection = HashSet::fromArray([1, 2, 3]);
@@ -251,15 +242,6 @@ class HashSetTest extends TestCase
         static::assertSame($first->hash(), $second->hash());
     }
 
-    /** @return array<string, array{HashSet<int>, HashSet<int>}> */
-    public static function provideSameContent(): array
-    {
-        return [
-            'insertion order' => [new HashSet(1, 2, 3), new HashSet(3, 2, 1)],
-            'duplicates in the input' => [new HashSet(1, 2, 3, 3, 1), new HashSet(3, 2, 1)],
-        ];
-    }
-
     /**
      * @param HashSet<int> $first
      * @param HashSet<int> $second
@@ -269,15 +251,6 @@ class HashSetTest extends TestCase
     {
         static::assertFalse($first->equals($second));
         static::assertFalse($second->equals($first));
-    }
-
-    /** @return array<string, array{HashSet<int>, HashSet<int>}> */
-    public static function provideDifferentContent(): array
-    {
-        return [
-            'one element differs' => [new HashSet(1, 2, 3), new HashSet(1, 2, 4)],
-            'one extra element' => [new HashSet(1, 2, 3), new HashSet(1, 2, 3, 4)],
-        ];
     }
 
     /**
@@ -295,17 +268,6 @@ class HashSetTest extends TestCase
         static::assertNotSame($set, $filtered);
     }
 
-    /** @return array<string, array{list<int>, list<int>}> */
-    public static function provideFilter(): array
-    {
-        return [
-            'some kept' => [[1, 2, 3, 4], [3, 4]],
-            'none kept' => [[1, 2], []],
-            'all kept' => [[3, 4], [3, 4]],
-            'empty' => [[], []],
-        ];
-    }
-
     /**
      * @param list<int> $elements
      * @param list<int> $expected
@@ -318,6 +280,52 @@ class HashSetTest extends TestCase
         static::assertTrue(HashSet::fromArray($expected)->equals($mapped));
     }
 
+    public function testReduce(): void
+    {
+        $sum = static fn (int $carry, int $element): int => $carry + $element;
+
+        static::assertSame(10, HashSet::fromArray([1, 2, 3, 4])->reduce($sum, 0));
+        static::assertSame(7, (new HashSet())->reduce($sum, 7));
+    }
+
+    /** @return array<string, array{list<int>, int, list<int>}> */
+    public static function provideRemove(): array
+    {
+        return [
+            'inside' => [[1, 2, 3, 4, 5], 3, [1, 2, 4, 5]],
+            'only element' => [[7], 7, []],
+        ];
+    }
+
+    /** @return array<string, array{HashSet<int>, HashSet<int>}> */
+    public static function provideSameContent(): array
+    {
+        return [
+            'insertion order' => [new HashSet(1, 2, 3), new HashSet(3, 2, 1)],
+            'duplicates in the input' => [new HashSet(1, 2, 3, 3, 1), new HashSet(3, 2, 1)],
+        ];
+    }
+
+    /** @return array<string, array{HashSet<int>, HashSet<int>}> */
+    public static function provideDifferentContent(): array
+    {
+        return [
+            'one element differs' => [new HashSet(1, 2, 3), new HashSet(1, 2, 4)],
+            'one extra element' => [new HashSet(1, 2, 3), new HashSet(1, 2, 3, 4)],
+        ];
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [[1, 2, 3, 4], [3, 4]],
+            'none kept' => [[1, 2], []],
+            'all kept' => [[3, 4], [3, 4]],
+            'empty' => [[], []],
+        ];
+    }
+
     /** @return array<string, array{list<int>, list<int>}> */
     public static function provideMap(): array
     {
@@ -326,13 +334,5 @@ class HashSetTest extends TestCase
             'equal results merge' => [[2, 3, 4], [1, 2]],
             'empty' => [[], []],
         ];
-    }
-
-    public function testReduce(): void
-    {
-        $sum = static fn (int $carry, int $element): int => $carry + $element;
-
-        static::assertSame(10, HashSet::fromArray([1, 2, 3, 4])->reduce($sum, 0));
-        static::assertSame(7, (new HashSet())->reduce($sum, 7));
     }
 }

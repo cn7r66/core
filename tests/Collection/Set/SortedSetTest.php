@@ -60,15 +60,6 @@ class SortedSetTest extends TestCase
         static::assertNotSame($collection, $removed);
     }
 
-    /** @return array<string, array{list<int>, int, list<int>}> */
-    public static function provideRemove(): array
-    {
-        return [
-            'inside' => [[5, 2, 3, 1, 7], 3, [1, 2, 5, 7]],
-            'last' => [[5, 2, 3, 1, 7], 7, [1, 2, 3, 5]],
-        ];
-    }
-
     public function testRemoveMissing(): void
     {
         $collection = SortedSet::fromArray(new ByNumber(), [1, 2, 3]);
@@ -301,17 +292,6 @@ class SortedSetTest extends TestCase
         static::assertSame([0, ...$expected], $filtered->add(0)->toArray());
     }
 
-    /** @return array<string, array{list<int>, list<int>}> */
-    public static function provideFilter(): array
-    {
-        return [
-            'some kept' => [[3, 1, 4, 2], [2, 3, 4]],
-            'none kept' => [[1, 0], []],
-            'all kept' => [[3, 2], [2, 3]],
-            'empty' => [[], []],
-        ];
-    }
-
     /**
      * @param list<int>  $elements
      * @param list<bool> $expected
@@ -327,15 +307,6 @@ class SortedSetTest extends TestCase
         static::assertTrue(HashSet::fromArray($expected)->equals($mapped));
     }
 
-    /** @return array<string, array{list<int>, list<bool>}> */
-    public static function provideMap(): array
-    {
-        return [
-            'elements' => [[3, 1, 2], [false, true]],
-            'empty' => [[], []],
-        ];
-    }
-
     /** @param list<int> $elements */
     #[DataProvider('provideReduce')]
     public function testReduce(array $elements, string $expected): void
@@ -346,6 +317,35 @@ class SortedSetTest extends TestCase
             static fn (string $carry, int|float $element): string => $carry . $element,
             '>',
         ));
+    }
+
+    /** @return array<string, array{list<int>, int, list<int>}> */
+    public static function provideRemove(): array
+    {
+        return [
+            'inside' => [[5, 2, 3, 1, 7], 3, [1, 2, 5, 7]],
+            'last' => [[5, 2, 3, 1, 7], 7, [1, 2, 3, 5]],
+        ];
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [[3, 1, 4, 2], [2, 3, 4]],
+            'none kept' => [[1, 0], []],
+            'all kept' => [[3, 2], [2, 3]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @return array<string, array{list<int>, list<bool>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'elements' => [[3, 1, 2], [false, true]],
+            'empty' => [[], []],
+        ];
     }
 
     /** @return array<string, array{list<int>, string}> */

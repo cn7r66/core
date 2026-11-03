@@ -33,6 +33,25 @@ final class VectorTest extends TestCase
         static::assertSame($expected, Vector::put($array, $element, $search));
     }
 
+    /**
+     * @param list<int> $array
+     * @param list<int> $expected
+     */
+    #[DataProvider('provideInsertAtIndex')]
+    public function testInsertAtIndex(array $array, int $element, int $index, array $expected): void
+    {
+        static::assertSame($expected, Vector::insertAtIndex($array, $element, $index));
+    }
+
+    #[DataProvider('provideInsertAtIndexOutOfRange')]
+    public function testInsertAtIndexRejectsOutOfRange(int $index, string $message): void
+    {
+        static::expectException(AssertionFailed::class);
+        static::expectExceptionMessage($message);
+
+        Vector::insertAtIndex([3, 6, 1, 2, 5], 8, $index);
+    }
+
     /** @return array<string, array{list<int|float>, int|float, list<int|float>}> */
     public static function providePut(): array
     {
@@ -45,16 +64,6 @@ final class VectorTest extends TestCase
         ];
     }
 
-    /**
-     * @param list<int> $array
-     * @param list<int> $expected
-     */
-    #[DataProvider('provideInsertAtIndex')]
-    public function testInsertAtIndex(array $array, int $element, int $index, array $expected): void
-    {
-        static::assertSame($expected, Vector::insertAtIndex($array, $element, $index));
-    }
-
     /** @return array<string, array{list<int>, int, int, list<int>}> */
     public static function provideInsertAtIndex(): array
     {
@@ -64,15 +73,6 @@ final class VectorTest extends TestCase
             'append at count' => [[3, 6, 1, 2, 5], 8, 5, [3, 6, 1, 2, 5, 8]],
             'equal element kept' => [[3, 6, 1, 2, 5], 6, 1, [3, 6, 6, 1, 2, 5]],
         ];
-    }
-
-    #[DataProvider('provideInsertAtIndexOutOfRange')]
-    public function testInsertAtIndexRejectsOutOfRange(int $index, string $message): void
-    {
-        static::expectException(AssertionFailed::class);
-        static::expectExceptionMessage($message);
-
-        Vector::insertAtIndex([3, 6, 1, 2, 5], 8, $index);
     }
 
     /** @return array<string, array{int, string}> */

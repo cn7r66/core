@@ -56,29 +56,6 @@ final class PriorityQueueTest extends TestCase
         static::assertSame($expected, $queue->toArray());
     }
 
-    /** @return array<string, array{list<array{string, int}>, list<string>}> */
-    public static function provideEnqueue(): array
-    {
-        return [
-            'lowest priority first' => [
-                [['high', Priority::HIGH], ['low', Priority::LOW], ['normal', Priority::NORMAL]],
-                ['low', 'normal', 'high'],
-            ],
-            'ties first in first out' => [
-                [['a', Priority::NORMAL], ['b', Priority::NORMAL], ['c', Priority::NORMAL]],
-                ['a', 'b', 'c'],
-            ],
-            'ties among other priorities' => [
-                [['a', 10], ['x', 0], ['b', 10], ['y', 0], ['c', 20], ['z', 0]],
-                ['x', 'y', 'z', 'a', 'b', 'c'],
-            ],
-            'beyond the constants' => [
-                [['last', PHP_INT_MAX], ['first', PHP_INT_MIN]],
-                ['first', 'last'],
-            ],
-        ];
-    }
-
     public function testEnqueueDefaultsToNormal(): void
     {
         $queue = (new PriorityQueue())
@@ -120,12 +97,6 @@ final class PriorityQueueTest extends TestCase
         $operation === 'peek' ? $queue->peek() : $queue->dequeue();
     }
 
-    /** @return array<string, array{string}> */
-    public static function provideEmptyQueueCalls(): array
-    {
-        return ['dequeue' => ['dequeue'], 'peek' => ['peek']];
-    }
-
     /**
      * @param list<array{string, int}> $left
      * @param list<array{string, int}> $right
@@ -135,25 +106,6 @@ final class PriorityQueueTest extends TestCase
     public function testMerge(array $left, array $right, array $expected): void
     {
         static::assertSame($expected, $this->queueOf($left)->merge($this->queueOf($right))->toArray());
-    }
-
-    /** @return array<string, array{list<array{string, int}>, list<array{string, int}>, list<string>}> */
-    public static function provideMerge(): array
-    {
-        return [
-            'interleaved priorities' => [
-                [['l1', 1], ['l3', 3]],
-                [['r0', 0], ['r2', 2], ['r4', 4]],
-                ['r0', 'l1', 'r2', 'l3', 'r4'],
-            ],
-            'ties: left first' => [
-                [['l1', 5], ['l2', 5]],
-                [['r1', 5], ['r2', 5]],
-                ['l1', 'l2', 'r1', 'r2'],
-            ],
-            'empty right' => [[['l', 1]], [], ['l']],
-            'empty left' => [[], [['r', 1]], ['r']],
-        ];
     }
 
     public function testRemove(): void
@@ -231,17 +183,6 @@ final class PriorityQueueTest extends TestCase
         static::assertNotSame($queue, $filtered);
     }
 
-    /** @return array<string, array{list<array{string, int}>, list<string>}> */
-    public static function provideFilter(): array
-    {
-        return [
-            'some kept' => [[['a', 5], ['b', 1], ['c', 3]], ['c', 'a']],
-            'none kept' => [[['b', 1], ['b', 2]], []],
-            'all kept' => [[['a', 5], ['c', 3]], ['c', 'a']],
-            'empty' => [[], []],
-        ];
-    }
-
     /**
      * @param list<array{string, int}> $entries
      * @param list<string>             $expected
@@ -250,15 +191,6 @@ final class PriorityQueueTest extends TestCase
     public function testMap(array $entries, array $expected): void
     {
         static::assertSame($expected, $this->queueOf($entries)->map(strtoupper(...))->toArray());
-    }
-
-    /** @return array<string, array{list<array{string, int}>, list<string>}> */
-    public static function provideMap(): array
-    {
-        return [
-            'elements' => [[['a', 5], ['b', 1], ['c', 3]], ['B', 'C', 'A']],
-            'empty' => [[], []],
-        ];
     }
 
     public function testFilterKeepsPriorities(): void
@@ -282,6 +214,74 @@ final class PriorityQueueTest extends TestCase
 
         static::assertSame('>bca', $this->queueOf([['a', 5], ['b', 1], ['c', 3]])->reduce($concat, '>'));
         static::assertSame('>', (new PriorityQueue())->reduce($concat, '>'));
+    }
+
+    /** @return array<string, array{list<array{string, int}>, list<string>}> */
+    public static function provideEnqueue(): array
+    {
+        return [
+            'lowest priority first' => [
+                [['high', Priority::HIGH], ['low', Priority::LOW], ['normal', Priority::NORMAL]],
+                ['low', 'normal', 'high'],
+            ],
+            'ties first in first out' => [
+                [['a', Priority::NORMAL], ['b', Priority::NORMAL], ['c', Priority::NORMAL]],
+                ['a', 'b', 'c'],
+            ],
+            'ties among other priorities' => [
+                [['a', 10], ['x', 0], ['b', 10], ['y', 0], ['c', 20], ['z', 0]],
+                ['x', 'y', 'z', 'a', 'b', 'c'],
+            ],
+            'beyond the constants' => [
+                [['last', PHP_INT_MAX], ['first', PHP_INT_MIN]],
+                ['first', 'last'],
+            ],
+        ];
+    }
+
+    /** @return array<string, array{string}> */
+    public static function provideEmptyQueueCalls(): array
+    {
+        return ['dequeue' => ['dequeue'], 'peek' => ['peek']];
+    }
+
+    /** @return array<string, array{list<array{string, int}>, list<array{string, int}>, list<string>}> */
+    public static function provideMerge(): array
+    {
+        return [
+            'interleaved priorities' => [
+                [['l1', 1], ['l3', 3]],
+                [['r0', 0], ['r2', 2], ['r4', 4]],
+                ['r0', 'l1', 'r2', 'l3', 'r4'],
+            ],
+            'ties: left first' => [
+                [['l1', 5], ['l2', 5]],
+                [['r1', 5], ['r2', 5]],
+                ['l1', 'l2', 'r1', 'r2'],
+            ],
+            'empty right' => [[['l', 1]], [], ['l']],
+            'empty left' => [[], [['r', 1]], ['r']],
+        ];
+    }
+
+    /** @return array<string, array{list<array{string, int}>, list<string>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [[['a', 5], ['b', 1], ['c', 3]], ['c', 'a']],
+            'none kept' => [[['b', 1], ['b', 2]], []],
+            'all kept' => [[['a', 5], ['c', 3]], ['c', 'a']],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @return array<string, array{list<array{string, int}>, list<string>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'elements' => [[['a', 5], ['b', 1], ['c', 3]], ['B', 'C', 'A']],
+            'empty' => [[], []],
+        ];
     }
 
     /**

@@ -71,12 +71,6 @@ class SortedQueueTest extends TestCase
         $operation === 'peek' ? $queue->peek() : $queue->dequeue();
     }
 
-    /** @return array<string, array{string}> */
-    public static function provideEmptyQueueCalls(): array
-    {
-        return ['dequeue' => ['dequeue'], 'peek' => ['peek']];
-    }
-
     public function testAdd(): void
     {
         /** @var int[] $values */
@@ -138,15 +132,6 @@ class SortedQueueTest extends TestCase
         static::assertSame($expected, $removed->toArray());
         static::assertFalse($removed->contains($element));
         static::assertNotSame($collection, $removed);
-    }
-
-    /** @return array<string, array{list<int>, int, list<int>}> */
-    public static function provideRemove(): array
-    {
-        return [
-            'first in order' => [[3, 4, 5, 1, 2, 6], 1, [2, 3, 4, 5, 6]],
-            'every occurrence' => [[3, 1, 2, 1], 1, [2, 3]],
-        ];
     }
 
     public function testRemoveMissing(): void
@@ -261,17 +246,6 @@ class SortedQueueTest extends TestCase
         static::assertSame([0, ...$expected], $filtered->enqueue(0)->toArray());
     }
 
-    /** @return array<string, array{list<int>, list<int>}> */
-    public static function provideFilter(): array
-    {
-        return [
-            'some kept' => [[3, 1, 4, 2], [2, 3, 4]],
-            'none kept' => [[1, 0], []],
-            'all kept' => [[3, 2, 3], [2, 3, 3]],
-            'empty' => [[], []],
-        ];
-    }
-
     /**
      * @param list<int> $elements
      * @param list<int> $expected
@@ -288,15 +262,6 @@ class SortedQueueTest extends TestCase
         static::assertSame([...$expected, 0], $mapped->enqueue(0)->toArray());
     }
 
-    /** @return array<string, array{list<int>, list<int>}> */
-    public static function provideMap(): array
-    {
-        return [
-            'elements' => [[3, 1, 2], [-1, -2, -3]],
-            'empty' => [[], []],
-        ];
-    }
-
     /** @param list<int> $elements */
     #[DataProvider('provideReduce')]
     public function testReduce(array $elements, string $expected): void
@@ -307,6 +272,41 @@ class SortedQueueTest extends TestCase
             static fn (string $carry, int|float $element): string => $carry . $element,
             '>',
         ));
+    }
+
+    /** @return array<string, array{string}> */
+    public static function provideEmptyQueueCalls(): array
+    {
+        return ['dequeue' => ['dequeue'], 'peek' => ['peek']];
+    }
+
+    /** @return array<string, array{list<int>, int, list<int>}> */
+    public static function provideRemove(): array
+    {
+        return [
+            'first in order' => [[3, 4, 5, 1, 2, 6], 1, [2, 3, 4, 5, 6]],
+            'every occurrence' => [[3, 1, 2, 1], 1, [2, 3]],
+        ];
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [[3, 1, 4, 2], [2, 3, 4]],
+            'none kept' => [[1, 0], []],
+            'all kept' => [[3, 2, 3], [2, 3, 3]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'elements' => [[3, 1, 2], [-1, -2, -3]],
+            'empty' => [[], []],
+        ];
     }
 
     /** @return array<string, array{list<int>, string}> */

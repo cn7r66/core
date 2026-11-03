@@ -85,16 +85,6 @@ class ArrayStackTest extends TestCase
         static::assertNotSame($collection, $removed);
     }
 
-    /** @return array<string, array{list<int>, int, list<int>}> */
-    public static function provideRemove(): array
-    {
-        return [
-            'top' => [[1, 2, 3], 3, [2, 1]],
-            'inside, neighbours kept' => [[1, 2, 3, 4, 5, 6], 4, [6, 5, 3, 2, 1]],
-            'every occurrence' => [[1, 2, 1, 3, 1], 1, [3, 2]],
-        ];
-    }
-
     public function testRemoveMissing(): void
     {
         $collection = ArrayStack::fromArray([1, 2, 3]);
@@ -203,17 +193,6 @@ class ArrayStackTest extends TestCase
         static::assertNotSame($collection, $filtered);
     }
 
-    /** @return array<string, array{list<int>, list<int>}> */
-    public static function provideFilter(): array
-    {
-        return [
-            'some kept' => [[1, 2, 3, 4], [3, 1]],
-            'none kept' => [[2, 4], []],
-            'all kept' => [[1, 3], [3, 1]],
-            'empty' => [[], []],
-        ];
-    }
-
     /**
      * @param list<int>    $elements
      * @param list<string> $expected
@@ -224,15 +203,6 @@ class ArrayStackTest extends TestCase
         $mapped = ArrayStack::fromArray($elements)->map(static fn (int $element): string => (string) $element);
 
         static::assertSame($expected, $mapped->toArray());
-    }
-
-    /** @return array<string, array{list<int>, list<string>}> */
-    public static function provideMap(): array
-    {
-        return [
-            'elements' => [[1, 2, 3], ['3', '2', '1']],
-            'empty' => [[], []],
-        ];
     }
 
     public function testVisitsInIterationOrder(): void
@@ -261,6 +231,36 @@ class ArrayStackTest extends TestCase
             static fn (string $carry, int $element): string => $carry . $element,
             '>',
         ));
+    }
+
+    /** @return array<string, array{list<int>, int, list<int>}> */
+    public static function provideRemove(): array
+    {
+        return [
+            'top' => [[1, 2, 3], 3, [2, 1]],
+            'inside, neighbours kept' => [[1, 2, 3, 4, 5, 6], 4, [6, 5, 3, 2, 1]],
+            'every occurrence' => [[1, 2, 1, 3, 1], 1, [3, 2]],
+        ];
+    }
+
+    /** @return array<string, array{list<int>, list<int>}> */
+    public static function provideFilter(): array
+    {
+        return [
+            'some kept' => [[1, 2, 3, 4], [3, 1]],
+            'none kept' => [[2, 4], []],
+            'all kept' => [[1, 3], [3, 1]],
+            'empty' => [[], []],
+        ];
+    }
+
+    /** @return array<string, array{list<int>, list<string>}> */
+    public static function provideMap(): array
+    {
+        return [
+            'elements' => [[1, 2, 3], ['3', '2', '1']],
+            'empty' => [[], []],
+        ];
     }
 
     /** @return array<string, array{list<int>, string}> */
